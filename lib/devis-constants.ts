@@ -1,0 +1,167 @@
+import type {
+  Devis,
+  Entreprise,
+  NouvelleLigneState,
+  StatutDevis,
+} from "../types/devis";
+
+export const STATUTS_DEVIS: StatutDevis[] = [
+  "Brouillon",
+  "Envoyé",
+  "Accepté",
+  "Refusé",
+];
+
+export const TVA_PAR_DEFAUT = 21;
+
+export const UNITE_PAR_DEFAUT = "pièce";
+
+export const entreprise: Entreprise = {
+  nom: "Menuiserie Bruyère",
+  adresse: "12 Rue des Artisans, 6690 Vielsalm",
+  email: "contact@menuiserie-bruyere.be",
+  telephone: "+32 80 00 00 00",
+  tva: "BE0123.456.789",
+};
+
+export const creerLigneVide = (): NouvelleLigneState => ({
+  designation: "",
+  quantite: "1",
+  unite: UNITE_PAR_DEFAUT,
+  prixUnitaire: "",
+});
+
+export const devisInitiaux: Devis[] = [
+  {
+    id: "DEV-2026-001",
+    client: "Dupont Menuiserie",
+    statut: "Brouillon",
+    date: "10/04/2026",
+    adresse: "18 Rue de la Gare, 6600 Bastogne",
+    email: "dupont@menuiserie.be",
+    telephone: "+32 470 10 20 30",
+    tvaTaux: TVA_PAR_DEFAUT,
+    lignes: [
+      {
+        id: "L-1",
+        designation: "Fabrication meuble TV sur mesure",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 1450,
+      },
+      {
+        id: "L-2",
+        designation: "Pose sur chantier",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 450,
+      },
+      {
+        id: "L-3",
+        designation: "Finitions et ajustements",
+        quantite: 2,
+        unite: "heure",
+        prixUnitaire: 275,
+      },
+    ],
+  },
+  {
+    id: "DEV-2026-002",
+    client: "Atelier Lambert",
+    statut: "Envoyé",
+    date: "09/04/2026",
+    adresse: "6 Avenue du Bois, 6900 Marche-en-Famenne",
+    email: "atelier@lambert.be",
+    telephone: "+32 471 44 55 66",
+    tvaTaux: TVA_PAR_DEFAUT,
+    lignes: [
+      {
+        id: "L-4",
+        designation: "Escalier bois massif",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 5200,
+      },
+      {
+        id: "L-5",
+        designation: "Main courante assortie",
+        quantite: 1,
+        unite: "pièce",
+        prixUnitaire: 980,
+      },
+      {
+        id: "L-6",
+        designation: "Pose complète",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 800,
+      },
+    ],
+  },
+  {
+    id: "DEV-2026-003",
+    client: "Maison Bertrand",
+    statut: "Accepté",
+    date: "07/04/2026",
+    adresse: "44 Clos des Tilleuls, 4900 Spa",
+    email: "bertrand@maison.be",
+    telephone: "+32 474 88 11 22",
+    tvaTaux: TVA_PAR_DEFAUT,
+    lignes: [
+      {
+        id: "L-7",
+        designation: "Bibliothèque sur mesure",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 8900,
+      },
+      {
+        id: "L-8",
+        designation: "Étagères intégrées",
+        quantite: 4,
+        unite: "pièce",
+        prixUnitaire: 650,
+      },
+      {
+        id: "L-9",
+        designation: "Pose et finitions",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 800,
+      },
+    ],
+  },
+  {
+    id: "DEV-2026-004",
+    client: "Projet Résidence Bois",
+    statut: "Refusé",
+    date: "05/04/2026",
+    adresse: "2 Chemin des Prés, 4960 Malmedy",
+    email: "contact@residencebois.be",
+    telephone: "+32 495 22 33 44",
+    tvaTaux: TVA_PAR_DEFAUT,
+    lignes: [
+      {
+        id: "L-10",
+        designation: "Habillage mural chêne",
+        quantite: 12,
+        unite: "m²",
+        prixUnitaire: 210,
+      },
+      {
+        id: "L-11",
+        designation: "Découpe et ajustement",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 920,
+      },
+      {
+        id: "L-12",
+        designation: "Pose",
+        quantite: 1,
+        unite: "forfait",
+        prixUnitaire: 680,
+      },
+    ],
+  },
+];
