@@ -1,20 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import {
-  creerLigneVide,
-  entreprise,
-  STATUTS_DEVIS,
-  TVA_PAR_DEFAUT,
-} from "../lib/devis-constants";
+import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import AdminDashboard from "../components/AdminDashboard";
+import DevisForm from "../components/DevisForm";
+import DevisList from "../components/DevisList";
+import DevisSearch from "../components/DevisSearch";
+import { entreprise, STATUTS_DEVIS, TVA_PAR_DEFAUT } from "../lib/devis-constants";
 import { db } from "../lib/firebase";
 import {
   calculerMontantTva,
@@ -29,7 +21,6 @@ import {
 import type {
   Devis,
   NouvelleLigneState,
-  NouveauDevisState,
   StatutDevis,
 } from "../types/devis";
 
@@ -64,39 +55,12 @@ export default function Home() {
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>("Tous");
-  const [filtreArchivage, setFiltreArchivage] =
-    useState<FiltreArchivage>("actifs");
+  const [filtreArchivage, setFiltreArchivage] = useState<FiltreArchivage>("actifs");
 
   const [devis, setDevis] = useState<DevisBusiness[]>([]);
-  const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(
-    null
-  );
+  const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(null);
   const [chargement, setChargement] = useState(true);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
-
-  const [nouveauDevis, setNouveauDevis] = useState<
-    NouveauDevisState & {
-      acomptePourcentage: string;
-      validiteJours: string;
-      conditions: string;
-    }
-  >({
-    client: "",
-    statut: "Brouillon",
-    date: "",
-    adresse: "",
-    email: "",
-    telephone: "",
-    tvaTaux: String(TVA_PAR_DEFAUT),
-    acomptePourcentage: "30",
-    validiteJours: "30",
-    conditions:
-      "Un acompte est demandé avant lancement. Toute modification complémentaire pourra faire l’objet d’un ajustement de prix.",
-  });
-
-  const [nouvellesLignes, setNouvellesLignes] = useState<NouvelleLigneState[]>([
-    creerLigneVide(),
-  ]);
 
   const [editForm, setEditForm] = useState<EditFormState>({
     client: "",
@@ -141,7 +105,7 @@ export default function Home() {
   const devisFiltres = useMemo(() => {
     const valeur = recherche.trim().toLowerCase();
 
-    return devis.filter((item: DevisBusiness) => {
+    return devis.filter((item) => {
       const total = calculerTotalTvac(item);
 
       const matchRecherche =
@@ -161,8 +125,8 @@ export default function Home() {
         filtreArchivage === "tous"
           ? true
           : filtreArchivage === "archives"
-          ? estArchive
-          : !estArchive;
+            ? estArchive
+            : !estArchive;
 
       return matchRecherche && matchStatut && matchArchivage;
     });
@@ -172,55 +136,41 @@ export default function Home() {
     if (devisFiltres.length === 0) return null;
 
     const trouve =
-      devisFiltres.find(
-        (item: DevisBusiness) => item.id === devisSelectionneId
-      ) ?? null;
+      devisFiltres.find((item) => item.id === devisSelectionneId) ?? null;
 
     return trouve ?? devisFiltres[0];
   }, [devisFiltres, devisSelectionneId]);
 
-  const totalDevis = devis.filter((item: DevisBusiness) => !item.archive).length;
+  const totalDevis = devis.filter((item) => !item.archive).length;
   const totalBrouillons = devis.filter(
-    (item: DevisBusiness) => item.statut === "Brouillon" && !item.archive
+    (item) => item.statut === "Brouillon" && !item.archive
   ).length;
   const totalAcceptes = devis.filter(
-    (item: DevisBusiness) => item.statut === "Accepté" && !item.archive
+    (item) => item.statut === "Accepté" && !item.archive
   ).length;
   const totalEnvoyes = devis.filter(
-    (item: DevisBusiness) => item.statut === "Envoyé" && !item.archive
+    (item) => item.statut === "Envoyé" && !item.archive
   ).length;
   const totalRefuses = devis.filter(
-    (item: DevisBusiness) => item.statut === "Refusé" && !item.archive
+    (item) => item.statut === "Refusé" && !item.archive
   ).length;
-  const totalArchives = devis.filter((item: DevisBusiness) => item.archive).length;
+  const totalArchives = devis.filter((item) => item.archive).length;
 
   const caSigne = devis
-    .filter((item: DevisBusiness) => item.statut === "Accepté" && !item.archive)
-    .reduce(
-      (total: number, item: DevisBusiness) => total + calculerTotalTvac(item),
-      0
-    );
+    .filter((item) => item.statut === "Accepté" && !item.archive)
+    .reduce((total, item) => total + calculerTotalTvac(item), 0);
 
   const pipeEnvoye = devis
-    .filter((item: DevisBusiness) => item.statut === "Envoyé" && !item.archive)
-    .reduce(
-      (total: number, item: DevisBusiness) => total + calculerTotalTvac(item),
-      0
-    );
+    .filter((item) => item.statut === "Envoyé" && !item.archive)
+    .reduce((total, item) => total + calculerTotalTvac(item), 0);
 
   const pipeBrouillon = devis
-    .filter((item: DevisBusiness) => item.statut === "Brouillon" && !item.archive)
-    .reduce(
-      (total: number, item: DevisBusiness) => total + calculerTotalTvac(item),
-      0
-    );
+    .filter((item) => item.statut === "Brouillon" && !item.archive)
+    .reduce((total, item) => total + calculerTotalTvac(item), 0);
 
   const valeurBusinessTotale = devis
-    .filter((item: DevisBusiness) => item.statut !== "Refusé" && !item.archive)
-    .reduce(
-      (total: number, item: DevisBusiness) => total + calculerTotalTvac(item),
-      0
-    );
+    .filter((item) => item.statut !== "Refusé" && !item.archive)
+    .reduce((total, item) => total + calculerTotalTvac(item), 0);
 
   const tauxConversion =
     totalDevis > 0 ? Math.round((totalAcceptes / totalDevis) * 100) : 0;
@@ -240,111 +190,6 @@ export default function Home() {
         return "bg-red-100 text-red-700";
       default:
         return "bg-slate-200 text-slate-700";
-    }
-  };
-
-  const reinitialiserFormulaire = () => {
-    setNouveauDevis({
-      client: "",
-      statut: "Brouillon",
-      date: "",
-      adresse: "",
-      email: "",
-      telephone: "",
-      tvaTaux: String(TVA_PAR_DEFAUT),
-      acomptePourcentage: "30",
-      validiteJours: "30",
-      conditions:
-        "Un acompte est demandé avant lancement. Toute modification complémentaire pourra faire l’objet d’un ajustement de prix.",
-    });
-    setNouvellesLignes([creerLigneVide()]);
-  };
-
-  const ajouterLigneCreation = () => {
-    setNouvellesLignes((prev: NouvelleLigneState[]) => [...prev, creerLigneVide()]);
-  };
-
-  const supprimerLigneCreation = (index: number) => {
-    setNouvellesLignes((prev: NouvelleLigneState[]) => {
-      if (prev.length === 1) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-
-  const mettreAJourLigneCreation = (
-    index: number,
-    champ: keyof NouvelleLigneState,
-    valeur: string
-  ) => {
-    setNouvellesLignes((prev: NouvelleLigneState[]) =>
-      prev.map((ligne: NouvelleLigneState, i: number) =>
-        i === index ? { ...ligne, [champ]: valeur } : ligne
-      )
-    );
-  };
-
-  const handleCreerDevis = async () => {
-    if (!nouveauDevis.client.trim() || !nouveauDevis.date) {
-      alert("Remplis au minimum le client et la date.");
-      return;
-    }
-
-    const lignesValides = convertirLignesFormStateEnLignesMetier(nouvellesLignes);
-
-    if (lignesValides.length === 0) {
-      alert("Ajoute au moins une ligne de prestation valide.");
-      return;
-    }
-
-    const tvaTaux = Number(nouveauDevis.tvaTaux);
-    const acomptePourcentage = Number(nouveauDevis.acomptePourcentage);
-    const validiteJours = Number(nouveauDevis.validiteJours);
-
-    if (Number.isNaN(tvaTaux) || tvaTaux < 0) {
-      alert("Le taux de TVA doit être valide.");
-      return;
-    }
-
-    if (Number.isNaN(acomptePourcentage) || acomptePourcentage < 0) {
-      alert("Le pourcentage d’acompte doit être valide.");
-      return;
-    }
-
-    if (Number.isNaN(validiteJours) || validiteJours <= 0) {
-      alert("La durée de validité doit être valide.");
-      return;
-    }
-
-    const devisCree: DevisBusiness = {
-      id: genererNumeroDevis(devis),
-      client: nouveauDevis.client.trim(),
-      statut: nouveauDevis.statut,
-      date: formaterDate(nouveauDevis.date),
-      adresse: nouveauDevis.adresse.trim(),
-      email: nouveauDevis.email.trim(),
-      telephone: nouveauDevis.telephone.trim(),
-      tvaTaux,
-      lignes: lignesValides,
-      acomptePourcentage,
-      validiteJours,
-      conditions: nouveauDevis.conditions.trim(),
-      archive: false,
-      createdAt: Date.now(),
-    };
-
-    try {
-      setSauvegardeEnCours(true);
-      await setDoc(doc(db, "devis", devisCree.id), devisCree);
-      setDevisSelectionneId(devisCree.id);
-      setAfficherFormulaire(false);
-      setRecherche("");
-      setFiltreArchivage("actifs");
-      reinitialiserFormulaire();
-    } catch (error) {
-      console.error(error);
-      alert(String(error));
-    } finally {
-      setSauvegardeEnCours(false);
     }
   };
 
@@ -398,11 +243,19 @@ export default function Home() {
   };
 
   const ajouterLigneEdition = () => {
-    setEditLignes((prev: NouvelleLigneState[]) => [...prev, creerLigneVide()]);
+    setEditLignes((prev) => [
+      ...prev,
+      {
+        designation: "",
+        quantite: "1",
+        unite: "",
+        prixUnitaire: "0",
+      },
+    ]);
   };
 
   const supprimerLigneEdition = (index: number) => {
-    setEditLignes((prev: NouvelleLigneState[]) => {
+    setEditLignes((prev) => {
       if (prev.length === 1) return prev;
       return prev.filter((_, i) => i !== index);
     });
@@ -413,8 +266,8 @@ export default function Home() {
     champ: keyof NouvelleLigneState,
     valeur: string
   ) => {
-    setEditLignes((prev: NouvelleLigneState[]) =>
-      prev.map((ligne: NouvelleLigneState, i: number) =>
+    setEditLignes((prev) =>
+      prev.map((ligne, i) =>
         i === index ? { ...ligne, [champ]: valeur } : ligne
       )
     );
@@ -498,13 +351,20 @@ export default function Home() {
 
     try {
       setSauvegardeEnCours(true);
-      await setDoc(doc(db, "devis", copie.id), copie);
-      setDevisSelectionneId(copie.id);
-      setFiltreArchivage("actifs");
-      setModeEdition(false);
+      await updateDoc(doc(db, "devis", copie.id), copie);
     } catch (error) {
       console.error(error);
-      alert(String(error));
+      try {
+        setSauvegardeEnCours(true);
+        const { setDoc } = await import("firebase/firestore");
+        await setDoc(doc(db, "devis", copie.id), copie);
+        setDevisSelectionneId(copie.id);
+        setFiltreArchivage("actifs");
+        setModeEdition(false);
+      } catch (innerError) {
+        console.error(innerError);
+        alert(String(innerError));
+      }
     } finally {
       setSauvegardeEnCours(false);
     }
@@ -917,7 +777,7 @@ export default function Home() {
                 {vuePrincipale === "devis" && (
                   <button
                     onClick={() => {
-                      setAfficherFormulaire((prev: boolean) => !prev);
+                      setAfficherFormulaire((prev) => !prev);
                       setModeEdition(false);
                     }}
                     className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
@@ -929,436 +789,33 @@ export default function Home() {
             </header>
 
             {vuePrincipale === "admin" ? (
-              <>
-                <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">Valeur totale active</p>
-                    <p className="mt-2 text-2xl font-bold">
-                      {formatMontant(valeurBusinessTotale)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">CA signé</p>
-                    <p className="mt-2 text-2xl font-bold">{formatMontant(caSigne)}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">Envoyés</p>
-                    <p className="mt-2 text-2xl font-bold">{totalEnvoyes}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">Pipe envoyé</p>
-                    <p className="mt-2 text-2xl font-bold">{formatMontant(pipeEnvoye)}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">Brouillons</p>
-                    <p className="mt-2 text-2xl font-bold">{formatMontant(pipeBrouillon)}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-slate-500">Conversion</p>
-                    <p className="mt-2 text-2xl font-bold">{tauxConversion}%</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-6 xl:grid-cols-3">
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <p className="text-sm text-slate-500">Devis actifs</p>
-                    <p className="mt-2 text-3xl font-bold">{totalDevis}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <p className="text-sm text-slate-500">Ticket moyen signé</p>
-                    <p className="mt-2 text-3xl font-bold">
-                      {formatMontant(ticketMoyen)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <p className="text-sm text-slate-500">Archivés</p>
-                    <p className="mt-2 text-3xl font-bold">{totalArchives}</p>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-6 xl:grid-cols-2">
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 className="text-xl font-semibold">Répartition statuts</h3>
-                    <div className="mt-6 space-y-4">
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                        <span>Brouillons</span>
-                        <span className="font-semibold">{totalBrouillons}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                        <span>Envoyés</span>
-                        <span className="font-semibold">{totalEnvoyes}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                        <span>Acceptés</span>
-                        <span className="font-semibold">{totalAcceptes}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                        <span>Refusés</span>
-                        <span className="font-semibold">{totalRefuses}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 className="text-xl font-semibold">Lecture business rapide</h3>
-                    <div className="mt-6 space-y-4 text-sm text-slate-600">
-                      <div className="rounded-xl bg-slate-50 p-4">
-                        Le chiffre le plus important ici, c’est le{" "}
-                        <span className="font-semibold text-slate-900">
-                          CA signé
-                        </span>
-                        . C’est ton revenu déjà gagné.
-                      </div>
-                      <div className="rounded-xl bg-slate-50 p-4">
-                        Le{" "}
-                        <span className="font-semibold text-slate-900">
-                          pipe envoyé
-                        </span>{" "}
-                        montre ce qui peut se transformer rapidement.
-                      </div>
-                      <div className="rounded-xl bg-slate-50 p-4">
-                        Les{" "}
-                        <span className="font-semibold text-slate-900">
-                          brouillons
-                        </span>{" "}
-                        représentent ton potentiel encore non envoyé.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
+              <AdminDashboard
+                valeurBusinessTotale={valeurBusinessTotale}
+                caSigne={caSigne}
+                totalEnvoyes={totalEnvoyes}
+                pipeEnvoye={pipeEnvoye}
+                pipeBrouillon={pipeBrouillon}
+                tauxConversion={tauxConversion}
+                totalDevis={totalDevis}
+                ticketMoyen={ticketMoyen}
+                totalArchives={totalArchives}
+                totalBrouillons={totalBrouillons}
+                totalAcceptes={totalAcceptes}
+                totalRefuses={totalRefuses}
+              />
             ) : (
               <>
                 {afficherFormulaire && (
-                  <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 className="text-2xl font-semibold">Créer un devis</h3>
-
-                    <div className="mt-6 grid gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Client
-                        </label>
-                        <input
-                          type="text"
-                          value={nouveauDevis.client}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              client: e.target.value,
-                            }))
-                          }
-                          placeholder="Nom du client"
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Date
-                        </label>
-                        <input
-                          type="date"
-                          value={nouveauDevis.date}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              date: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Adresse
-                        </label>
-                        <input
-                          type="text"
-                          value={nouveauDevis.adresse}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              adresse: e.target.value,
-                            }))
-                          }
-                          placeholder="Adresse du client"
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Statut
-                        </label>
-                        <select
-                          value={nouveauDevis.statut}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              statut: e.target.value as StatutDevis,
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        >
-                          {STATUTS_DEVIS.map((statut: StatutDevis) => (
-                            <option key={statut} value={statut}>
-                              {statut}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          value={nouveauDevis.email}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                          placeholder="Email du client"
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Téléphone
-                        </label>
-                        <input
-                          type="text"
-                          value={nouveauDevis.telephone}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              telephone: e.target.value,
-                            }))
-                          }
-                          placeholder="Téléphone du client"
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          TVA (%)
-                        </label>
-                        <input
-                          type="number"
-                          value={nouveauDevis.tvaTaux}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              tvaTaux: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Acompte (%)
-                        </label>
-                        <input
-                          type="number"
-                          value={nouveauDevis.acomptePourcentage}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              acomptePourcentage: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                          Validité (jours)
-                        </label>
-                        <input
-                          type="number"
-                          value={nouveauDevis.validiteJours}
-                          onChange={(e) =>
-                            setNouveauDevis((prev) => ({
-                              ...prev,
-                              validiteJours: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <label className="mb-2 block text-sm font-medium text-slate-700">
-                        Conditions
-                      </label>
-                      <textarea
-                        value={nouveauDevis.conditions}
-                        onChange={(e) =>
-                          setNouveauDevis((prev) => ({
-                            ...prev,
-                            conditions: e.target.value,
-                          }))
-                        }
-                        rows={4}
-                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                      />
-                    </div>
-
-                    <div className="mt-8 rounded-2xl bg-slate-50 p-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <h4 className="text-lg font-semibold">Prestations</h4>
-                        <button
-                          onClick={ajouterLigneCreation}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                        >
-                          Ajouter une ligne
-                        </button>
-                      </div>
-
-                      <div className="mt-4 space-y-4">
-                        {nouvellesLignes.map(
-                          (ligne: NouvelleLigneState, index: number) => (
-                            <div
-                              key={`creation-${index}`}
-                              className="rounded-2xl border border-slate-200 bg-white p-4"
-                            >
-                              <div className="mb-4 flex items-center justify-between gap-3">
-                                <p className="text-sm font-semibold text-slate-700">
-                                  Ligne {index + 1}
-                                </p>
-                                <button
-                                  onClick={() => supprimerLigneCreation(index)}
-                                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
-
-                              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                <div className="xl:col-span-2">
-                                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Désignation
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={ligne.designation}
-                                    onChange={(e) =>
-                                      mettreAJourLigneCreation(
-                                        index,
-                                        "designation",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Quantité
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={ligne.quantite}
-                                    onChange={(e) =>
-                                      mettreAJourLigneCreation(
-                                        index,
-                                        "quantite",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Unité
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={ligne.unite}
-                                    onChange={(e) =>
-                                      mettreAJourLigneCreation(
-                                        index,
-                                        "unite",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Prix unitaire
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={ligne.prixUnitaire}
-                                    onChange={(e) =>
-                                      mettreAJourLigneCreation(
-                                        index,
-                                        "prixUnitaire",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                  />
-                                </div>
-
-                                <div className="xl:col-span-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                  Total ligne :{" "}
-                                  <span className="font-semibold text-slate-900">
-                                    {formatMontant(
-                                      (Number(ligne.quantite) || 0) *
-                                        (Number(ligne.prixUnitaire) || 0)
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                      <button
-                        onClick={handleCreerDevis}
-                        className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                      >
-                        Enregistrer le devis
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAfficherFormulaire(false);
-                          reinitialiserFormulaire();
-                        }}
-                        className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
+                  <DevisForm
+                    devis={devis}
+                    onDevisCree={(id) => {
+                      setDevisSelectionneId(id);
+                      setAfficherFormulaire(false);
+                      setRecherche("");
+                      setFiltreArchivage("actifs");
+                    }}
+                    onClose={() => setAfficherFormulaire(false)}
+                  />
                 )}
 
                 <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -1385,142 +842,24 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(390px,1fr)]">
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
                   <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <div className="mb-6 flex flex-col gap-3">
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <h3 className="text-2xl font-semibold">Liste des devis</h3>
+                    <DevisSearch
+                      recherche={recherche}
+                      setRecherche={setRecherche}
+                      filtreStatut={filtreStatut}
+                      setFiltreStatut={setFiltreStatut}
+                      filtreArchivage={filtreArchivage}
+                      setFiltreArchivage={setFiltreArchivage}
+                      statuts={STATUTS_DEVIS}
+                    />
 
-                        <input
-                          type="text"
-                          value={recherche}
-                          onChange={(e) => setRecherche(e.target.value)}
-                          placeholder="Rechercher un devis, un client ou un statut"
-                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400 lg:max-w-md"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-3 lg:flex-row">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => setFiltreStatut("Tous")}
-                            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                              filtreStatut === "Tous"
-                                ? "bg-slate-900 text-white"
-                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            Tous
-                          </button>
-
-                          {STATUTS_DEVIS.map((statut: StatutDevis) => (
-                            <button
-                              key={statut}
-                              onClick={() => setFiltreStatut(statut)}
-                              className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                                filtreStatut === statut
-                                  ? "bg-slate-900 text-white"
-                                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                              }`}
-                            >
-                              {statut}
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => setFiltreArchivage("actifs")}
-                            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                              filtreArchivage === "actifs"
-                                ? "bg-slate-900 text-white"
-                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            Actifs
-                          </button>
-                          <button
-                            onClick={() => setFiltreArchivage("archives")}
-                            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                              filtreArchivage === "archives"
-                                ? "bg-slate-900 text-white"
-                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            Archives
-                          </button>
-                          <button
-                            onClick={() => setFiltreArchivage("tous")}
-                            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                              filtreArchivage === "tous"
-                                ? "bg-slate-900 text-white"
-                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            Tout voir
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {devisFiltres.map((item: DevisBusiness) => {
-                        const estSelectionne = item.id === devisSelectionne?.id;
-
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setDevisSelectionneId(item.id);
-                              setModeEdition(false);
-                            }}
-                            className={`w-full rounded-2xl border p-4 text-left transition ${
-                              estSelectionne
-                                ? "border-slate-900 bg-slate-50"
-                                : "border-slate-200 bg-white hover:bg-slate-50"
-                            } ${item.archive ? "opacity-70" : ""}`}
-                          >
-                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-base font-semibold">{item.id}</p>
-                                  {item.archive && (
-                                    <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700">
-                                      Archivé
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {item.client}
-                                </p>
-                              </div>
-
-                              <div className="flex flex-wrap items-center gap-3">
-                                <span
-                                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                                    item.statut
-                                  )}`}
-                                >
-                                  {item.statut}
-                                </span>
-                                <span className="text-sm font-semibold text-slate-900">
-                                  {formatMontant(calculerTotalTvac(item))}
-                                </span>
-                                <span className="text-sm text-slate-500">
-                                  {item.date}
-                                </span>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {devisFiltres.length === 0 && (
-                      <div className="py-10 text-center text-sm text-slate-500">
-                        Aucun devis trouvé pour ces filtres.
-                      </div>
-                    )}
+                    <DevisList
+                      devis={devisFiltres}
+                      devisSelectionneId={devisSelectionne?.id ?? null}
+                      setDevisSelectionneId={setDevisSelectionneId}
+                      setModeEdition={setModeEdition}
+                    />
                   </div>
 
                   <div className="rounded-2xl bg-white p-6 shadow-sm">
@@ -1637,9 +976,7 @@ export default function Home() {
 
                             <div className="rounded-2xl bg-slate-50 p-4">
                               <div className="flex items-center justify-between gap-3">
-                                <p className="text-sm text-slate-500">
-                                  Prestations
-                                </p>
+                                <p className="text-sm text-slate-500">Prestations</p>
                                 <p className="text-sm font-semibold text-slate-700">
                                   {devisSelectionne.lignes.length} ligne
                                   {devisSelectionne.lignes.length > 1 ? "s" : ""}
@@ -1653,9 +990,7 @@ export default function Home() {
                                       <th className="px-3 py-3 font-medium">
                                         Désignation
                                       </th>
-                                      <th className="px-3 py-3 font-medium">
-                                        Qté
-                                      </th>
+                                      <th className="px-3 py-3 font-medium">Qté</th>
                                       <th className="px-3 py-3 font-medium">
                                         Unité
                                       </th>
@@ -1739,15 +1074,11 @@ export default function Home() {
                             </div>
 
                             <div className="rounded-2xl bg-slate-50 p-4">
-                              <p className="text-sm text-slate-500">
-                                Actions rapides
-                              </p>
+                              <p className="text-sm text-slate-500">Actions rapides</p>
 
                               <div className="mt-4 flex flex-wrap gap-2">
                                 <button
-                                  onClick={() =>
-                                    handleChangerStatut("Brouillon")
-                                  }
+                                  onClick={() => handleChangerStatut("Brouillon")}
                                   className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                                 >
                                   Mettre en brouillon
@@ -1778,9 +1109,7 @@ export default function Home() {
                         <>
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="text-sm text-slate-500">
-                                Édition devis
-                              </p>
+                              <p className="text-sm text-slate-500">Édition devis</p>
                               <h3 className="mt-1 text-2xl font-bold">
                                 {devisSelectionne.id}
                               </h3>
@@ -1803,7 +1132,7 @@ export default function Home() {
                                 type="text"
                                 value={editForm.client}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     client: e.target.value,
                                   }))
@@ -1820,7 +1149,7 @@ export default function Home() {
                                 type="date"
                                 value={editForm.date}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     date: e.target.value,
                                   }))
@@ -1837,7 +1166,7 @@ export default function Home() {
                                 type="text"
                                 value={editForm.adresse}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     adresse: e.target.value,
                                   }))
@@ -1853,14 +1182,14 @@ export default function Home() {
                               <select
                                 value={editForm.statut}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     statut: e.target.value as StatutDevis,
                                   }))
                                 }
                                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
                               >
-                                {STATUTS_DEVIS.map((statut: StatutDevis) => (
+                                {STATUTS_DEVIS.map((statut) => (
                                   <option key={statut} value={statut}>
                                     {statut}
                                   </option>
@@ -1876,7 +1205,7 @@ export default function Home() {
                                 type="email"
                                 value={editForm.email}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     email: e.target.value,
                                   }))
@@ -1893,7 +1222,7 @@ export default function Home() {
                                 type="text"
                                 value={editForm.telephone}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     telephone: e.target.value,
                                   }))
@@ -1910,7 +1239,7 @@ export default function Home() {
                                 type="number"
                                 value={editForm.tvaTaux}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     tvaTaux: e.target.value,
                                   }))
@@ -1927,7 +1256,7 @@ export default function Home() {
                                 type="number"
                                 value={editForm.acomptePourcentage}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     acomptePourcentage: e.target.value,
                                   }))
@@ -1944,7 +1273,7 @@ export default function Home() {
                                 type="number"
                                 value={editForm.validiteJours}
                                 onChange={(e) =>
-                                  setEditForm((prev: EditFormState) => ({
+                                  setEditForm((prev) => ({
                                     ...prev,
                                     validiteJours: e.target.value,
                                   }))
@@ -1961,7 +1290,7 @@ export default function Home() {
                             <textarea
                               value={editForm.conditions}
                               onChange={(e) =>
-                                setEditForm((prev: EditFormState) => ({
+                                setEditForm((prev) => ({
                                   ...prev,
                                   conditions: e.target.value,
                                 }))
@@ -1985,112 +1314,108 @@ export default function Home() {
                             </div>
 
                             <div className="mt-4 space-y-4">
-                              {editLignes.map(
-                                (ligne: NouvelleLigneState, index: number) => (
-                                  <div
-                                    key={`edition-${index}`}
-                                    className="rounded-2xl border border-slate-200 bg-white p-4"
-                                  >
-                                    <div className="mb-4 flex items-center justify-between gap-3">
-                                      <p className="text-sm font-semibold text-slate-700">
-                                        Ligne {index + 1}
-                                      </p>
-                                      <button
-                                        onClick={() =>
-                                          supprimerLigneEdition(index)
+                              {editLignes.map((ligne, index) => (
+                                <div
+                                  key={`edition-${index}`}
+                                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                                >
+                                  <div className="mb-4 flex items-center justify-between gap-3">
+                                    <p className="text-sm font-semibold text-slate-700">
+                                      Ligne {index + 1}
+                                    </p>
+                                    <button
+                                      onClick={() => supprimerLigneEdition(index)}
+                                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                                    >
+                                      Supprimer
+                                    </button>
+                                  </div>
+
+                                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <div className="xl:col-span-2">
+                                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Désignation
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={ligne.designation}
+                                        onChange={(e) =>
+                                          mettreAJourLigneEdition(
+                                            index,
+                                            "designation",
+                                            e.target.value
+                                          )
                                         }
-                                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
-                                      >
-                                        Supprimer
-                                      </button>
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                      />
                                     </div>
 
-                                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                      <div className="xl:col-span-2">
-                                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                                          Désignation
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={ligne.designation}
-                                          onChange={(e) =>
-                                            mettreAJourLigneEdition(
-                                              index,
-                                              "designation",
-                                              e.target.value
-                                            )
-                                          }
-                                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                        />
-                                      </div>
+                                    <div>
+                                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Quantité
+                                      </label>
+                                      <input
+                                        type="number"
+                                        value={ligne.quantite}
+                                        onChange={(e) =>
+                                          mettreAJourLigneEdition(
+                                            index,
+                                            "quantite",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                      />
+                                    </div>
 
-                                      <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                                          Quantité
-                                        </label>
-                                        <input
-                                          type="number"
-                                          value={ligne.quantite}
-                                          onChange={(e) =>
-                                            mettreAJourLigneEdition(
-                                              index,
-                                              "quantite",
-                                              e.target.value
-                                            )
-                                          }
-                                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                        />
-                                      </div>
+                                    <div>
+                                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Unité
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={ligne.unite}
+                                        onChange={(e) =>
+                                          mettreAJourLigneEdition(
+                                            index,
+                                            "unite",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                      />
+                                    </div>
 
-                                      <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                                          Unité
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={ligne.unite}
-                                          onChange={(e) =>
-                                            mettreAJourLigneEdition(
-                                              index,
-                                              "unite",
-                                              e.target.value
-                                            )
-                                          }
-                                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                        />
-                                      </div>
+                                    <div>
+                                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Prix unitaire
+                                      </label>
+                                      <input
+                                        type="number"
+                                        value={ligne.prixUnitaire}
+                                        onChange={(e) =>
+                                          mettreAJourLigneEdition(
+                                            index,
+                                            "prixUnitaire",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                      />
+                                    </div>
 
-                                      <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-700">
-                                          Prix unitaire
-                                        </label>
-                                        <input
-                                          type="number"
-                                          value={ligne.prixUnitaire}
-                                          onChange={(e) =>
-                                            mettreAJourLigneEdition(
-                                              index,
-                                              "prixUnitaire",
-                                              e.target.value
-                                            )
-                                          }
-                                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                        />
-                                      </div>
-
-                                      <div className="xl:col-span-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                        Total ligne :{" "}
-                                        <span className="font-semibold text-slate-900">
-                                          {formatMontant(
-                                            (Number(ligne.quantite) || 0) *
-                                              (Number(ligne.prixUnitaire) || 0)
-                                          )}
-                                        </span>
-                                      </div>
+                                    <div className="xl:col-span-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                      Total ligne :{" "}
+                                      <span className="font-semibold text-slate-900">
+                                        {formatMontant(
+                                          (Number(ligne.quantite) || 0) *
+                                            (Number(ligne.prixUnitaire) || 0)
+                                        )}
+                                      </span>
                                     </div>
                                   </div>
-                                )
-                              )}
+                                </div>
+                              ))}
                             </div>
                           </div>
 
