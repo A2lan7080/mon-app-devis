@@ -1,5 +1,7 @@
+// lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBOL2HDgQDF0oGPfUig1mVVAOJ_H0vMWQI",
@@ -10,6 +12,8 @@ const firebaseConfig = {
   appId: "1:660828720700:web:0e7a9a011f81e590effd39",
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Évite la réinitialisation de l'app lors du hot reload
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const db = getFirestore(app);
+export const auth = getAuth(app);

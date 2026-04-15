@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import AdminDashboard from "../components/AdminDashboard";
 import DevisForm from "../components/DevisForm";
 import DevisList from "../components/DevisList";
 import DevisSearch from "../components/DevisSearch";
 import { entreprise, STATUTS_DEVIS, TVA_PAR_DEFAUT } from "../lib/devis-constants";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
   calculerMontantTva,
   calculerTotalHt,
@@ -18,11 +20,7 @@ import {
   formatMontant,
   genererNumeroDevis,
 } from "../lib/devis-helpers";
-import type {
-  Devis,
-  NouvelleLigneState,
-  StatutDevis,
-} from "../types/devis";
+import type { Devis, NouvelleLigneState, StatutDevis } from "../types/devis";
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -30,6 +28,8 @@ type DevisBusiness = Devis & {
   conditions: string;
   archive?: boolean;
   createdAt?: number;
+  entrepriseId?: string;
+  createdByUid?: string;
 };
 
 type EditFormState = {
@@ -50,12 +50,17 @@ type FiltreArchivage = "actifs" | "archives" | "tous";
 type VuePrincipale = "devis" | "admin";
 
 export default function Home() {
+  const router = useRouter();
+
   const [vuePrincipale, setVuePrincipale] = useState<VuePrincipale>("devis");
   const [recherche, setRecherche] = useState("");
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>("Tous");
   const [filtreArchivage, setFiltreArchivage] = useState<FiltreArchivage>("actifs");
+
+  const [user, setUser] = useState<User | null>(null);
+  const [authChargee, setAuthChargee] = useState(false);
 
   const [devis, setDevis] = useState<DevisBusiness[]>([]);
   const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(null);
@@ -78,6 +83,32 @@ export default function Home() {
   const [editLignes, setEditLignes] = useState<NouvelleLigneState[]>([]);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        setUser(null);
+        setAuthChargee(true);
+        router.push("/login");
+        return;
+      }
+
+      setUser(currentUser);
+      setAuthChargee(true);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (!authChargee) return;
+
+    if (!user) {
+      setDevis([]);
+      setChargement(false);
+      return;
+    }
+
+    setChargement(true);
+
     const unsubscribe = onSnapshot(
       collection(db, "devis"),
       (snapshot) => {
@@ -100,7 +131,7 @@ export default function Home() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [authChargee, user]);
 
   const devisFiltres = useMemo(() => {
     const valeur = recherche.trim().toLowerCase();
@@ -333,7 +364,7 @@ export default function Home() {
   };
 
   const dupliquerDevis = async () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !user) return;
 
     const nouveauId = genererNumeroDevis(devis);
 
@@ -343,6 +374,8 @@ export default function Home() {
       statut: "Brouillon",
       archive: false,
       createdAt: Date.now(),
+      createdByUid: user.uid,
+      entrepriseId: devisSelectionne.entrepriseId ?? "entreprise-demo",
       lignes: devisSelectionne.lignes.map((ligne, index) => ({
         ...ligne,
         id: `${nouveauId}-L-${index + 1}`,
@@ -351,20 +384,13 @@ export default function Home() {
 
     try {
       setSauvegardeEnCours(true);
-      await updateDoc(doc(db, "devis", copie.id), copie);
+      await setDoc(doc(db, "devis", copie.id), copie);
+      setDevisSelectionneId(copie.id);
+      setFiltreArchivage("actifs");
+      setModeEdition(false);
     } catch (error) {
       console.error(error);
-      try {
-        setSauvegardeEnCours(true);
-        const { setDoc } = await import("firebase/firestore");
-        await setDoc(doc(db, "devis", copie.id), copie);
-        setDevisSelectionneId(copie.id);
-        setFiltreArchivage("actifs");
-        setModeEdition(false);
-      } catch (innerError) {
-        console.error(innerError);
-        alert(String(innerError));
-      }
+      alert(String(error));
     } finally {
       setSauvegardeEnCours(false);
     }
@@ -699,12 +725,16 @@ export default function Home() {
     ? totalTvacSelectionne * (devisSelectionne.acomptePourcentage / 100)
     : 0;
 
-  if (chargement) {
+  if (!authChargee || chargement) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">
-        Chargement Firestore...
+        Chargement...
       </main>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
