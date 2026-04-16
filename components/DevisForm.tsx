@@ -1,6 +1,10 @@
 "use client";
 
-import { creerLigneVide, STATUTS_DEVIS, TVA_PAR_DEFAUT } from "../lib/devis-constants";
+import {
+  creerLigneVide,
+  STATUTS_DEVIS,
+  TVA_PAR_DEFAUT,
+} from "../lib/devis-constants";
 import {
   convertirLignesFormStateEnLignesMetier,
   formatMontant,
@@ -8,7 +12,7 @@ import {
   genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import type {
   Devis,
@@ -33,7 +37,15 @@ type DevisFormProps = {
   onClose: () => void;
 };
 
-const ENTREPRISE_ID_PAR_DEFAUT = "bru-01";
+type ProfilUtilisateur = {
+  uid: string;
+  email: string;
+  role: string;
+  active: boolean;
+  entrepriseId: string;
+  displayName: string;
+  createdAt?: number;
+};
 
 export default function DevisForm({
   devis,
@@ -114,6 +126,31 @@ export default function DevisForm({
       return;
     }
 
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      alert("Profil utilisateur introuvable.");
+      return;
+    }
+
+    const profil = userSnap.data() as Partial<ProfilUtilisateur>;
+
+    if (profil.active !== true) {
+      alert("Ce compte est désactivé.");
+      return;
+    }
+
+    if (profil.role !== "admin") {
+      alert("Seul un administrateur peut créer un devis.");
+      return;
+    }
+
+    if (!profil.entrepriseId || typeof profil.entrepriseId !== "string") {
+      alert("Aucun entrepriseId valide n’est défini sur ce compte.");
+      return;
+    }
+
     if (!nouveauDevis.client.trim() || !nouveauDevis.date) {
       alert("Remplis au minimum le client et la date.");
       return;
@@ -149,7 +186,7 @@ export default function DevisForm({
 
     const devisCree: DevisBusiness = {
       id: nouveauId,
-      entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
+      entrepriseId: profil.entrepriseId,
       createdByUid: currentUser.uid,
       client: nouveauDevis.client.trim(),
       statut: nouveauDevis.statut,
@@ -174,7 +211,6 @@ export default function DevisForm({
       onClose();
     } catch (error) {
       console.error("Erreur création devis :", error);
-      console.log("Payload envoyé :", devisCree);
 
       if (error instanceof Error) {
         alert(`Erreur création devis : ${error.message}`);
@@ -263,6 +299,108 @@ export default function DevisForm({
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
           />
         </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Adresse
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.adresse}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                adresse: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Email
+          </label>
+          <input
+            type="email"
+            value={nouveauDevis.email}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                email: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Téléphone
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.telephone}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                telephone: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Acompte (%)
+          </label>
+          <input
+            type="number"
+            value={nouveauDevis.acomptePourcentage}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                acomptePourcentage: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Validité (jours)
+          </label>
+          <input
+            type="number"
+            value={nouveauDevis.validiteJours}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                validiteJours: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Conditions
+        </label>
+        <textarea
+          value={nouveauDevis.conditions}
+          onChange={(e) =>
+            setNouveauDevis((prev) => ({
+              ...prev,
+              conditions: e.target.value,
+            }))
+          }
+          rows={4}
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+        />
       </div>
 
       <div className="mt-8 rounded-2xl bg-slate-50 p-5">
@@ -346,14 +484,15 @@ export default function DevisForm({
         <button
           onClick={handleCreerDevis}
           disabled={sauvegardeEnCours}
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
+          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {sauvegardeEnCours ? "Enregistrement..." : "Enregistrer le devis"}
         </button>
 
         <button
           onClick={onClose}
-          className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          disabled={sauvegardeEnCours}
+          className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Annuler
         </button>

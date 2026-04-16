@@ -59,12 +59,17 @@ type EditFormState = {
   conditions: string;
 };
 
-type FiltreStatut = "Tous" | StatutDevis;
-type FiltreArchivage = "actifs" | "archives" | "tous";
 type VuePrincipale = "devis" | "admin";
 
-const ENTREPRISE_ID_PAR_DEFAUT = "bru-01";
-const ROLE_PAR_DEFAUT = "admin";
+type ProfilUtilisateur = {
+  uid: string;
+  email: string;
+  role: string;
+  active: boolean;
+  entrepriseId: string;
+  displayName: string;
+  createdAt?: number;
+};
 
 export default function Home() {
   const router = useRouter();
@@ -73,12 +78,12 @@ export default function Home() {
   const [recherche, setRecherche] = useState("");
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
-  const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>("Tous");
-  const [filtreArchivage, setFiltreArchivage] =
-    useState<FiltreArchivage>("actifs");
 
   const [user, setUser] = useState<User | null>(null);
+  const [profilUtilisateur, setProfilUtilisateur] =
+    useState<ProfilUtilisateur | null>(null);
   const [authChargee, setAuthChargee] = useState(false);
+  const [erreurAcces, setErreurAcces] = useState<string | null>(null);
 
   const [devis, setDevis] = useState<DevisBusiness[]>([]);
   const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(
@@ -102,46 +107,99 @@ export default function Home() {
 
   const [editLignes, setEditLignes] = useState<NouvelleLigneState[]>([]);
 
+  const estAdmin = profilUtilisateur?.role === "admin";
+  const entrepriseIdCourante = profilUtilisateur?.entrepriseId ?? null;
+  const getDevisDocRef = (devisId: string) => doc(db, "devis", devisId);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      const synchroniserUtilisateur = async () => {
+      const chargerProfilUtilisateur = async () => {
         if (!currentUser) {
           setUser(null);
+          setProfilUtilisateur(null);
+          setErreurAcces(null);
           setAuthChargee(true);
           router.push("/login");
           return;
         }
 
         try {
+          setErreurAcces(null);
+
           const userRef = doc(db, "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
 
           if (!userSnap.exists()) {
-            await setDoc(userRef, {
-              uid: currentUser.uid,
-              email: currentUser.email ?? "",
-              role: ROLE_PAR_DEFAUT,
-              active: true,
-              entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
-              displayName:
-                currentUser.displayName ??
-                currentUser.email?.split("@")[0] ??
-                "Utilisateur",
-              createdAt: Date.now(),
-            });
+            setUser(currentUser);
+            setProfilUtilisateur(null);
+            setErreurAcces(
+              "Ton profil utilisateur n’existe pas dans Firestore. Crée d’abord le document users/{uid} avec un rôle, un statut actif et un entrepriseId valide."
+            );
+            return;
           }
 
+          const data = userSnap.data() as Partial<ProfilUtilisateur>;
+
+          if (data.uid !== currentUser.uid) {
+            setUser(currentUser);
+            setProfilUtilisateur(null);
+            setErreurAcces("Le profil utilisateur est invalide.");
+            return;
+          }
+
+          if (data.active !== true) {
+            setUser(currentUser);
+            setProfilUtilisateur(null);
+            setErreurAcces("Ce compte est désactivé.");
+            return;
+          }
+
+          if (!data.entrepriseId || typeof data.entrepriseId !== "string") {
+            setUser(currentUser);
+            setProfilUtilisateur(null);
+            setErreurAcces(
+              "Aucun entrepriseId valide n’est défini sur ce compte."
+            );
+            return;
+          }
+
+          if (data.role !== "admin" && data.role !== "ouvrier") {
+            setUser(currentUser);
+            setProfilUtilisateur(null);
+            setErreurAcces("Le rôle utilisateur est invalide.");
+            return;
+          }
+
+          const profil: ProfilUtilisateur = {
+            uid: currentUser.uid,
+            email:
+              typeof data.email === "string" ? data.email : currentUser.email ?? "",
+            role: data.role,
+            active: true,
+            entrepriseId: data.entrepriseId,
+            displayName:
+              typeof data.displayName === "string" && data.displayName.trim()
+                ? data.displayName
+                : currentUser.displayName ??
+                  currentUser.email?.split("@")[0] ??
+                  "Utilisateur",
+            createdAt:
+              typeof data.createdAt === "number" ? data.createdAt : undefined,
+          };
+
           setUser(currentUser);
+          setProfilUtilisateur(profil);
         } catch (error) {
-          console.error("Erreur synchronisation utilisateur :", error);
-          alert("Impossible de synchroniser le profil utilisateur.");
-          setUser(null);
+          console.error("Erreur chargement profil utilisateur :", error);
+          setUser(currentUser);
+          setProfilUtilisateur(null);
+          setErreurAcces("Impossible de charger le profil utilisateur.");
         } finally {
           setAuthChargee(true);
         }
       };
 
-      void synchroniserUtilisateur();
+      void chargerProfilUtilisateur();
     });
 
     return () => unsubscribe();
@@ -150,7 +208,19 @@ export default function Home() {
   useEffect(() => {
     if (!authChargee) return;
 
-    if (!user) {
+    if (!user || !profilUtilisateur) {
+      setDevis([]);
+      setChargement(false);
+      return;
+    }
+
+    if (!estAdmin) {
+      setDevis([]);
+      setChargement(false);
+      return;
+    }
+
+    if (!entrepriseIdCourante) {
       setDevis([]);
       setChargement(false);
       return;
@@ -160,7 +230,7 @@ export default function Home() {
 
     const devisQuery = query(
       collection(db, "devis"),
-      where("entrepriseId", "==", ENTREPRISE_ID_PAR_DEFAUT)
+      where("entrepriseId", "==", entrepriseIdCourante)
     );
 
     const unsubscribe = onSnapshot(
@@ -179,52 +249,26 @@ export default function Home() {
         setChargement(false);
       },
       (error) => {
-        console.error(error);
+        console.error("Erreur lecture devis :", error);
         setChargement(false);
       }
     );
 
     return () => unsubscribe();
-  }, [authChargee, user]);
+  }, [authChargee, user, profilUtilisateur, entrepriseIdCourante, estAdmin]);
 
-  const devisFiltres = useMemo(() => {
-    const valeur = recherche.trim().toLowerCase();
-
-    return devis.filter((item) => {
-      const total = calculerTotalTvac(item);
-
-      const matchRecherche =
-        !valeur ||
-        item.id.toLowerCase().includes(valeur) ||
-        item.client.toLowerCase().includes(valeur) ||
-        item.statut.toLowerCase().includes(valeur) ||
-        item.adresse.toLowerCase().includes(valeur) ||
-        formatMontant(total).toLowerCase().includes(valeur);
-
-      const matchStatut =
-        filtreStatut === "Tous" ? true : item.statut === filtreStatut;
-
-      const estArchive = item.archive === true;
-
-      const matchArchivage =
-        filtreArchivage === "tous"
-          ? true
-          : filtreArchivage === "archives"
-          ? estArchive
-          : !estArchive;
-
-      return matchRecherche && matchStatut && matchArchivage;
-    });
-  }, [recherche, devis, filtreStatut, filtreArchivage]);
+  useEffect(() => {
+    if (!estAdmin && vuePrincipale === "admin") {
+      setVuePrincipale("devis");
+    }
+  }, [estAdmin, vuePrincipale]);
 
   const devisSelectionne = useMemo(() => {
-    if (devisFiltres.length === 0) return null;
+    if (devis.length === 0) return null;
 
-    const trouve =
-      devisFiltres.find((item) => item.id === devisSelectionneId) ?? null;
-
-    return trouve ?? devisFiltres[0];
-  }, [devisFiltres, devisSelectionneId]);
+    const trouve = devis.find((item) => item.id === devisSelectionneId) ?? null;
+    return trouve ?? devis[0];
+  }, [devis, devisSelectionneId]);
 
   const totalDevis = devis.filter((item) => !item.archive).length;
   const totalBrouillons = devis.filter(
@@ -289,11 +333,12 @@ export default function Home() {
   };
 
   const handleChangerStatut = async (nouveauStatut: StatutDevis) => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     try {
       setSauvegardeEnCours(true);
-      await updateDoc(doc(db, "devis", devisSelectionne.id), {
+      await updateDoc(getDevisDocRef(devisSelectionne.id), {
+        ...devisSelectionne,
         statut: nouveauStatut,
       });
     } catch (error) {
@@ -305,7 +350,7 @@ export default function Home() {
   };
 
   const ouvrirEdition = () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     setEditForm({
       client: devisSelectionne.client,
@@ -369,7 +414,7 @@ export default function Home() {
   };
 
   const enregistrerEdition = async () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     if (!editForm.client.trim() || !editForm.date) {
       alert("Le client et la date sont obligatoires.");
@@ -404,7 +449,8 @@ export default function Home() {
 
     try {
       setSauvegardeEnCours(true);
-      await updateDoc(doc(db, "devis", devisSelectionne.id), {
+      await updateDoc(getDevisDocRef(devisSelectionne.id), {
+        ...devisSelectionne,
         client: editForm.client.trim(),
         statut: editForm.statut,
         date: formaterDate(editForm.date),
@@ -428,7 +474,7 @@ export default function Home() {
   };
 
   const dupliquerDevis = async () => {
-    if (!devisSelectionne || !user) return;
+    if (!devisSelectionne || !user || !entrepriseIdCourante || !estAdmin) return;
 
     const nouveauId = genererNumeroDevis(devis);
 
@@ -439,7 +485,7 @@ export default function Home() {
       archive: false,
       createdAt: Date.now(),
       createdByUid: user.uid,
-      entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
+      entrepriseId: entrepriseIdCourante,
       lignes: devisSelectionne.lignes.map((ligne, index) => ({
         ...ligne,
         id: `${nouveauId}-L-${index + 1}`,
@@ -448,9 +494,8 @@ export default function Home() {
 
     try {
       setSauvegardeEnCours(true);
-      await setDoc(doc(db, "devis", copie.id), copie);
+      await setDoc(getDevisDocRef(copie.id), copie);
       setDevisSelectionneId(copie.id);
-      setFiltreArchivage("actifs");
       setModeEdition(false);
     } catch (error) {
       console.error(error);
@@ -461,7 +506,7 @@ export default function Home() {
   };
 
   const supprimerDevis = async () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     const confirmation = window.confirm(
       `Supprimer définitivement le devis ${devisSelectionne.id} ?`
@@ -471,7 +516,7 @@ export default function Home() {
 
     try {
       setSauvegardeEnCours(true);
-      await deleteDoc(doc(db, "devis", devisSelectionne.id));
+      await deleteDoc(getDevisDocRef(devisSelectionne.id));
       setModeEdition(false);
       setDevisSelectionneId(null);
     } catch (error) {
@@ -483,14 +528,14 @@ export default function Home() {
   };
 
   const archiverDevis = async () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     try {
       setSauvegardeEnCours(true);
-      await updateDoc(doc(db, "devis", devisSelectionne.id), {
+      await updateDoc(getDevisDocRef(devisSelectionne.id), {
+        ...devisSelectionne,
         archive: true,
       });
-      setFiltreArchivage("actifs");
       setModeEdition(false);
     } catch (error) {
       console.error(error);
@@ -501,14 +546,14 @@ export default function Home() {
   };
 
   const restaurerDevis = async () => {
-    if (!devisSelectionne) return;
+    if (!devisSelectionne || !estAdmin) return;
 
     try {
       setSauvegardeEnCours(true);
-      await updateDoc(doc(db, "devis", devisSelectionne.id), {
+      await updateDoc(getDevisDocRef(devisSelectionne.id), {
+        ...devisSelectionne,
         archive: false,
       });
-      setFiltreArchivage("actifs");
     } catch (error) {
       console.error(error);
       alert(String(error));
@@ -806,6 +851,89 @@ export default function Home() {
     return null;
   }
 
+  if (erreurAcces || !profilUtilisateur) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
+        <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Accès impossible</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            {erreurAcces ??
+              "Le profil utilisateur est introuvable ou incomplet."}
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={handleDeconnexion}
+              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+            >
+              Se déconnecter
+            </button>
+            <button
+              onClick={() => router.push("/login")}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
+            >
+              Retour login
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!estAdmin) {
+    return (
+      <main className="min-h-screen bg-slate-100 text-slate-900">
+        <div className="flex min-h-screen">
+          <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white p-6 md:flex">
+            <div>
+              <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Espace ouvrier
+              </p>
+              <p className="mt-3 text-xs text-slate-400">
+                {profilUtilisateur.displayName} · {profilUtilisateur.entrepriseId}
+              </p>
+            </div>
+          </aside>
+
+          <section className="flex-1 p-6 md:p-8">
+            <div className="mx-auto max-w-4xl">
+              <header className="mb-8 flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold">Espace ouvrier</h2>
+                  <p className="mt-2 text-slate-500">
+                    Le module devis est réservé aux administrateurs.
+                  </p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    Entreprise : {profilUtilisateur.entrepriseId} · Rôle :{" "}
+                    {profilUtilisateur.role}
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleDeconnexion}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Déconnexion
+                </button>
+              </header>
+
+              <div className="rounded-2xl bg-white p-8 shadow-sm">
+                <h3 className="text-xl font-semibold text-slate-900">
+                  Module en préparation
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Cet espace servira plus tard au suivi des chantiers, aux tâches,
+                  aux heures prestées, aux notes terrain et aux photos.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="flex min-h-screen">
@@ -814,6 +942,9 @@ export default function Home() {
             <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
             <p className="mt-1 text-sm text-slate-500">
               Gestion devis & pilotage
+            </p>
+            <p className="mt-3 text-xs text-slate-400">
+              {profilUtilisateur.displayName} · {profilUtilisateur.entrepriseId}
             </p>
           </div>
 
@@ -863,6 +994,10 @@ export default function Home() {
                   {vuePrincipale === "devis"
                     ? "Gère tes devis, leur statut et leur suivi."
                     : "Pilote la valeur business, le pipe et la conversion."}
+                </p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Entreprise : {profilUtilisateur.entrepriseId} · Rôle :{" "}
+                  {profilUtilisateur.role}
                 </p>
               </div>
 
@@ -918,7 +1053,6 @@ export default function Home() {
                       setDevisSelectionneId(id);
                       setAfficherFormulaire(false);
                       setRecherche("");
-                      setFiltreArchivage("actifs");
                     }}
                     onClose={() => setAfficherFormulaire(false)}
                   />
@@ -953,15 +1087,15 @@ export default function Home() {
                     <DevisSearch
                       recherche={recherche}
                       setRecherche={setRecherche}
-                      filtreStatut={filtreStatut}
-                      setFiltreStatut={setFiltreStatut}
-                      filtreArchivage={filtreArchivage}
-                      setFiltreArchivage={setFiltreArchivage}
+                      filtreStatut={"Tous"}
+                      setFiltreStatut={() => {}}
+                      filtreArchivage={"tous"}
+                      setFiltreArchivage={() => {}}
                       statuts={STATUTS_DEVIS}
                     />
 
                     <DevisList
-                      devis={devisFiltres}
+                      devis={devis}
                       devisSelectionneId={devisSelectionne?.id ?? null}
                       setDevisSelectionneId={setDevisSelectionneId}
                       setModeEdition={setModeEdition}
@@ -988,6 +1122,7 @@ export default function Home() {
                               >
                                 {devisSelectionne.statut}
                               </span>
+
                               <button
                                 onClick={ouvrirEdition}
                                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
@@ -1544,7 +1679,7 @@ export default function Home() {
                       )
                     ) : (
                       <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
-                        Sélectionne un devis pour afficher sa fiche.
+                        Aucun devis pour cette entreprise.
                       </div>
                     )}
                   </div>
