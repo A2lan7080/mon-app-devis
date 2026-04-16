@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   query,
   setDoc,
@@ -17,7 +18,11 @@ import AdminDashboard from "../components/AdminDashboard";
 import DevisForm from "../components/DevisForm";
 import DevisList from "../components/DevisList";
 import DevisSearch from "../components/DevisSearch";
-import { entreprise, STATUTS_DEVIS, TVA_PAR_DEFAUT } from "../lib/devis-constants";
+import {
+  entreprise,
+  STATUTS_DEVIS,
+  TVA_PAR_DEFAUT,
+} from "../lib/devis-constants";
 import { auth, db } from "../lib/firebase";
 import {
   calculerMontantTva,
@@ -59,6 +64,7 @@ type FiltreArchivage = "actifs" | "archives" | "tous";
 type VuePrincipale = "devis" | "admin";
 
 const ENTREPRISE_ID_PAR_DEFAUT = "bru-01";
+const ROLE_PAR_DEFAUT = "admin";
 
 export default function Home() {
   const router = useRouter();
@@ -68,13 +74,16 @@ export default function Home() {
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>("Tous");
-  const [filtreArchivage, setFiltreArchivage] = useState<FiltreArchivage>("actifs");
+  const [filtreArchivage, setFiltreArchivage] =
+    useState<FiltreArchivage>("actifs");
 
   const [user, setUser] = useState<User | null>(null);
   const [authChargee, setAuthChargee] = useState(false);
 
   const [devis, setDevis] = useState<DevisBusiness[]>([]);
-  const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(null);
+  const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(
+    null
+  );
   const [chargement, setChargement] = useState(true);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
 
@@ -95,15 +104,44 @@ export default function Home() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        setUser(null);
-        setAuthChargee(true);
-        router.push("/login");
-        return;
-      }
+      const synchroniserUtilisateur = async () => {
+        if (!currentUser) {
+          setUser(null);
+          setAuthChargee(true);
+          router.push("/login");
+          return;
+        }
 
-      setUser(currentUser);
-      setAuthChargee(true);
+        try {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              email: currentUser.email ?? "",
+              role: ROLE_PAR_DEFAUT,
+              active: true,
+              entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
+              displayName:
+                currentUser.displayName ??
+                currentUser.email?.split("@")[0] ??
+                "Utilisateur",
+              createdAt: Date.now(),
+            });
+          }
+
+          setUser(currentUser);
+        } catch (error) {
+          console.error("Erreur synchronisation utilisateur :", error);
+          alert("Impossible de synchroniser le profil utilisateur.");
+          setUser(null);
+        } finally {
+          setAuthChargee(true);
+        }
+      };
+
+      void synchroniserUtilisateur();
     });
 
     return () => unsubscribe();
@@ -172,8 +210,8 @@ export default function Home() {
         filtreArchivage === "tous"
           ? true
           : filtreArchivage === "archives"
-            ? estArchive
-            : !estArchive;
+          ? estArchive
+          : !estArchive;
 
       return matchRecherche && matchStatut && matchArchivage;
     });
@@ -237,6 +275,16 @@ export default function Home() {
         return "bg-red-100 text-red-700";
       default:
         return "bg-slate-200 text-slate-700";
+    }
+  };
+
+  const handleDeconnexion = async () => {
+    try {
+      await signOut(auth);
+      router.push("/login");
+    } catch (error) {
+      console.error("Erreur déconnexion :", error);
+      alert("Impossible de se déconnecter.");
     }
   };
 
@@ -475,7 +523,8 @@ export default function Home() {
     const totalHt = calculerTotalHt(devisSelectionne);
     const montantTva = calculerMontantTva(devisSelectionne);
     const totalTvac = calculerTotalTvac(devisSelectionne);
-    const montantAcompte = totalTvac * (devisSelectionne.acomptePourcentage / 100);
+    const montantAcompte =
+      totalTvac * (devisSelectionne.acomptePourcentage / 100);
     const soldeRestant = totalTvac - montantAcompte;
 
     const lignesHtml = devisSelectionne.lignes
@@ -487,7 +536,9 @@ export default function Home() {
             <td>${ligne.designation}</td>
             <td style="text-align:center;">${ligne.quantite}</td>
             <td style="text-align:center;">${ligne.unite}</td>
-            <td style="text-align:right;">${formatMontant(ligne.prixUnitaire)}</td>
+            <td style="text-align:right;">${formatMontant(
+              ligne.prixUnitaire
+            )}</td>
             <td style="text-align:right;">${formatMontant(sousTotal)}</td>
           </tr>
         `;
@@ -730,7 +781,9 @@ export default function Home() {
     fenetre.document.close();
   };
 
-  const totalHtSelectionne = devisSelectionne ? calculerTotalHt(devisSelectionne) : 0;
+  const totalHtSelectionne = devisSelectionne
+    ? calculerTotalHt(devisSelectionne)
+    : 0;
   const totalTvaSelectionne = devisSelectionne
     ? calculerMontantTva(devisSelectionne)
     : 0;
@@ -819,6 +872,13 @@ export default function Home() {
                     Synchronisation...
                   </div>
                 )}
+
+                <button
+                  onClick={handleDeconnexion}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Déconnexion
+                </button>
 
                 {vuePrincipale === "devis" && (
                   <button
