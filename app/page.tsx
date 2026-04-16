@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import AdminDashboard from "../components/AdminDashboard";
 import DevisForm from "../components/DevisForm";
@@ -48,6 +57,8 @@ type EditFormState = {
 type FiltreStatut = "Tous" | StatutDevis;
 type FiltreArchivage = "actifs" | "archives" | "tous";
 type VuePrincipale = "devis" | "admin";
+
+const ENTREPRISE_ID_PAR_DEFAUT = "bru-01";
 
 export default function Home() {
   const router = useRouter();
@@ -109,8 +120,13 @@ export default function Home() {
 
     setChargement(true);
 
-    const unsubscribe = onSnapshot(
+    const devisQuery = query(
       collection(db, "devis"),
+      where("entrepriseId", "==", ENTREPRISE_ID_PAR_DEFAUT)
+    );
+
+    const unsubscribe = onSnapshot(
+      devisQuery,
       (snapshot) => {
         const donnees = snapshot.docs
           .map((item) => item.data() as DevisBusiness)
@@ -375,7 +391,7 @@ export default function Home() {
       archive: false,
       createdAt: Date.now(),
       createdByUid: user.uid,
-      entrepriseId: devisSelectionne.entrepriseId ?? "entreprise-demo",
+      entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
       lignes: devisSelectionne.lignes.map((ligne, index) => ({
         ...ligne,
         id: `${nouveauId}-L-${index + 1}`,

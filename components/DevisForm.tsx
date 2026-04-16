@@ -7,7 +7,7 @@ import {
   formaterDate,
   genererNumeroDevis,
 } from "../lib/devis-helpers";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import type {
@@ -23,6 +23,8 @@ type DevisBusiness = Devis & {
   conditions: string;
   archive?: boolean;
   createdAt?: number;
+  entrepriseId?: string;
+  createdByUid?: string;
 };
 
 type DevisFormProps = {
@@ -30,6 +32,8 @@ type DevisFormProps = {
   onDevisCree: (id: string) => void;
   onClose: () => void;
 };
+
+const ENTREPRISE_ID_PAR_DEFAUT = "bru-01";
 
 export default function DevisForm({
   devis,
@@ -103,6 +107,13 @@ export default function DevisForm({
   };
 
   const handleCreerDevis = async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert("Utilisateur non connecté.");
+      return;
+    }
+
     if (!nouveauDevis.client.trim() || !nouveauDevis.date) {
       alert("Remplis au minimum le client et la date.");
       return;
@@ -138,6 +149,8 @@ export default function DevisForm({
 
     const devisCree: DevisBusiness = {
       id: nouveauId,
+      entrepriseId: ENTREPRISE_ID_PAR_DEFAUT,
+      createdByUid: currentUser.uid,
       client: nouveauDevis.client.trim(),
       statut: nouveauDevis.statut,
       date: formaterDate(nouveauDevis.date),
@@ -160,8 +173,14 @@ export default function DevisForm({
       reinitialiserFormulaire();
       onClose();
     } catch (error) {
-      console.error(error);
-      alert("Erreur lors de la création du devis.");
+      console.error("Erreur création devis :", error);
+      console.log("Payload envoyé :", devisCree);
+
+      if (error instanceof Error) {
+        alert(`Erreur création devis : ${error.message}`);
+      } else {
+        alert("Erreur lors de la création du devis.");
+      }
     } finally {
       setSauvegardeEnCours(false);
     }
@@ -246,7 +265,6 @@ export default function DevisForm({
         </div>
       </div>
 
-      {/* Lignes de prestation */}
       <div className="mt-8 rounded-2xl bg-slate-50 p-5">
         <div className="flex items-center justify-between">
           <h4 className="text-lg font-semibold">Prestations</h4>
