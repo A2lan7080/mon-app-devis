@@ -4,16 +4,17 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBOL2HDgQDF0oGPfUig1mVVAOJ_H0vMWQI",
-  authDomain: "batiflow-627b9.firebaseapp.com",
-  projectId: "batiflow-627b9",
-  storageBucket: "batiflow-627b9.firebasestorage.app",
-  messagingSenderId: "660828720700",
-  appId: "1:660828720700:web:0e7a9a011f81e590effd39",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
 // Évite la réinitialisation de l'app lors du hot reload
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// Export des services Firebase
 export const db = getFirestore(app);
 export const auth = getAuth(app);
