@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  creerLigneVide,
-  STATUTS_DEVIS,
-  TVA_PAR_DEFAUT,
-} from "../lib/devis-constants";
+import { useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { creerLigneVide, STATUTS_DEVIS, TVA_PAR_DEFAUT } from "../lib/devis-constants";
 import {
   convertirLignesFormStateEnLignesMetier,
   formatMontant,
@@ -12,8 +10,6 @@ import {
   genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { useState } from "react";
 import type {
   Devis,
   NouvelleLigneState,
@@ -33,22 +29,16 @@ type DevisBusiness = Devis & {
 
 type DevisFormProps = {
   devis: DevisBusiness[];
+  entrepriseId?: string;
+  createdByUid?: string;
   onDevisCree: (id: string) => void;
   onClose: () => void;
 };
 
-type ProfilUtilisateur = {
-  uid: string;
-  email: string;
-  role: string;
-  active: boolean;
-  entrepriseId: string;
-  displayName: string;
-  createdAt?: number;
-};
-
 export default function DevisForm({
   devis,
+  entrepriseId,
+  createdByUid,
   onDevisCree,
   onClose,
 }: DevisFormProps) {
@@ -126,28 +116,15 @@ export default function DevisForm({
       return;
     }
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      alert("Profil utilisateur introuvable.");
+    if (!entrepriseId || typeof entrepriseId !== "string") {
+      alert("Aucune entreprise active pour ce compte.");
       return;
     }
 
-    const profil = userSnap.data() as Partial<ProfilUtilisateur>;
+    const uidCreateur = createdByUid ?? currentUser.uid;
 
-    if (profil.active !== true) {
-      alert("Ce compte est désactivé.");
-      return;
-    }
-
-    if (profil.role !== "admin") {
-      alert("Seul un administrateur peut créer un devis.");
-      return;
-    }
-
-    if (!profil.entrepriseId || typeof profil.entrepriseId !== "string") {
-      alert("Aucun entrepriseId valide n’est défini sur ce compte.");
+    if (!uidCreateur) {
+      alert("Impossible d’identifier le créateur du devis.");
       return;
     }
 
@@ -182,12 +159,13 @@ export default function DevisForm({
       return;
     }
 
-    const nouveauId = genererNumeroDevis(devis);
+    const numeroBase = genererNumeroDevis(devis);
+    const nouveauId = `${entrepriseId}-${numeroBase}`;
 
     const devisCree: DevisBusiness = {
       id: nouveauId,
-      entrepriseId: profil.entrepriseId,
-      createdByUid: currentUser.uid,
+      entrepriseId,
+      createdByUid: uidCreateur,
       client: nouveauDevis.client.trim(),
       statut: nouveauDevis.statut,
       date: formaterDate(nouveauDevis.date),
@@ -209,14 +187,30 @@ export default function DevisForm({
       onDevisCree(devisCree.id);
       reinitialiserFormulaire();
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Erreur création devis :", error);
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        "message" in error
+      ) {
+        const firebaseError = error as { code?: string; message?: string };
+        alert(
+          `Erreur création devis : ${firebaseError.code ?? "unknown"} - ${
+            firebaseError.message ?? "Erreur inconnue"
+          }`
+        );
+        return;
+      }
 
       if (error instanceof Error) {
         alert(`Erreur création devis : ${error.message}`);
-      } else {
-        alert("Erreur lors de la création du devis.");
+        return;
       }
+
+      alert("Erreur lors de la création du devis.");
     } finally {
       setSauvegardeEnCours(false);
     }
@@ -407,6 +401,7 @@ export default function DevisForm({
         <div className="flex items-center justify-between">
           <h4 className="text-lg font-semibold">Prestations</h4>
           <button
+            type="button"
             onClick={ajouterLigne}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
@@ -470,6 +465,7 @@ export default function DevisForm({
               </div>
 
               <button
+                type="button"
                 onClick={() => supprimerLigne(index)}
                 className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 hover:bg-red-100"
               >
@@ -482,6 +478,7 @@ export default function DevisForm({
 
       <div className="mt-6 flex gap-3">
         <button
+          type="button"
           onClick={handleCreerDevis}
           disabled={sauvegardeEnCours}
           className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -490,6 +487,7 @@ export default function DevisForm({
         </button>
 
         <button
+          type="button"
           onClick={onClose}
           disabled={sauvegardeEnCours}
           className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
