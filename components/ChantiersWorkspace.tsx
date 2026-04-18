@@ -148,8 +148,9 @@ export default function ChantiersWorkspace({
     }
 
     return (
-      chantiersFiltres.find((chantier) => chantier.id === chantierSelectionneId) ??
-      null
+      chantiersFiltres.find(
+        (chantier) => chantier.id === chantierSelectionneId
+      ) ?? null
     );
   }, [chantiersFiltres, chantierSelectionneId]);
 
@@ -357,8 +358,8 @@ export default function ChantiersWorkspace({
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-slate-500">
             Gère les chantiers de ton entreprise.
           </p>
@@ -373,49 +374,55 @@ export default function ChantiersWorkspace({
 
         <button
           onClick={afficherFormulaireChantier ? fermerFormulaire : ouvrirCreation}
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
         >
           {afficherFormulaireChantier ? "Fermer" : "Nouveau chantier"}
         </button>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Chantiers actifs</p>
-          <p className="mt-2 text-3xl font-bold">{totalChantiers}</p>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Chantiers actifs</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalChantiers}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Planifiés</p>
-          <p className="mt-2 text-3xl font-bold">{totalPlanifies}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Planifiés</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalPlanifies}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">En cours</p>
-          <p className="mt-2 text-3xl font-bold">{totalEnCours}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">En cours</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalEnCours}</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Archivés</p>
-          <p className="mt-2 text-3xl font-bold">{totalArchives}</p>
+        <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <p className="text-xs text-slate-500 sm:text-sm">Archivés</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalArchives}
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]">
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_220px]">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          <div className="grid gap-4">
             <input
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un chantier, client, ville..."
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             />
 
             <select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value as FiltreStatut)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             >
               <option value="Tous">Tous les statuts</option>
               {STATUTS_CHANTIER.map((statut) => (
@@ -430,7 +437,7 @@ export default function ChantiersWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             >
               <option value="actifs">Chantiers actifs</option>
               <option value="archives">Chantiers archivés</option>
@@ -438,7 +445,7 @@ export default function ChantiersWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3 overflow-hidden">
             {chantiersFiltres.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucun chantier trouvé.
@@ -452,51 +459,59 @@ export default function ChantiersWorkspace({
                     setModeEdition(false);
                     setAfficherFormulaire(false);
                   }}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
                     chantierSelectionne?.id === chantier.id
                       ? "border-slate-900 bg-slate-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-slate-500">{chantier.reference}</p>
-                      <h3 className="mt-1 text-base font-semibold text-slate-900">
-                        {chantier.titre}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {chantier.clientNom || "Sans client associé"}
+                  <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-500">
+                          {chantier.reference}
+                        </p>
+                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                          {chantier.titre}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {chantier.clientNom || "Sans client associé"}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                            chantier.statut
+                          )}`}
+                        >
+                          {chantier.statut}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            chantier.archive
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {chantier.archive ? "Archivé" : "Actif"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
+                      <p className="text-sm text-slate-600">
+                        {chantier.adresse || "Adresse non renseignée"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {chantier.ville || "Ville non renseignée"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {chantier.dateDebut || "Date début non renseignée"}
+                        {chantier.dateFin ? ` → ${chantier.dateFin}` : ""}
                       </p>
                     </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                          chantier.statut
-                        )}`}
-                      >
-                        {chantier.statut}
-                      </span>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          chantier.archive
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-700"
-                        }`}
-                      >
-                        {chantier.archive ? "Archivé" : "Actif"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1 text-sm text-slate-600">
-                    <p>{chantier.adresse || "Adresse non renseignée"}</p>
-                    <p>{chantier.ville || "Ville non renseignée"}</p>
-                    <p>
-                      {chantier.dateDebut || "Date début non renseignée"}
-                      {chantier.dateFin ? ` → ${chantier.dateFin}` : ""}
-                    </p>
                   </div>
                 </button>
               ))
@@ -504,19 +519,19 @@ export default function ChantiersWorkspace({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des chantiers...
             </div>
           ) : afficherFormulaireChantier ? (
             <>
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-sm text-slate-500">
                     {modeEdition ? "Édition chantier" : "Nouveau chantier"}
                   </p>
-                  <h3 className="mt-1 text-2xl font-bold">
+                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
                     {modeEdition && chantierSelectionne
                       ? chantierSelectionne.reference
                       : "Créer un chantier"}
@@ -525,7 +540,7 @@ export default function ChantiersWorkspace({
 
                 <button
                   onClick={fermerFormulaire}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
                 >
                   Fermer
                 </button>
@@ -720,7 +735,7 @@ export default function ChantiersWorkspace({
                 <button
                   onClick={enregistrerChantier}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {sauvegardeEnCours
                     ? "Enregistrement..."
@@ -732,7 +747,7 @@ export default function ChantiersWorkspace({
                 <button
                   onClick={fermerFormulaire}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   Annuler
                 </button>
@@ -740,39 +755,43 @@ export default function ChantiersWorkspace({
             </>
           ) : chantierSelectionne ? (
             <>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Fiche chantier</p>
-                  <h3 className="mt-1 text-2xl font-bold">
-                    {chantierSelectionne.titre}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {chantierSelectionne.reference}
-                  </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-500">Fiche chantier</p>
+                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                      {chantierSelectionne.titre}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {chantierSelectionne.reference}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                        chantierSelectionne.statut
+                      )}`}
+                    >
+                      {chantierSelectionne.statut}
+                    </span>
+
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                        chantierSelectionne.archive
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      {chantierSelectionne.archive ? "Archivé" : "Actif"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                      chantierSelectionne.statut
-                    )}`}
-                  >
-                    {chantierSelectionne.statut}
-                  </span>
-
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      chantierSelectionne.archive
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {chantierSelectionne.archive ? "Archivé" : "Actif"}
-                  </span>
-
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   <button
                     onClick={ouvrirEdition}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Modifier
                   </button>
@@ -780,14 +799,14 @@ export default function ChantiersWorkspace({
                   {!chantierSelectionne.archive ? (
                     <button
                       onClick={archiverChantier}
-                      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
                     >
                       Archiver
                     </button>
                   ) : (
                     <button
                       onClick={restaurerChantier}
-                      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
                     >
                       Restaurer
                     </button>
@@ -795,7 +814,7 @@ export default function ChantiersWorkspace({
 
                   <button
                     onClick={supprimerChantier}
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
                   >
                     Supprimer
                   </button>
@@ -810,14 +829,17 @@ export default function ChantiersWorkspace({
                   </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Adresse</p>
                     <p className="mt-1 font-semibold">
                       {chantierSelectionne.adresse || "Non renseignée"}
                     </p>
                     <p className="mt-2 text-sm text-slate-600">
-                      {[chantierSelectionne.codePostal, chantierSelectionne.ville]
+                      {[
+                        chantierSelectionne.codePostal,
+                        chantierSelectionne.ville,
+                      ]
                         .filter(Boolean)
                         .join(" · ") || "Coordonnées non renseignées"}
                     </p>
@@ -845,8 +867,7 @@ export default function ChantiersWorkspace({
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-sm text-slate-500">Notes</p>
                   <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
-                    {chantierSelectionne.notes ||
-                      "Aucune note pour ce chantier."}
+                    {chantierSelectionne.notes || "Aucune note pour ce chantier."}
                   </p>
                 </div>
               </div>
