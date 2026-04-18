@@ -40,7 +40,7 @@ export default function DevisList({
   setModeEdition,
 }: DevisListProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-hidden">
       {devis.map((item) => {
         const estSelectionne = item.id === devisSelectionneId;
 
@@ -51,51 +51,49 @@ export default function DevisList({
               setDevisSelectionneId(item.id);
               setModeEdition(false);
             }}
-            className={`w-full rounded-2xl border p-4 text-left transition ${
+            className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
               estSelectionne
                 ? "border-slate-900 bg-slate-50"
                 : "border-slate-200 bg-white hover:bg-slate-50"
             } ${item.archive ? "opacity-70" : ""}`}
           >
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="break-all text-sm font-semibold text-slate-900 sm:text-base">
-                      {item.id}
-                    </p>
-
-                    {item.archive && (
-                      <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700">
-                        Archivé
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 break-words text-sm font-medium text-slate-700 sm:text-base">
-                    {item.client}
+            <div className="flex min-w-0 flex-col gap-3">
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <p className="min-w-0 overflow-hidden text-ellipsis text-sm font-semibold text-slate-900 sm:text-base">
+                    {item.id}
                   </p>
 
-                  {item.adresse && (
-                    <p className="mt-1 break-words text-xs text-slate-400 sm:text-sm">
-                      {item.adresse}
-                    </p>
+                  {item.archive && (
+                    <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700">
+                      Archivé
+                    </span>
                   )}
                 </div>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                      item.statut
-                    )}`}
-                  >
-                    {item.statut}
-                  </span>
-                </div>
+                <p className="min-w-0 text-base font-medium text-slate-700">
+                  {item.client}
+                </p>
+
+                {item.adresse && (
+                  <p className="min-w-0 text-sm text-slate-400">
+                    {item.adresse}
+                  </p>
+                )}
               </div>
 
-              <div className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-2">
-                <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                    item.statut
+                  )}`}
+                >
+                  {item.statut}
+                </span>
+              </div>
+
+              <div className="grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2">
+                <div className="min-w-0">
                   <p className="text-[11px] uppercase tracking-wide text-slate-400">
                     Montant
                   </p>
@@ -104,7 +102,7 @@ export default function DevisList({
                   </p>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-[11px] uppercase tracking-wide text-slate-400">
                     Date
                   </p>

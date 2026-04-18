@@ -45,38 +45,37 @@ export default function DevisSearch({
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
           placeholder="Rechercher un devis, client, statut ou montant"
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
         />
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Statut
           </p>
-          <div className="-mx-1 overflow-x-auto">
-            <div className="flex min-w-max gap-2 px-1 pb-1">
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+            <button
+              onClick={() => setFiltreStatut("Tous")}
+              className={`w-full rounded-xl px-3 py-3 text-center text-sm font-medium transition ${getButtonClasses(
+                filtreStatut === "Tous"
+              )}`}
+            >
+              Tous
+            </button>
+
+            {statuts.map((statut) => (
               <button
-                onClick={() => setFiltreStatut("Tous")}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
-                  filtreStatut === "Tous"
+                key={statut}
+                onClick={() => setFiltreStatut(statut)}
+                className={`w-full rounded-xl px-3 py-3 text-center text-sm font-medium transition ${getButtonClasses(
+                  filtreStatut === statut
                 )}`}
               >
-                Tous
+                {statut}
               </button>
-
-              {statuts.map((statut) => (
-                <button
-                  key={statut}
-                  onClick={() => setFiltreStatut(statut)}
-                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
-                    filtreStatut === statut
-                  )}`}
-                >
-                  {statut}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
@@ -84,35 +83,34 @@ export default function DevisSearch({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Archivage
           </p>
-          <div className="-mx-1 overflow-x-auto">
-            <div className="flex min-w-max gap-2 px-1 pb-1">
-              <button
-                onClick={() => setFiltreArchivage("actifs")}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
-                  filtreArchivage === "actifs"
-                )}`}
-              >
-                Actifs
-              </button>
 
-              <button
-                onClick={() => setFiltreArchivage("archives")}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
-                  filtreArchivage === "archives"
-                )}`}
-              >
-                Archives
-              </button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button
+              onClick={() => setFiltreArchivage("actifs")}
+              className={`w-full rounded-xl px-3 py-3 text-center text-sm font-medium transition ${getButtonClasses(
+                filtreArchivage === "actifs"
+              )}`}
+            >
+              Actifs
+            </button>
 
-              <button
-                onClick={() => setFiltreArchivage("tous")}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
-                  filtreArchivage === "tous"
-                )}`}
-              >
-                Tout voir
-              </button>
-            </div>
+            <button
+              onClick={() => setFiltreArchivage("archives")}
+              className={`w-full rounded-xl px-3 py-3 text-center text-sm font-medium transition ${getButtonClasses(
+                filtreArchivage === "archives"
+              )}`}
+            >
+              Archives
+            </button>
+
+            <button
+              onClick={() => setFiltreArchivage("tous")}
+              className={`w-full rounded-xl px-3 py-3 text-center text-sm font-medium transition ${getButtonClasses(
+                filtreArchivage === "tous"
+              )}`}
+            >
+              Tout voir
+            </button>
           </div>
         </div>
       </div>
