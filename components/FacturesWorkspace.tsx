@@ -5,6 +5,7 @@ import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
+import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { db } from "../lib/firebase";
 import { formatMontant } from "../lib/devis-helpers";
 import type { Facture, StatutFacture } from "../types/factures";
@@ -128,6 +129,7 @@ export default function FacturesWorkspace({
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [formulaire, setFormulaire] = useState<FactureFormState>(
     creerFormulaireVide()
   );
@@ -430,6 +432,72 @@ export default function FacturesWorkspace({
       alert("Impossible de supprimer la facture.");
     } finally {
       setSauvegardeEnCours(false);
+    }
+  };
+
+  const handleExporterPdf = () => {
+    if (!factureSelectionnee) return;
+    exporterFacturePdf(factureSelectionnee);
+  };
+
+  const handleEnvoyerParMail = async () => {
+    if (!factureSelectionnee) return;
+
+    const clientAssocie =
+      clients.find((client) => client.id === factureSelectionnee.clientId) ??
+      null;
+
+    const emailClient = clientAssocie?.email?.trim();
+
+    if (!emailClient) {
+      alert("Ce client n’a pas d’adresse email renseignée.");
+      return;
+    }
+
+    try {
+      setEnvoiEnCours(true);
+
+      const response = await fetch("/api/factures/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          facture: factureSelectionnee,
+          toEmail: emailClient,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Impossible d’envoyer la facture.");
+      }
+
+      if (
+        factureSelectionnee.statut !== "Payée" &&
+        factureSelectionnee.statut !== "Envoyée"
+      ) {
+        await updateDoc(doc(db, "factures", factureSelectionnee.id), {
+          ...factureSelectionnee,
+          statut: "Envoyée",
+          updatedAt: Date.now(),
+        });
+      }
+
+      alert(`Facture envoyée à ${emailClient}.`);
+    } catch (error) {
+      console.error("Erreur envoi facture :", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Impossible d’envoyer la facture."
+      );
+    } finally {
+      setEnvoiEnCours(false);
     }
   };
 
@@ -878,21 +946,26 @@ export default function FacturesWorkspace({
                     {factureSelectionnee.statut}
                   </span>
 
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      factureSelectionnee.archive
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {factureSelectionnee.archive ? "Archivée" : "Active"}
-                  </span>
-
                   <button
                     onClick={ouvrirEdition}
                     className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Modifier
+                  </button>
+
+                  <button
+                    onClick={handleExporterPdf}
+                    className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                  >
+                    Export PDF
+                  </button>
+
+                  <button
+                    onClick={handleEnvoyerParMail}
+                    disabled={envoiEnCours}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
                   </button>
 
                   {!factureSelectionnee.archive ? (
