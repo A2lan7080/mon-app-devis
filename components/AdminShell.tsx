@@ -82,10 +82,6 @@ export default function AdminShell({
       : "Pilote la valeur business, le pipe et la conversion.";
 
   useEffect(() => {
-    setMenuMobileOuvert(false);
-  }, [vueAffichee]);
-
-  useEffect(() => {
     if (!menuMobileOuvert) return;
 
     const originalOverflow = document.body.style.overflow;
@@ -96,7 +92,37 @@ export default function AdminShell({
     };
   }, [menuMobileOuvert]);
 
-  const renderNav = () => (
+  const ouvrirVueDevisMobile = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirVueDevis();
+  };
+
+  const ouvrirVueClientsMobile = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirVueClients();
+  };
+
+  const ouvrirVueChantiersMobile = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirVueChantiers();
+  };
+
+  const ouvrirVueFacturesMobile = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirVueFactures();
+  };
+
+  const ouvrirVueAdminMobile = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirVueAdmin();
+  };
+
+  const deconnexionMobile = () => {
+    setMenuMobileOuvert(false);
+    onDeconnexion();
+  };
+
+  const renderDesktopNav = () => (
     <nav className="mt-8 space-y-2">
       <button
         onClick={onOuvrirVueDevis}
@@ -146,6 +172,56 @@ export default function AdminShell({
     </nav>
   );
 
+  const renderMobileNav = () => (
+    <nav className="mt-8 space-y-2">
+      <button
+        onClick={ouvrirVueDevisMobile}
+        className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+          vueAffichee === "devis"
+        )}`}
+      >
+        Devis
+      </button>
+
+      <button
+        onClick={ouvrirVueClientsMobile}
+        className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+          vueAffichee === "clients"
+        )}`}
+      >
+        Clients
+      </button>
+
+      <button
+        onClick={ouvrirVueChantiersMobile}
+        className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+          vueAffichee === "chantiers"
+        )}`}
+      >
+        Chantiers
+      </button>
+
+      <button
+        onClick={ouvrirVueFacturesMobile}
+        className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+          vueAffichee === "factures"
+        )}`}
+      >
+        Factures
+      </button>
+
+      <button
+        onClick={ouvrirVueAdminMobile}
+        className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+          vueAffichee === "admin",
+          "admin"
+        )}`}
+      >
+        Admin
+      </button>
+    </nav>
+  );
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
       <div className="flex min-h-screen">
@@ -160,7 +236,7 @@ export default function AdminShell({
             </p>
           </div>
 
-          {renderNav()}
+          {renderDesktopNav()}
         </aside>
 
         <section className="min-w-0 flex-1 p-4 md:p-8">
@@ -255,11 +331,11 @@ export default function AdminShell({
               </button>
             </div>
 
-            {renderNav()}
+            {renderMobileNav()}
 
             <div className="mt-auto pt-6">
               <button
-                onClick={onDeconnexion}
+                onClick={deconnexionMobile}
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
               >
                 Déconnexion
