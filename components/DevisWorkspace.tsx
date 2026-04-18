@@ -1,12 +1,6 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import DevisDetailPanel from "./DevisDetailPanel";
-import DevisForm from "./DevisForm";
-import DevisKpiCards from "./DevisKpiCards";
-import DevisList from "./DevisList";
-import DevisSearch from "./DevisSearch";
-import { STATUTS_DEVIS } from "../lib/devis-constants";
 import type { DevisBusiness, EditFormState } from "../hooks/useDevisActions";
 import type { NouvelleLigneState, StatutDevis } from "../types/devis";
 
@@ -57,107 +51,14 @@ type Props = {
   onCloseFormulaire: () => void;
 };
 
-export default function DevisWorkspace({
-  devis,
-  devisFiltres,
-  devisSelectionne,
-  entrepriseId,
-  createdByUid,
-  afficherFormulaire,
-  recherche,
-  setRecherche,
-  filtreStatut,
-  setFiltreStatut,
-  filtreArchivage,
-  setFiltreArchivage,
-  devisSelectionneId,
-  setDevisSelectionneId,
-  totalDevis,
-  totalBrouillons,
-  totalAcceptes,
-  caSigne,
-  modeEdition,
-  setModeEdition,
-  editForm,
-  setEditForm,
-  editLignes,
-  ouvrirEdition,
-  annulerEdition,
-  ajouterLigneEdition,
-  supprimerLigneEdition,
-  mettreAJourLigneEdition,
-  enregistrerEdition,
-  dupliquerDevis,
-  supprimerDevis,
-  archiverDevis,
-  restaurerDevis,
-  handleExporterPdf,
-  handleChangerStatut,
-  onDevisCree,
-  onCloseFormulaire,
-}: Props) {
+export default function DevisWorkspace(_: Props) {
   return (
-    <>
-      {afficherFormulaire && (
-        <DevisForm
-          devis={devis}
-          entrepriseId={entrepriseId}
-          createdByUid={createdByUid}
-          onDevisCree={onDevisCree}
-          onClose={onCloseFormulaire}
-        />
-      )}
-
-      <DevisKpiCards
-        totalDevis={totalDevis}
-        totalBrouillons={totalBrouillons}
-        totalAcceptes={totalAcceptes}
-        caSigne={caSigne}
-      />
-
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          <DevisSearch
-            recherche={recherche}
-            setRecherche={setRecherche}
-            filtreStatut={filtreStatut}
-            setFiltreStatut={setFiltreStatut}
-            filtreArchivage={filtreArchivage}
-            setFiltreArchivage={setFiltreArchivage}
-            statuts={STATUTS_DEVIS}
-          />
-
-          <DevisList
-            devis={devisFiltres}
-            devisSelectionneId={devisSelectionneId}
-            setDevisSelectionneId={setDevisSelectionneId}
-            setModeEdition={setModeEdition}
-          />
-        </div>
-
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          <DevisDetailPanel
-            devisSelectionne={devisSelectionne}
-            modeEdition={modeEdition}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            editLignes={editLignes}
-            setModeEdition={setModeEdition}
-            ouvrirEdition={ouvrirEdition}
-            annulerEdition={annulerEdition}
-            ajouterLigneEdition={ajouterLigneEdition}
-            supprimerLigneEdition={supprimerLigneEdition}
-            mettreAJourLigneEdition={mettreAJourLigneEdition}
-            enregistrerEdition={enregistrerEdition}
-            dupliquerDevis={dupliquerDevis}
-            supprimerDevis={supprimerDevis}
-            archiverDevis={archiverDevis}
-            restaurerDevis={restaurerDevis}
-            handleExporterPdf={handleExporterPdf}
-            handleChangerStatut={handleChangerStatut}
-          />
-        </div>
-      </div>
-    </>
+    <div className="rounded-2xl bg-white p-6 shadow-sm">
+      <p className="text-lg font-semibold">Test mobile shell</p>
+      <p className="mt-2 text-sm text-slate-500">
+        Si le zoom est normal ici, alors le problème vient d’un composant du
+        module Devis.
+      </p>
+    </div>
   );
 }
