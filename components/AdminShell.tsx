@@ -164,21 +164,21 @@ export default function AdminShell({
 
         <section className="flex-1 p-4 md:p-8">
           <div className="mx-auto max-w-7xl">
-            <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm md:hidden">
-              <div className="flex items-start justify-between gap-3">
+            <div className="mb-4 rounded-2xl bg-white p-3 shadow-sm md:hidden">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <h1 className="text-xl font-bold leading-tight">Batiflow</h1>
+                  <p className="mt-1 text-xs text-slate-500">
                     Gestion devis & pilotage
                   </p>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-[11px] text-slate-400">
                     {displayName} · {entrepriseId}
                   </p>
                 </div>
 
                 <button
                   onClick={() => setMobileMenuOuvert(true)}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
                   aria-label="Ouvrir le menu"
                 >
                   <span className="text-xl leading-none">☰</span>
