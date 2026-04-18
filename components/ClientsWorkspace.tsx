@@ -322,8 +322,8 @@ export default function ClientsWorkspace({
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-slate-500">
             Gère ta base clients par entreprise.
           </p>
@@ -338,43 +338,47 @@ export default function ClientsWorkspace({
 
         <button
           onClick={afficherFormulaireClient ? fermerFormulaire : ouvrirCreation}
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
         >
           {afficherFormulaireClient ? "Fermer" : "Nouveau client"}
         </button>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Clients actifs</p>
-          <p className="mt-2 text-3xl font-bold">{totalClients}</p>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Clients actifs</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalClients}</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Professionnels</p>
-          <p className="mt-2 text-3xl font-bold">{totalPros}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Professionnels</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalPros}</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Particuliers</p>
-          <p className="mt-2 text-3xl font-bold">{totalParticuliers}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Particuliers</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalParticuliers}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Archivés</p>
-          <p className="mt-2 text-3xl font-bold">{totalClientsArchives}</p>
+        <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <p className="text-xs text-slate-500 sm:text-sm">Archivés</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalClientsArchives}
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]">
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          <div className="grid gap-4">
             <input
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un client, email, société..."
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             />
 
             <select
@@ -382,7 +386,7 @@ export default function ClientsWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             >
               <option value="actifs">Clients actifs</option>
               <option value="archives">Clients archivés</option>
@@ -390,7 +394,7 @@ export default function ClientsWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3 overflow-hidden">
             {clientsFiltres.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucun client trouvé.
@@ -404,26 +408,28 @@ export default function ClientsWorkspace({
                     setModeEdition(false);
                     setAfficherFormulaire(false);
                   }}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
                     clientSelectionne?.id === client.id
                       ? "border-slate-900 bg-slate-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-slate-500">{client.reference}</p>
-                      <h3 className="mt-1 text-base font-semibold text-slate-900">
-                        {client.nom}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {client.societe || client.typeClient}
-                      </p>
-                    </div>
+                  <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-500">
+                          {client.reference}
+                        </p>
+                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                          {client.nom}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {client.societe || client.typeClient}
+                        </p>
+                      </div>
 
-                    <div className="flex flex-col items-end gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
                           client.archive
                             ? "bg-amber-100 text-amber-800"
                             : "bg-emerald-100 text-emerald-700"
@@ -432,12 +438,18 @@ export default function ClientsWorkspace({
                         {client.archive ? "Archivé" : "Actif"}
                       </span>
                     </div>
-                  </div>
 
-                  <div className="mt-3 space-y-1 text-sm text-slate-600">
-                    <p>{client.email || "Email non renseigné"}</p>
-                    <p>{client.telephone || "Téléphone non renseigné"}</p>
-                    <p>{client.ville || "Ville non renseignée"}</p>
+                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
+                      <p className="text-sm text-slate-600">
+                        {client.email || "Email non renseigné"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {client.telephone || "Téléphone non renseigné"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {client.ville || "Ville non renseignée"}
+                      </p>
+                    </div>
                   </div>
                 </button>
               ))
@@ -445,19 +457,19 @@ export default function ClientsWorkspace({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des clients...
             </div>
           ) : afficherFormulaireClient ? (
             <>
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-sm text-slate-500">
                     {modeEdition ? "Édition client" : "Nouveau client"}
                   </p>
-                  <h3 className="mt-1 text-2xl font-bold">
+                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
                     {modeEdition && clientSelectionne
                       ? clientSelectionne.reference
                       : "Créer une fiche client"}
@@ -466,7 +478,7 @@ export default function ClientsWorkspace({
 
                 <button
                   onClick={fermerFormulaire}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
                 >
                   Fermer
                 </button>
@@ -631,7 +643,7 @@ export default function ClientsWorkspace({
                   />
                 </div>
 
-                <div>
+                <div className="md:col-span-2 lg:max-w-xs">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Pays
                   </label>
@@ -670,7 +682,7 @@ export default function ClientsWorkspace({
                 <button
                   onClick={enregistrerClient}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {sauvegardeEnCours
                     ? "Enregistrement..."
@@ -682,7 +694,7 @@ export default function ClientsWorkspace({
                 <button
                   onClick={fermerFormulaire}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   Annuler
                 </button>
@@ -690,31 +702,35 @@ export default function ClientsWorkspace({
             </>
           ) : clientSelectionne ? (
             <>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Fiche client</p>
-                  <h3 className="mt-1 text-2xl font-bold">
-                    {clientSelectionne.nom}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {clientSelectionne.reference}
-                  </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-500">Fiche client</p>
+                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                      {clientSelectionne.nom}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {clientSelectionne.reference}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                        clientSelectionne.archive
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      {clientSelectionne.archive ? "Archivé" : "Actif"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      clientSelectionne.archive
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {clientSelectionne.archive ? "Archivé" : "Actif"}
-                  </span>
-
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   <button
                     onClick={ouvrirEdition}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Modifier
                   </button>
@@ -722,14 +738,14 @@ export default function ClientsWorkspace({
                   {!clientSelectionne.archive ? (
                     <button
                       onClick={archiverClient}
-                      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
                     >
                       Archiver
                     </button>
                   ) : (
                     <button
                       onClick={restaurerClient}
-                      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
                     >
                       Restaurer
                     </button>
@@ -737,7 +753,7 @@ export default function ClientsWorkspace({
 
                   <button
                     onClick={supprimerClient}
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
                   >
                     Supprimer
                   </button>
@@ -752,7 +768,7 @@ export default function ClientsWorkspace({
                   </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Société</p>
                     <p className="mt-1 font-semibold">
@@ -768,10 +784,10 @@ export default function ClientsWorkspace({
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Email</p>
-                    <p className="mt-1 font-semibold">
+                    <p className="mt-1 break-all font-semibold">
                       {clientSelectionne.email || "Non renseigné"}
                     </p>
                   </div>
@@ -790,7 +806,11 @@ export default function ClientsWorkspace({
                     {clientSelectionne.adresse || "Non renseignée"}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    {[clientSelectionne.codePostal, clientSelectionne.ville, clientSelectionne.pays]
+                    {[
+                      clientSelectionne.codePostal,
+                      clientSelectionne.ville,
+                      clientSelectionne.pays,
+                    ]
                       .filter(Boolean)
                       .join(" · ") || "Coordonnées non renseignées"}
                   </p>
