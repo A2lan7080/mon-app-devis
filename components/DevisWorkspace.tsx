@@ -115,8 +115,8 @@ export default function DevisWorkspace({
         caSigne={caSigne}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           <DevisSearch
             recherche={recherche}
             setRecherche={setRecherche}
@@ -135,7 +135,7 @@ export default function DevisWorkspace({
           />
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           <DevisDetailPanel
             devisSelectionne={devisSelectionne}
             modeEdition={modeEdition}

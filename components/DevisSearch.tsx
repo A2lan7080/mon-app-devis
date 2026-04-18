@@ -15,6 +15,12 @@ type DevisSearchProps = {
   statuts: readonly StatutDevis[];
 };
 
+function getButtonClasses(estActif: boolean) {
+  return estActif
+    ? "bg-slate-900 text-white border-slate-900"
+    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
+}
+
 export default function DevisSearch({
   recherche,
   setRecherche,
@@ -25,80 +31,89 @@ export default function DevisSearch({
   statuts,
 }: DevisSearchProps) {
   return (
-    <div className="mb-6 flex flex-col gap-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <h3 className="text-2xl font-semibold">Liste des devis</h3>
+    <div className="mb-5 space-y-4 sm:mb-6">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-xl font-semibold sm:text-2xl">Liste des devis</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Recherche, filtre et ouvre rapidement un devis.
+          </p>
+        </div>
 
         <input
           type="text"
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher un devis, un client, un statut ou un montant"
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400 lg:max-w-md"
+          placeholder="Rechercher un devis, client, statut ou montant"
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
         />
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setFiltreStatut("Tous")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-              filtreStatut === "Tous"
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Tous
-          </button>
+      <div className="space-y-3">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Statut
+          </p>
+          <div className="-mx-1 overflow-x-auto">
+            <div className="flex min-w-max gap-2 px-1 pb-1">
+              <button
+                onClick={() => setFiltreStatut("Tous")}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
+                  filtreStatut === "Tous"
+                )}`}
+              >
+                Tous
+              </button>
 
-          {statuts.map((statut) => (
-            <button
-              key={statut}
-              onClick={() => setFiltreStatut(statut)}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                filtreStatut === statut
-                  ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {statut}
-            </button>
-          ))}
+              {statuts.map((statut) => (
+                <button
+                  key={statut}
+                  onClick={() => setFiltreStatut(statut)}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
+                    filtreStatut === statut
+                  )}`}
+                >
+                  {statut}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setFiltreArchivage("actifs")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-              filtreArchivage === "actifs"
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Actifs
-          </button>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Archivage
+          </p>
+          <div className="-mx-1 overflow-x-auto">
+            <div className="flex min-w-max gap-2 px-1 pb-1">
+              <button
+                onClick={() => setFiltreArchivage("actifs")}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
+                  filtreArchivage === "actifs"
+                )}`}
+              >
+                Actifs
+              </button>
 
-          <button
-            onClick={() => setFiltreArchivage("archives")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-              filtreArchivage === "archives"
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Archives
-          </button>
+              <button
+                onClick={() => setFiltreArchivage("archives")}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
+                  filtreArchivage === "archives"
+                )}`}
+              >
+                Archives
+              </button>
 
-          <button
-            onClick={() => setFiltreArchivage("tous")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-              filtreArchivage === "tous"
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Tout voir
-          </button>
+              <button
+                onClick={() => setFiltreArchivage("tous")}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getButtonClasses(
+                  filtreArchivage === "tous"
+                )}`}
+              >
+                Tout voir
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
