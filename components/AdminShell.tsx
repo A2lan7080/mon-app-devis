@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type VuePrincipale =
   | "devis"
@@ -26,7 +26,10 @@ type Props = {
   children: ReactNode;
 };
 
-function getNavButtonClasses(estActif: boolean, variante: "standard" | "admin" = "standard") {
+function getNavButtonClasses(
+  estActif: boolean,
+  variante: "standard" | "admin" = "standard"
+) {
   if (estActif && variante === "admin") {
     return "bg-amber-100 text-amber-800";
   }
@@ -54,6 +57,26 @@ export default function AdminShell({
   onDeconnexion,
   children,
 }: Props) {
+  const [mobileMenuOuvert, setMobileMenuOuvert] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOuvert) return;
+
+    const precedentOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = precedentOverflow;
+    };
+  }, [mobileMenuOuvert]);
+
+  const fermerMenuMobile = () => setMobileMenuOuvert(false);
+
+  const ouvrirVueEtFermerMenu = (callback: () => void) => {
+    callback();
+    fermerMenuMobile();
+  };
+
   const titre =
     vueAffichee === "devis"
       ? "Devis"
@@ -142,8 +165,8 @@ export default function AdminShell({
         <section className="flex-1 p-4 md:p-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm md:hidden">
-              <div className="flex flex-col gap-3">
-                <div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
                   <p className="mt-1 text-sm text-slate-500">
                     Gestion devis & pilotage
@@ -153,11 +176,52 @@ export default function AdminShell({
                   </p>
                 </div>
 
-                <div className="-mx-1 overflow-x-auto">
-                  <div className="flex min-w-max gap-2 px-1 pb-1">
+                <button
+                  onClick={() => setMobileMenuOuvert(true)}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+                  aria-label="Ouvrir le menu"
+                >
+                  <span className="text-xl leading-none">☰</span>
+                </button>
+              </div>
+            </div>
+
+            {mobileMenuOuvert && (
+              <div className="fixed inset-0 z-50 md:hidden">
+                <button
+                  onClick={fermerMenuMobile}
+                  className="absolute inset-0 bg-slate-900/30"
+                  aria-label="Fermer le menu"
+                />
+
+                <div className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-white p-5 shadow-2xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-2xl font-bold">Batiflow</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Gestion devis & pilotage
+                      </p>
+                      <p className="mt-3 text-xs text-slate-400">
+                        {displayName} · {entrepriseId}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Rôle : {role}
+                      </p>
+                    </div>
+
                     <button
-                      onClick={onOuvrirVueDevis}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition ${getNavButtonClasses(
+                      onClick={fermerMenuMobile}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+                      aria-label="Fermer le menu"
+                    >
+                      <span className="text-xl leading-none">×</span>
+                    </button>
+                  </div>
+
+                  <nav className="mt-8 space-y-3">
+                    <button
+                      onClick={() => ouvrirVueEtFermerMenu(onOuvrirVueDevis)}
+                      className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
                         vueAffichee === "devis"
                       )}`}
                     >
@@ -165,8 +229,8 @@ export default function AdminShell({
                     </button>
 
                     <button
-                      onClick={onOuvrirVueClients}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition ${getNavButtonClasses(
+                      onClick={() => ouvrirVueEtFermerMenu(onOuvrirVueClients)}
+                      className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
                         vueAffichee === "clients"
                       )}`}
                     >
@@ -174,8 +238,8 @@ export default function AdminShell({
                     </button>
 
                     <button
-                      onClick={onOuvrirVueChantiers}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition ${getNavButtonClasses(
+                      onClick={() => ouvrirVueEtFermerMenu(onOuvrirVueChantiers)}
+                      className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
                         vueAffichee === "chantiers"
                       )}`}
                     >
@@ -183,8 +247,8 @@ export default function AdminShell({
                     </button>
 
                     <button
-                      onClick={onOuvrirVueFactures}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition ${getNavButtonClasses(
+                      onClick={() => ouvrirVueEtFermerMenu(onOuvrirVueFactures)}
+                      className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
                         vueAffichee === "factures"
                       )}`}
                     >
@@ -192,18 +256,30 @@ export default function AdminShell({
                     </button>
 
                     <button
-                      onClick={onOuvrirVueAdmin}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition ${getNavButtonClasses(
+                      onClick={() => ouvrirVueEtFermerMenu(onOuvrirVueAdmin)}
+                      className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
                         vueAffichee === "admin",
                         "admin"
                       )}`}
                     >
                       Admin
                     </button>
+                  </nav>
+
+                  <div className="mt-auto pt-6">
+                    <button
+                      onClick={() => {
+                        fermerMenuMobile();
+                        onDeconnexion();
+                      }}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Déconnexion
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm md:mb-8 md:p-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
@@ -225,7 +301,7 @@ export default function AdminShell({
 
                 <button
                   onClick={onDeconnexion}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                  className="hidden rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:inline-flex"
                 >
                   Déconnexion
                 </button>
