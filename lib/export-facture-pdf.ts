@@ -97,6 +97,12 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
             grid-template-columns: 1fr 1fr;
             gap: 16px;
           }
+          .grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+          }
           .label {
             font-size: 12px;
             text-transform: uppercase;
@@ -107,6 +113,12 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
           .value {
             font-size: 16px;
             font-weight: 600;
+            line-height: 1.5;
+          }
+          .small-value {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #334155;
           }
           .total-box {
             margin-top: 24px;
@@ -168,6 +180,7 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
               <h2 class="title">Facture</h2>
               <p class="subtitle">N° ${echapperHtml(factureSelectionnee.reference)}</p>
               <p class="subtitle">Objet : ${texteOuDefaut(factureSelectionnee.objet)}</p>
+              <p class="subtitle">Devis lié : ${texteOuDefaut(factureSelectionnee.devisReference, "Aucun devis lié")}</p>
               <p class="subtitle">Date émission : ${texteOuDefaut(factureSelectionnee.dateEmission)}</p>
               <p class="subtitle">Date échéance : ${texteOuDefaut(factureSelectionnee.dateEcheance)}</p>
               <p class="subtitle">Statut : ${texteOuDefaut(factureSelectionnee.statut)}</p>
@@ -177,7 +190,37 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
           <div class="card">
             <div class="label">Client</div>
             <div class="value">${texteOuDefaut(factureSelectionnee.clientNom)}</div>
-            <div style="height:12px;"></div>
+
+            <div class="grid-2x2">
+              <div>
+                <div class="label">Adresse</div>
+                <div class="small-value">${texteOuDefaut(factureSelectionnee.clientAdresse, "Adresse non renseignée")}</div>
+              </div>
+
+              <div>
+                <div class="label">Coordonnées</div>
+                <div class="small-value">
+                  ${texteOuDefaut(
+                    [factureSelectionnee.clientCodePostal, factureSelectionnee.clientVille]
+                      .filter(Boolean)
+                      .join(" · "),
+                    "Coordonnées non renseignées"
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="label">Email</div>
+                <div class="small-value">${texteOuDefaut(factureSelectionnee.clientEmail, "Email non renseigné")}</div>
+              </div>
+
+              <div>
+                <div class="label">Téléphone</div>
+                <div class="small-value">${texteOuDefaut(factureSelectionnee.clientTelephone, "Téléphone non renseigné")}</div>
+              </div>
+            </div>
+
+            <div style="height:16px;"></div>
 
             <div class="grid">
               <div>
