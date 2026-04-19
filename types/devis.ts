@@ -14,8 +14,13 @@ export type Devis = {
   statut: StatutDevis;
   date: string;
   adresse: string;
+  codePostal: string;
+  ville: string;
   email: string;
   telephone: string;
+  typeClient: "Particulier" | "Professionnel";
+  societe: string;
+  tvaClient: string;
   tvaTaux: number;
   lignes: LigneDevis[];
 };
@@ -25,8 +30,13 @@ export type NouveauDevisState = {
   statut: StatutDevis;
   date: string;
   adresse: string;
+  codePostal: string;
+  ville: string;
   email: string;
   telephone: string;
+  typeClient: "Particulier" | "Professionnel";
+  societe: string;
+  tvaClient: string;
   tvaTaux: string;
 };
 

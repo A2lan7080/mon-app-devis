@@ -15,7 +15,7 @@ import {
   genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
-import type { Client } from "../types/clients";
+import type { Client, TypeClient } from "../types/clients";
 import type {
   Devis,
   NouvelleLigneState,
@@ -94,8 +94,13 @@ export default function DevisForm({
     statut: "Brouillon",
     date: "",
     adresse: "",
+    codePostal: "",
+    ville: "",
     email: "",
     telephone: "",
+    typeClient: "Particulier",
+    societe: "",
+    tvaClient: "",
     tvaTaux: String(TVA_PAR_DEFAUT),
     acomptePourcentage: "30",
     validiteJours: "30",
@@ -114,8 +119,13 @@ export default function DevisForm({
       statut: "Brouillon",
       date: "",
       adresse: "",
+      codePostal: "",
+      ville: "",
       email: "",
       telephone: "",
+      typeClient: "Particulier",
+      societe: "",
+      tvaClient: "",
       tvaTaux: String(TVA_PAR_DEFAUT),
       acomptePourcentage: "30",
       validiteJours: "30",
@@ -162,8 +172,13 @@ export default function DevisForm({
       ...prev,
       client: client.nom ?? "",
       adresse: client.adresse ?? "",
+      codePostal: client.codePostal ?? "",
+      ville: client.ville ?? "",
       email: client.email ?? "",
       telephone: client.telephone ?? "",
+      typeClient: client.typeClient ?? "Particulier",
+      societe: client.societe ?? "",
+      tvaClient: client.tva ?? "",
     }));
   };
 
@@ -232,15 +247,15 @@ export default function DevisForm({
           id: `${entrepriseId}-cli-${maintenant}`,
           reference: referenceClient,
           nom: nouveauDevis.client.trim(),
-          typeClient: "Particulier",
-          societe: "",
+          typeClient: nouveauDevis.typeClient,
+          societe: nouveauDevis.societe.trim(),
           email: nouveauDevis.email.trim(),
           telephone: nouveauDevis.telephone.trim(),
           adresse: nouveauDevis.adresse.trim(),
-          codePostal: "",
-          ville: "",
+          codePostal: nouveauDevis.codePostal.trim(),
+          ville: nouveauDevis.ville.trim(),
           pays: "Belgique",
-          tva: "",
+          tva: nouveauDevis.tvaClient.trim(),
           notes: "",
           entrepriseId,
           createdByUid: uidCreateur,
@@ -260,8 +275,13 @@ export default function DevisForm({
         statut: nouveauDevis.statut,
         date: formaterDate(nouveauDevis.date),
         adresse: nouveauDevis.adresse.trim(),
+        codePostal: nouveauDevis.codePostal.trim(),
+        ville: nouveauDevis.ville.trim(),
         email: nouveauDevis.email.trim(),
         telephone: nouveauDevis.telephone.trim(),
+        typeClient: nouveauDevis.typeClient,
+        societe: nouveauDevis.societe.trim(),
+        tvaClient: nouveauDevis.tvaClient.trim(),
         tvaTaux,
         lignes: lignesValides,
         acomptePourcentage,
@@ -334,7 +354,7 @@ export default function DevisForm({
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Client
+            Nom du client
           </label>
           <input
             type="text"
@@ -343,6 +363,59 @@ export default function DevisForm({
               setNouveauDevis((prev) => ({
                 ...prev,
                 client: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Type de client
+          </label>
+          <select
+            value={nouveauDevis.typeClient}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                typeClient: e.target.value as TypeClient,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          >
+            <option value="Particulier">Particulier</option>
+            <option value="Professionnel">Professionnel</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Société
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.societe}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                societe: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            TVA client
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.tvaClient}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                tvaClient: e.target.value,
               }))
             }
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
@@ -405,7 +478,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Adresse
           </label>
@@ -416,6 +489,40 @@ export default function DevisForm({
               setNouveauDevis((prev) => ({
                 ...prev,
                 adresse: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Code postal
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.codePostal}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                codePostal: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Ville / commune
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.ville}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                ville: e.target.value,
               }))
             }
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
