@@ -109,6 +109,11 @@ export default function ChantiersWorkspace({
     estAdmin: true,
   });
 
+  const clientsActifs = useMemo(
+    () => clients.filter((client) => !client.archive),
+    [clients]
+  );
+
   const chantiersFiltres = useMemo(() => {
     const valeur = recherche.trim().toLowerCase();
 
@@ -214,6 +219,19 @@ export default function ChantiersWorkspace({
 
     setModeEdition(true);
     setAfficherFormulaire(false);
+  };
+
+  const handleSelectionClient = (clientId: string) => {
+    const clientAssocie =
+      clientsActifs.find((client) => client.id === clientId) ?? null;
+
+    setFormulaire((prev) => ({
+      ...prev,
+      clientId,
+      adresse: clientAssocie?.adresse ?? prev.adresse,
+      codePostal: clientAssocie?.codePostal ?? prev.codePostal,
+      ville: clientAssocie?.ville ?? prev.ville,
+    }));
   };
 
   const enregistrerChantier = async () => {
@@ -570,22 +588,15 @@ export default function ChantiersWorkspace({
                   </label>
                   <select
                     value={formulaire.clientId}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        clientId: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => handleSelectionClient(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
                   >
                     <option value="">Aucun client associé</option>
-                    {clients
-                      .filter((client) => !client.archive)
-                      .map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.nom}
-                        </option>
-                      ))}
+                    {clientsActifs.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.nom}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
