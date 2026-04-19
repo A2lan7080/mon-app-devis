@@ -11,8 +11,15 @@ export type Facture = {
   objet: string;
   clientId: string;
   clientNom: string;
+  clientAdresse: string;
+  clientCodePostal: string;
+  clientVille: string;
+  clientEmail: string;
+  clientTelephone: string;
   chantierId: string;
   chantierTitre: string;
+  devisId: string;
+  devisReference: string;
   dateEmission: string;
   dateEcheance: string;
   datePaiement: string;

@@ -7,7 +7,11 @@ import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { db } from "../lib/firebase";
-import { formatMontant } from "../lib/devis-helpers";
+import {
+  calculerTotalHt,
+  formatMontant,
+} from "../lib/devis-helpers";
+import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import type { Facture, StatutFacture } from "../types/factures";
 
 type FiltreArchivage = "actifs" | "archives" | "tous";
@@ -19,6 +23,7 @@ type Props = {
 };
 
 type FactureFormState = {
+  devisId: string;
   objet: string;
   clientId: string;
   chantierId: string;
@@ -41,6 +46,7 @@ const STATUTS_FACTURE: StatutFacture[] = [
 ];
 
 const creerFormulaireVide = (): FactureFormState => ({
+  devisId: "",
   objet: "",
   clientId: "",
   chantierId: "",
@@ -76,11 +82,17 @@ function convertirNombre(valeur: string) {
   return nombre;
 }
 
-function calculerMontantTva(facture: { montantHt: number; tvaTaux: number }) {
+function calculerMontantTva(facture: {
+  montantHt: number;
+  tvaTaux: number;
+}) {
   return facture.montantHt * (facture.tvaTaux / 100);
 }
 
-function calculerTotalTtc(facture: { montantHt: number; tvaTaux: number }) {
+function calculerTotalTtc(facture: {
+  montantHt: number;
+  tvaTaux: number;
+}) {
   return facture.montantHt + calculerMontantTva(facture);
 }
 
@@ -149,6 +161,13 @@ export default function FacturesWorkspace({
     estAdmin: true,
   });
 
+  const { devis } = useEntrepriseDevis({
+    authChargee: true,
+    userId: createdByUid ?? null,
+    entrepriseIdCourante: entrepriseId ?? null,
+    estAdmin: true,
+  });
+
   const facturesFiltrees = useMemo(() => {
     const valeur = recherche.trim().toLowerCase();
 
@@ -158,6 +177,7 @@ export default function FacturesWorkspace({
         facture.objet ?? "",
         facture.clientNom ?? "",
         facture.chantierTitre ?? "",
+        facture.devisReference ?? "",
         facture.statut ?? "",
       ]
         .join(" ")
@@ -242,6 +262,7 @@ export default function FacturesWorkspace({
     if (!factureSelectionnee) return;
 
     setFormulaire({
+      devisId: factureSelectionnee.devisId ?? "",
       objet: factureSelectionnee.objet,
       clientId: factureSelectionnee.clientId,
       chantierId: factureSelectionnee.chantierId,
@@ -257,6 +278,44 @@ export default function FacturesWorkspace({
 
     setModeEdition(true);
     setAfficherFormulaire(false);
+  };
+
+  const handleSelectionDevis = (devisId: string) => {
+    const devisSelectionne =
+      devis.find((item) => item.id === devisId) ?? null;
+
+    if (!devisSelectionne) {
+      setFormulaire((prev) => ({
+        ...prev,
+        devisId: "",
+      }));
+      return;
+    }
+
+    const clientAssocie =
+      clients.find((client) => {
+        const memeNom = client.nom === devisSelectionne.client;
+        const memeEmail =
+          devisSelectionne.email &&
+          client.email &&
+          client.email === devisSelectionne.email;
+        return memeNom || memeEmail;
+      }) ?? null;
+
+    setFormulaire((prev) => ({
+      ...prev,
+      devisId,
+      objet: `Facture - ${devisSelectionne.id}`,
+      clientId: clientAssocie?.id ?? prev.clientId,
+      montantHt: String(calculerTotalHt(devisSelectionne)),
+      tvaTaux: String(devisSelectionne.tvaTaux),
+      acompteDeduit: String(
+        ((calculerTotalHt(devisSelectionne) *
+          (1 + devisSelectionne.tvaTaux / 100)) *
+          ((devisSelectionne.acomptePourcentage ?? 0) / 100)) || 0
+      ),
+      notes: devisSelectionne.conditions ?? prev.notes,
+    }));
   };
 
   const enregistrerFacture = async () => {
@@ -292,6 +351,9 @@ export default function FacturesWorkspace({
       chantiers.find((chantier) => chantier.id === formulaire.chantierId) ??
       null;
 
+    const devisAssocie =
+      devis.find((item) => item.id === formulaire.devisId) ?? null;
+
     const montantHt = convertirNombre(formulaire.montantHt);
     const tvaTaux = convertirNombre(formulaire.tvaTaux);
     const acompteDeduit = convertirNombre(formulaire.acompteDeduit);
@@ -312,8 +374,15 @@ export default function FacturesWorkspace({
           objet: formulaire.objet.trim(),
           clientId: clientAssocie.id,
           clientNom: clientAssocie.nom,
+          clientAdresse: clientAssocie.adresse ?? "",
+          clientCodePostal: clientAssocie.codePostal ?? "",
+          clientVille: clientAssocie.ville ?? "",
+          clientEmail: clientAssocie.email ?? "",
+          clientTelephone: clientAssocie.telephone ?? "",
           chantierId: chantierAssocie?.id ?? "",
           chantierTitre: chantierAssocie?.titre ?? "",
+          devisId: devisAssocie?.id ?? "",
+          devisReference: devisAssocie?.id ?? "",
           dateEmission: formulaire.dateEmission,
           dateEcheance: formulaire.dateEcheance,
           datePaiement: formulaire.datePaiement,
@@ -339,8 +408,15 @@ export default function FacturesWorkspace({
         objet: formulaire.objet.trim(),
         clientId: clientAssocie.id,
         clientNom: clientAssocie.nom,
+        clientAdresse: clientAssocie.adresse ?? "",
+        clientCodePostal: clientAssocie.codePostal ?? "",
+        clientVille: clientAssocie.ville ?? "",
+        clientEmail: clientAssocie.email ?? "",
+        clientTelephone: clientAssocie.telephone ?? "",
         chantierId: chantierAssocie?.id ?? "",
         chantierTitre: chantierAssocie?.titre ?? "",
+        devisId: devisAssocie?.id ?? "",
+        devisReference: devisAssocie?.id ?? "",
         dateEmission: formulaire.dateEmission,
         dateEcheance: formulaire.dateEcheance,
         datePaiement: formulaire.datePaiement,
@@ -437,11 +513,7 @@ export default function FacturesWorkspace({
   const handleEnvoyerParMail = async () => {
     if (!factureSelectionnee) return;
 
-    const clientAssocie =
-      clients.find((client) => client.id === factureSelectionnee.clientId) ??
-      null;
-
-    const emailClient = clientAssocie?.email?.trim();
+    const emailClient = factureSelectionnee.clientEmail?.trim();
 
     if (!emailClient) {
       alert("Ce client n’a pas d’adresse email renseignée.");
@@ -654,6 +726,9 @@ export default function FacturesWorkspace({
                         {facture.chantierTitre || "Sans chantier associé"}
                       </p>
                       <p className="text-sm text-slate-600">
+                        Devis : {facture.devisReference || "Aucun devis lié"}
+                      </p>
+                      <p className="text-sm text-slate-600">
                         Émission : {facture.dateEmission || "Non renseignée"}
                       </p>
                       <p className="text-sm font-semibold text-slate-900">
@@ -695,6 +770,24 @@ export default function FacturesWorkspace({
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Devis lié
+                  </label>
+                  <select
+                    value={formulaire.devisId}
+                    onChange={(e) => handleSelectionDevis(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                  >
+                    <option value="">Aucun devis lié</option>
+                    {devis.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.id} — {item.client}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Objet
@@ -1006,7 +1099,28 @@ export default function FacturesWorkspace({
                     {factureSelectionnee.clientNom}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
+                    {factureSelectionnee.clientAdresse || "Adresse non renseignée"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {[
+                      factureSelectionnee.clientCodePostal,
+                      factureSelectionnee.clientVille,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Coordonnées non renseignées"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {factureSelectionnee.clientEmail || "Email non renseigné"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {factureSelectionnee.clientTelephone ||
+                      "Téléphone non renseigné"}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
                     {factureSelectionnee.chantierTitre || "Sans chantier lié"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Devis : {factureSelectionnee.devisReference || "Aucun devis lié"}
                   </p>
                 </div>
 
