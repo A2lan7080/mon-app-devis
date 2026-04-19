@@ -32,22 +32,17 @@ export default function DevisSearch({
 }: DevisSearchProps) {
   return (
     <div className="mb-5 space-y-4 sm:mb-6">
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-xl font-semibold sm:text-2xl">Liste des devis</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Recherche, filtre et ouvre rapidement un devis.
-          </p>
-        </div>
-
-        <input
-          type="text"
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher un devis, client, statut ou montant"
-          className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-        />
+      <div>
+        <h3 className="text-xl font-semibold sm:text-2xl">Liste des devis</h3>
       </div>
+
+      <input
+        type="text"
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+        placeholder="Rechercher un devis, client, statut ou montant"
+        className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+      />
 
       <div className="space-y-4">
         <div>
