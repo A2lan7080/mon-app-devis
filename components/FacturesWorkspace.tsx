@@ -76,17 +76,11 @@ function convertirNombre(valeur: string) {
   return nombre;
 }
 
-function calculerMontantTva(facture: {
-  montantHt: number;
-  tvaTaux: number;
-}) {
+function calculerMontantTva(facture: { montantHt: number; tvaTaux: number }) {
   return facture.montantHt * (facture.tvaTaux / 100);
 }
 
-function calculerTotalTtc(facture: {
-  montantHt: number;
-  tvaTaux: number;
-}) {
+function calculerTotalTtc(facture: { montantHt: number; tvaTaux: number }) {
   return facture.montantHt + calculerMontantTva(facture);
 }
 
@@ -515,8 +509,8 @@ export default function FacturesWorkspace({
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-slate-500">
             Gère les factures de ton entreprise.
           </p>
@@ -531,51 +525,53 @@ export default function FacturesWorkspace({
 
         <button
           onClick={afficherFormulaireFacture ? fermerFormulaire : ouvrirCreation}
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
         >
           {afficherFormulaireFacture ? "Fermer" : "Nouvelle facture"}
         </button>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Factures actives</p>
-          <p className="mt-2 text-3xl font-bold">{totalFactures}</p>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Factures actives</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {totalFactures}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Payées</p>
-          <p className="mt-2 text-3xl font-bold">{totalPayees}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">Payées</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalPayees}</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">En retard</p>
-          <p className="mt-2 text-3xl font-bold">{totalRetard}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">En retard</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalRetard}</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Net facturé</p>
-          <p className="mt-2 text-3xl font-bold">
+        <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <p className="text-xs text-slate-500 sm:text-sm">Net facturé</p>
+          <p className="mt-2 break-words text-2xl font-bold sm:text-3xl">
             {formatMontant(totalNetFacture)}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]">
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_220px]">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          <div className="grid gap-4">
             <input
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher une facture, client, chantier..."
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             />
 
             <select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value as FiltreStatut)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             >
               <option value="Tous">Tous les statuts</option>
               {STATUTS_FACTURE.map((statut) => (
@@ -590,7 +586,7 @@ export default function FacturesWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
             >
               <option value="actifs">Factures actives</option>
               <option value="archives">Factures archivées</option>
@@ -598,7 +594,7 @@ export default function FacturesWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3 overflow-hidden">
             {facturesFiltrees.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucune facture trouvée.
@@ -612,52 +608,58 @@ export default function FacturesWorkspace({
                     setModeEdition(false);
                     setAfficherFormulaire(false);
                   }}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
                     factureSelectionnee?.id === facture.id
                       ? "border-slate-900 bg-slate-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-slate-500">{facture.reference}</p>
-                      <h3 className="mt-1 text-base font-semibold text-slate-900">
-                        {facture.objet}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {facture.clientNom}
+                  <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-500">
+                          {facture.reference}
+                        </p>
+                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                          {facture.objet}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {facture.clientNom}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                            facture.statut
+                          )}`}
+                        >
+                          {facture.statut}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            facture.archive
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {facture.archive ? "Archivée" : "Active"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
+                      <p className="text-sm text-slate-600">
+                        {facture.chantierTitre || "Sans chantier associé"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        Émission : {facture.dateEmission || "Non renseignée"}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {formatMontant(calculerNetAPayer(facture))}
                       </p>
                     </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                          facture.statut
-                        )}`}
-                      >
-                        {facture.statut}
-                      </span>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          facture.archive
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-700"
-                        }`}
-                      >
-                        {facture.archive ? "Archivée" : "Active"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1 text-sm text-slate-600">
-                    <p>{facture.chantierTitre || "Sans chantier associé"}</p>
-                    <p>
-                      Émission : {facture.dateEmission || "Non renseignée"}
-                    </p>
-                    <p className="font-semibold text-slate-900">
-                      {formatMontant(calculerNetAPayer(facture))}
-                    </p>
                   </div>
                 </button>
               ))
@@ -665,19 +667,19 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des factures...
             </div>
           ) : afficherFormulaireFacture ? (
             <>
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-sm text-slate-500">
                     {modeEdition ? "Édition facture" : "Nouvelle facture"}
                   </p>
-                  <h3 className="mt-1 text-2xl font-bold">
+                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
                     {modeEdition && factureSelectionnee
                       ? factureSelectionnee.reference
                       : "Créer une facture"}
@@ -686,7 +688,7 @@ export default function FacturesWorkspace({
 
                 <button
                   onClick={fermerFormulaire}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
                 >
                   Fermer
                 </button>
@@ -867,7 +869,7 @@ export default function FacturesWorkspace({
                   />
                 </div>
 
-                <div>
+                <div className="md:col-span-2 lg:max-w-xs">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Acompte déduit
                   </label>
@@ -906,7 +908,7 @@ export default function FacturesWorkspace({
                 <button
                   onClick={enregistrerFacture}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {sauvegardeEnCours
                     ? "Enregistrement..."
@@ -918,7 +920,7 @@ export default function FacturesWorkspace({
                 <button
                   onClick={fermerFormulaire}
                   disabled={sauvegardeEnCours}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   Annuler
                 </button>
@@ -926,36 +928,40 @@ export default function FacturesWorkspace({
             </>
           ) : factureSelectionnee ? (
             <>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Fiche facture</p>
-                  <h3 className="mt-1 text-2xl font-bold">
-                    {factureSelectionnee.reference}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {factureSelectionnee.objet}
-                  </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-500">Fiche facture</p>
+                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                      {factureSelectionnee.reference}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {factureSelectionnee.objet}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                        factureSelectionnee.statut
+                      )}`}
+                    >
+                      {factureSelectionnee.statut}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                      factureSelectionnee.statut
-                    )}`}
-                  >
-                    {factureSelectionnee.statut}
-                  </span>
-
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   <button
                     onClick={ouvrirEdition}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Modifier
                   </button>
 
                   <button
                     onClick={handleExporterPdf}
-                    className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                    className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                   >
                     Export PDF
                   </button>
@@ -963,7 +969,7 @@ export default function FacturesWorkspace({
                   <button
                     onClick={handleEnvoyerParMail}
                     disabled={envoiEnCours}
-                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
                   </button>
@@ -971,14 +977,14 @@ export default function FacturesWorkspace({
                   {!factureSelectionnee.archive ? (
                     <button
                       onClick={archiverFacture}
-                      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
                     >
                       Archiver
                     </button>
                   ) : (
                     <button
                       onClick={restaurerFacture}
-                      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
                     >
                       Restaurer
                     </button>
@@ -986,7 +992,7 @@ export default function FacturesWorkspace({
 
                   <button
                     onClick={supprimerFacture}
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
                   >
                     Supprimer
                   </button>
@@ -1004,7 +1010,7 @@ export default function FacturesWorkspace({
                   </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Émission</p>
                     <p className="mt-1 font-semibold">
@@ -1019,7 +1025,7 @@ export default function FacturesWorkspace({
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
                     <p className="text-sm text-slate-500">Paiement</p>
                     <p className="mt-1 font-semibold">
                       {factureSelectionnee.datePaiement || "Non renseignée"}
@@ -1027,10 +1033,10 @@ export default function FacturesWorkspace({
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Montant HT</p>
-                    <p className="mt-1 font-semibold">
+                    <p className="mt-1 break-words font-semibold">
                       {formatMontant(factureSelectionnee.montantHt)}
                     </p>
                   </div>
@@ -1039,21 +1045,21 @@ export default function FacturesWorkspace({
                     <p className="text-sm text-slate-500">
                       TVA ({factureSelectionnee.tvaTaux}%)
                     </p>
-                    <p className="mt-1 font-semibold">
+                    <p className="mt-1 break-words font-semibold">
                       {formatMontant(totalTvaSelectionnee)}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Total TTC</p>
-                    <p className="mt-1 font-semibold">
+                    <p className="mt-1 break-words font-semibold">
                       {formatMontant(totalTtcSelectionnee)}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-slate-500">Net à payer</p>
-                    <p className="mt-1 font-semibold">
+                    <p className="mt-1 break-words font-semibold">
                       {formatMontant(netAPayerSelectionnee)}
                     </p>
                   </div>
