@@ -307,6 +307,7 @@ export default function FacturesWorkspace({
       devisId,
       objet: `Facture - ${devisSelectionne.id}`,
       clientId: clientAssocie?.id ?? prev.clientId,
+      chantierId: devisSelectionne.chantierId ?? "",
       montantHt: String(calculerTotalHt(devisSelectionne)),
       tvaTaux: String(devisSelectionne.tvaTaux),
       acompteDeduit: String(
@@ -354,6 +355,13 @@ export default function FacturesWorkspace({
     const devisAssocie =
       devis.find((item) => item.id === formulaire.devisId) ?? null;
 
+    const chantierAssocieFinal =
+      chantierAssocie ??
+      (devisAssocie?.chantierId
+        ? chantiers.find((chantier) => chantier.id === devisAssocie.chantierId) ??
+          null
+        : null);
+
     const montantHt = convertirNombre(formulaire.montantHt);
     const tvaTaux = convertirNombre(formulaire.tvaTaux);
     const acompteDeduit = convertirNombre(formulaire.acompteDeduit);
@@ -379,8 +387,9 @@ export default function FacturesWorkspace({
           clientVille: clientAssocie.ville ?? "",
           clientEmail: clientAssocie.email ?? "",
           clientTelephone: clientAssocie.telephone ?? "",
-          chantierId: chantierAssocie?.id ?? "",
-          chantierTitre: chantierAssocie?.titre ?? "",
+          chantierId: chantierAssocieFinal?.id ?? devisAssocie?.chantierId ?? "",
+          chantierTitre:
+            chantierAssocieFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
           devisId: devisAssocie?.id ?? "",
           devisReference: devisAssocie?.id ?? "",
           dateEmission: formulaire.dateEmission,
@@ -413,8 +422,9 @@ export default function FacturesWorkspace({
         clientVille: clientAssocie.ville ?? "",
         clientEmail: clientAssocie.email ?? "",
         clientTelephone: clientAssocie.telephone ?? "",
-        chantierId: chantierAssocie?.id ?? "",
-        chantierTitre: chantierAssocie?.titre ?? "",
+        chantierId: chantierAssocieFinal?.id ?? devisAssocie?.chantierId ?? "",
+        chantierTitre:
+          chantierAssocieFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
         devisId: devisAssocie?.id ?? "",
         devisReference: devisAssocie?.id ?? "",
         dateEmission: formulaire.dateEmission,
