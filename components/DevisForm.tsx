@@ -16,7 +16,7 @@ import {
   genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
-import type { Chantier } from "../types/chantiers";
+import type { Chantier, StatutChantier } from "../types/chantiers";
 import type { Client, TypeClient } from "../types/clients";
 import type {
   Devis,
@@ -44,6 +44,13 @@ type DevisFormProps = {
 };
 
 const UNITES_PREDEFINIES = ["pièce", "forfait", "m²", "ml", "heure", "jour"];
+const STATUTS_CHANTIER: StatutChantier[] = [
+  "À planifier",
+  "Planifié",
+  "En cours",
+  "Terminé",
+  "Suspendu",
+];
 
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
@@ -86,6 +93,8 @@ export default function DevisForm({
   const [chantierSelectionneId, setChantierSelectionneId] = useState("");
   const [nouveauChantierDateDebut, setNouveauChantierDateDebut] = useState("");
   const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
+  const [nouveauChantierStatut, setNouveauChantierStatut] =
+    useState<StatutChantier>("À planifier");
 
   const { clients } = useEntrepriseClients({
     authChargee: true,
@@ -147,6 +156,7 @@ export default function DevisForm({
     setChantierSelectionneId("");
     setNouveauChantierDateDebut("");
     setNouveauChantierDateFin("");
+    setNouveauChantierStatut("À planifier");
     setNouveauDevis({
       client: "",
       statut: "Brouillon",
@@ -255,6 +265,7 @@ export default function DevisForm({
 
     setNouveauChantierDateDebut(chantier.dateDebut ?? "");
     setNouveauChantierDateFin(chantier.dateFin ?? "");
+    setNouveauChantierStatut(chantier.statut ?? "À planifier");
 
     if (clientAssocie) {
       setClientSelectionneId(clientAssocie.id);
@@ -368,7 +379,7 @@ export default function DevisForm({
           ville: nouveauDevis.ville.trim(),
           dateDebut: nouveauChantierDateDebut,
           dateFin: nouveauChantierDateFin,
-          statut: "À planifier",
+          statut: nouveauChantierStatut,
           description: "",
           notes: "",
           entrepriseId,
@@ -510,6 +521,25 @@ export default function DevisForm({
 
         {!chantierSelectionneId && nouveauDevis.chantierTitre.trim() && (
           <>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Statut du chantier
+              </label>
+              <select
+                value={nouveauChantierStatut}
+                onChange={(e) =>
+                  setNouveauChantierStatut(e.target.value as StatutChantier)
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+              >
+                {STATUTS_CHANTIER.map((statut) => (
+                  <option key={statut} value={statut}>
+                    {statut}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date début chantier
