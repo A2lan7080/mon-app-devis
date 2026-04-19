@@ -84,6 +84,8 @@ export default function DevisForm({
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [clientSelectionneId, setClientSelectionneId] = useState("");
   const [chantierSelectionneId, setChantierSelectionneId] = useState("");
+  const [nouveauChantierDateDebut, setNouveauChantierDateDebut] = useState("");
+  const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
 
   const { clients } = useEntrepriseClients({
     authChargee: true,
@@ -143,6 +145,8 @@ export default function DevisForm({
   const reinitialiserFormulaire = () => {
     setClientSelectionneId("");
     setChantierSelectionneId("");
+    setNouveauChantierDateDebut("");
+    setNouveauChantierDateFin("");
     setNouveauDevis({
       client: "",
       statut: "Brouillon",
@@ -248,6 +252,9 @@ export default function DevisForm({
           }
         : {}),
     }));
+
+    setNouveauChantierDateDebut(chantier.dateDebut ?? "");
+    setNouveauChantierDateFin(chantier.dateFin ?? "");
 
     if (clientAssocie) {
       setClientSelectionneId(clientAssocie.id);
@@ -359,8 +366,8 @@ export default function DevisForm({
           adresse: nouveauDevis.adresse.trim(),
           codePostal: nouveauDevis.codePostal.trim(),
           ville: nouveauDevis.ville.trim(),
-          dateDebut: "",
-          dateFin: "",
+          dateDebut: nouveauChantierDateDebut,
+          dateFin: nouveauChantierDateFin,
           statut: "À planifier",
           description: "",
           notes: "",
@@ -495,10 +502,39 @@ export default function DevisForm({
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
           />
           <p className="mt-2 text-xs text-slate-400">
-            Si aucun chantier n’est sélectionné mais qu’un titre est saisi, le
-            chantier sera créé automatiquement à l’enregistrement du devis.
+            Si aucun client ni chantier n’est sélectionné, ils pourront être
+            créés automatiquement à l’enregistrement du devis selon les
+            informations saisies.
           </p>
         </div>
+
+        {!chantierSelectionneId && nouveauDevis.chantierTitre.trim() && (
+          <>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Date début chantier
+              </label>
+              <input
+                type="date"
+                value={nouveauChantierDateDebut}
+                onChange={(e) => setNouveauChantierDateDebut(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Date fin chantier
+              </label>
+              <input
+                type="date"
+                value={nouveauChantierDateFin}
+                onChange={(e) => setNouveauChantierDateFin(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+              />
+            </div>
+          </>
+        )}
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
