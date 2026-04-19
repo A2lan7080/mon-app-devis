@@ -228,15 +228,8 @@ export default function AdminShell({
         <section className="min-w-0 flex-1 p-4 pb-28 md:p-8 md:pb-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm md:hidden">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
-
-                <button
-                  onClick={() => setMenuMobileOuvert(true)}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm"
-                >
-                  Menu
-                </button>
               </div>
             </div>
 
@@ -274,6 +267,13 @@ export default function AdminShell({
           </div>
         </section>
       </div>
+
+      <button
+        onClick={() => setMenuMobileOuvert(true)}
+        className="fixed right-4 top-6 z-40 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-xl md:hidden"
+      >
+        Menu
+      </button>
 
       {menuMobileOuvert && (
         <div className="fixed inset-0 z-50 md:hidden">
