@@ -38,8 +38,13 @@ export const devisInitiaux: Devis[] = [
     statut: "Brouillon",
     date: "10/04/2026",
     adresse: "18 Rue de la Gare, 6600 Bastogne",
+    codePostal: "6600",
+    ville: "Bastogne",
     email: "dupont@menuiserie.be",
     telephone: "+32 470 10 20 30",
+    typeClient: "Professionnel",
+    societe: "Dupont Menuiserie",
+    tvaClient: "BE0456.123.789",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -71,8 +76,13 @@ export const devisInitiaux: Devis[] = [
     statut: "Envoyé",
     date: "09/04/2026",
     adresse: "6 Avenue du Bois, 6900 Marche-en-Famenne",
+    codePostal: "6900",
+    ville: "Marche-en-Famenne",
     email: "atelier@lambert.be",
     telephone: "+32 471 44 55 66",
+    typeClient: "Professionnel",
+    societe: "Atelier Lambert",
+    tvaClient: "BE0678.234.901",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -104,8 +114,13 @@ export const devisInitiaux: Devis[] = [
     statut: "Accepté",
     date: "07/04/2026",
     adresse: "44 Clos des Tilleuls, 4900 Spa",
+    codePostal: "4900",
+    ville: "Spa",
     email: "bertrand@maison.be",
     telephone: "+32 474 88 11 22",
+    typeClient: "Particulier",
+    societe: "",
+    tvaClient: "",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -137,8 +152,13 @@ export const devisInitiaux: Devis[] = [
     statut: "Refusé",
     date: "05/04/2026",
     adresse: "2 Chemin des Prés, 4960 Malmedy",
+    codePostal: "4960",
+    ville: "Malmedy",
     email: "contact@residencebois.be",
     telephone: "+32 495 22 33 44",
+    typeClient: "Professionnel",
+    societe: "Résidence Bois",
+    tvaClient: "BE0890.345.678",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
