@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { doc, setDoc } from "firebase/firestore";
+import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import {
   creerLigneVide,
@@ -15,6 +16,7 @@ import {
   genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
+import type { Chantier } from "../types/chantiers";
 import type { Client, TypeClient } from "../types/clients";
 import type {
   Devis,
@@ -54,6 +56,17 @@ function genererReferenceClient(clients: Client[]) {
   return `CLI-${String(plusGrandNumero + 1).padStart(4, "0")}`;
 }
 
+function genererReferenceChantier(chantiers: Chantier[]) {
+  const plusGrandNumero = chantiers.reduce((max, chantier) => {
+    const match = chantier.reference?.match(/CH-(\d+)/);
+    if (!match) return max;
+    const numero = Number(match[1]);
+    return Number.isNaN(numero) ? max : Math.max(max, numero);
+  }, 0);
+
+  return `CH-${String(plusGrandNumero + 1).padStart(4, "0")}`;
+}
+
 function creerLigneVideAvecUnite(): NouvelleLigneState {
   return {
     ...creerLigneVide(),
@@ -70,8 +83,16 @@ export default function DevisForm({
 }: DevisFormProps) {
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [clientSelectionneId, setClientSelectionneId] = useState("");
+  const [chantierSelectionneId, setChantierSelectionneId] = useState("");
 
   const { clients } = useEntrepriseClients({
+    authChargee: true,
+    userId: createdByUid ?? null,
+    entrepriseIdCourante: entrepriseId ?? null,
+    estAdmin: true,
+  });
+
+  const { chantiers } = useEntrepriseChantiers({
     authChargee: true,
     userId: createdByUid ?? null,
     entrepriseIdCourante: entrepriseId ?? null,
@@ -81,6 +102,11 @@ export default function DevisForm({
   const clientsActifs = useMemo(
     () => clients.filter((client) => !client.archive),
     [clients]
+  );
+
+  const chantiersActifs = useMemo(
+    () => chantiers.filter((chantier) => !chantier.archive),
+    [chantiers]
   );
 
   const [nouveauDevis, setNouveauDevis] = useState<
@@ -101,6 +127,8 @@ export default function DevisForm({
     typeClient: "Particulier",
     societe: "",
     tvaClient: "",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: String(TVA_PAR_DEFAUT),
     acomptePourcentage: "30",
     validiteJours: "30",
@@ -114,6 +142,7 @@ export default function DevisForm({
 
   const reinitialiserFormulaire = () => {
     setClientSelectionneId("");
+    setChantierSelectionneId("");
     setNouveauDevis({
       client: "",
       statut: "Brouillon",
@@ -126,6 +155,8 @@ export default function DevisForm({
       typeClient: "Particulier",
       societe: "",
       tvaClient: "",
+      chantierId: "",
+      chantierTitre: "",
       tvaTaux: String(TVA_PAR_DEFAUT),
       acomptePourcentage: "30",
       validiteJours: "30",
@@ -180,6 +211,47 @@ export default function DevisForm({
       societe: client.societe ?? "",
       tvaClient: client.tva ?? "",
     }));
+  };
+
+  const handleSelectionChantier = (chantierId: string) => {
+    setChantierSelectionneId(chantierId);
+
+    if (!chantierId) {
+      setNouveauDevis((prev) => ({
+        ...prev,
+        chantierId: "",
+      }));
+      return;
+    }
+
+    const chantier = chantiersActifs.find((item) => item.id === chantierId);
+    if (!chantier) return;
+
+    const clientAssocie =
+      clientsActifs.find((client) => client.id === chantier.clientId) ?? null;
+
+    setNouveauDevis((prev) => ({
+      ...prev,
+      chantierId: chantier.id,
+      chantierTitre: chantier.titre ?? "",
+      adresse: chantier.adresse ?? prev.adresse,
+      codePostal: chantier.codePostal ?? prev.codePostal,
+      ville: chantier.ville ?? prev.ville,
+      ...(clientAssocie
+        ? {
+            client: clientAssocie.nom ?? prev.client,
+            email: clientAssocie.email ?? prev.email,
+            telephone: clientAssocie.telephone ?? prev.telephone,
+            typeClient: clientAssocie.typeClient ?? prev.typeClient,
+            societe: clientAssocie.societe ?? prev.societe,
+            tvaClient: clientAssocie.tva ?? prev.tvaClient,
+          }
+        : {}),
+    }));
+
+    if (clientAssocie) {
+      setClientSelectionneId(clientAssocie.id);
+    }
   };
 
   const handleCreerDevis = async () => {
@@ -240,6 +312,9 @@ export default function DevisForm({
     try {
       setSauvegardeEnCours(true);
 
+      let finalClientId = clientSelectionneId;
+      let finalClientNom = nouveauDevis.client.trim();
+
       if (!clientSelectionneId) {
         const referenceClient = genererReferenceClient(clients);
 
@@ -265,6 +340,40 @@ export default function DevisForm({
         };
 
         await setDoc(doc(db, "clients", nouveauClient.id), nouveauClient);
+        finalClientId = nouveauClient.id;
+        finalClientNom = nouveauClient.nom;
+      }
+
+      let finalChantierId = chantierSelectionneId;
+      let finalChantierTitre = nouveauDevis.chantierTitre.trim();
+
+      if (!chantierSelectionneId && nouveauDevis.chantierTitre.trim()) {
+        const referenceChantier = genererReferenceChantier(chantiers);
+
+        const nouveauChantier: Chantier = {
+          id: `${entrepriseId}-ch-${maintenant}`,
+          reference: referenceChantier,
+          titre: nouveauDevis.chantierTitre.trim(),
+          clientId: finalClientId,
+          clientNom: finalClientNom,
+          adresse: nouveauDevis.adresse.trim(),
+          codePostal: nouveauDevis.codePostal.trim(),
+          ville: nouveauDevis.ville.trim(),
+          dateDebut: "",
+          dateFin: "",
+          statut: "À planifier",
+          description: "",
+          notes: "",
+          entrepriseId,
+          createdByUid: uidCreateur,
+          archive: false,
+          createdAt: maintenant,
+          updatedAt: maintenant,
+        };
+
+        await setDoc(doc(db, "chantiers", nouveauChantier.id), nouveauChantier);
+        finalChantierId = nouveauChantier.id;
+        finalChantierTitre = nouveauChantier.titre;
       }
 
       const devisCree: DevisBusiness = {
@@ -282,6 +391,8 @@ export default function DevisForm({
         typeClient: nouveauDevis.typeClient,
         societe: nouveauDevis.societe.trim(),
         tvaClient: nouveauDevis.tvaClient.trim(),
+        chantierId: finalChantierId,
+        chantierTitre: finalChantierTitre,
         tvaTaux,
         lignes: lignesValides,
         acomptePourcentage,
@@ -346,9 +457,46 @@ export default function DevisForm({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Chantier existant
+          </label>
+          <select
+            value={chantierSelectionneId}
+            onChange={(e) => handleSelectionChantier(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          >
+            <option value="">Créer un nouveau chantier depuis ce devis</option>
+            {chantiersActifs.map((chantier) => (
+              <option key={chantier.id} value={chantier.id}>
+                {chantier.titre}
+                {chantier.clientNom ? ` — ${chantier.clientNom}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Titre du chantier
+          </label>
+          <input
+            type="text"
+            value={nouveauDevis.chantierTitre}
+            onChange={(e) =>
+              setNouveauDevis((prev) => ({
+                ...prev,
+                chantierTitre: e.target.value,
+              }))
+            }
+            placeholder="Ex. Rénovation cuisine, pose châssis, dressing sur mesure..."
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          />
           <p className="mt-2 text-xs text-slate-400">
-            Si aucun client n’est sélectionné, un nouveau client sera créé
-            automatiquement à l’enregistrement du devis.
+            Si aucun chantier n’est sélectionné mais qu’un titre est saisi, le
+            chantier sera créé automatiquement à l’enregistrement du devis.
           </p>
         </div>
 

@@ -2,7 +2,12 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { User } from "firebase/auth";
-import { deleteDoc, setDoc, updateDoc, type DocumentReference } from "firebase/firestore";
+import {
+  deleteDoc,
+  setDoc,
+  updateDoc,
+  type DocumentReference,
+} from "firebase/firestore";
 import { TVA_PAR_DEFAUT } from "../lib/devis-constants";
 import { exporterDevisPdf } from "../lib/export-devis-pdf";
 import {
@@ -28,8 +33,15 @@ export type EditFormState = {
   statut: StatutDevis;
   date: string;
   adresse: string;
+  codePostal: string;
+  ville: string;
   email: string;
   telephone: string;
+  typeClient: "Particulier" | "Professionnel";
+  societe: string;
+  tvaClient: string;
+  chantierId: string;
+  chantierTitre: string;
   tvaTaux: string;
   acomptePourcentage: string;
   validiteJours: string;
@@ -63,8 +75,15 @@ export function useDevisActions({
     statut: "Brouillon",
     date: "",
     adresse: "",
+    codePostal: "",
+    ville: "",
     email: "",
     telephone: "",
+    typeClient: "Particulier",
+    societe: "",
+    tvaClient: "",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: String(TVA_PAR_DEFAUT),
     acomptePourcentage: "30",
     validiteJours: "30",
@@ -78,8 +97,10 @@ export function useDevisActions({
       devisId,
     } as unknown as DocumentReference);
 
-  const withRef = (devisId: string, resolver: (devisId: string) => DocumentReference) =>
-    resolver(devisId);
+  const withRef = (
+    devisId: string,
+    resolver: (devisId: string) => DocumentReference
+  ) => resolver(devisId);
 
   const handleChangerStatut = async (
     nouveauStatut: StatutDevis,
@@ -109,8 +130,15 @@ export function useDevisActions({
       statut: devisSelectionne.statut,
       date: convertirDateVersInput(devisSelectionne.date),
       adresse: devisSelectionne.adresse,
+      codePostal: devisSelectionne.codePostal,
+      ville: devisSelectionne.ville,
       email: devisSelectionne.email,
       telephone: devisSelectionne.telephone,
+      typeClient: devisSelectionne.typeClient,
+      societe: devisSelectionne.societe,
+      tvaClient: devisSelectionne.tvaClient,
+      chantierId: devisSelectionne.chantierId,
+      chantierTitre: devisSelectionne.chantierTitre,
       tvaTaux: String(devisSelectionne.tvaTaux),
       acomptePourcentage: String(devisSelectionne.acomptePourcentage),
       validiteJours: String(devisSelectionne.validiteJours),
@@ -140,7 +168,7 @@ export function useDevisActions({
       {
         designation: "",
         quantite: "1",
-        unite: "",
+        unite: "forfait",
         prixUnitaire: "0",
       },
     ]);
@@ -209,8 +237,15 @@ export function useDevisActions({
         statut: editForm.statut,
         date: formaterDate(editForm.date),
         adresse: editForm.adresse.trim(),
+        codePostal: editForm.codePostal.trim(),
+        ville: editForm.ville.trim(),
         email: editForm.email.trim(),
         telephone: editForm.telephone.trim(),
+        typeClient: editForm.typeClient,
+        societe: editForm.societe.trim(),
+        tvaClient: editForm.tvaClient.trim(),
+        chantierId: editForm.chantierId.trim(),
+        chantierTitre: editForm.chantierTitre.trim(),
         tvaTaux,
         lignes: lignesValides,
         acomptePourcentage,
@@ -230,7 +265,8 @@ export function useDevisActions({
   const dupliquerDevis = async (
     resolver: (devisId: string) => DocumentReference
   ) => {
-    if (!devisSelectionne || !user || !entrepriseIdCourante || !estAdmin) return;
+    if (!devisSelectionne || !user || !entrepriseIdCourante || !estAdmin)
+      return;
 
     const numeroBase = genererNumeroDevis(devis);
     const nouveauId = `${entrepriseIdCourante}-${numeroBase}`;

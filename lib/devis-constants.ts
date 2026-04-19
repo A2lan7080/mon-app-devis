@@ -45,6 +45,8 @@ export const devisInitiaux: Devis[] = [
     typeClient: "Professionnel",
     societe: "Dupont Menuiserie",
     tvaClient: "BE0456.123.789",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -83,6 +85,8 @@ export const devisInitiaux: Devis[] = [
     typeClient: "Professionnel",
     societe: "Atelier Lambert",
     tvaClient: "BE0678.234.901",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -121,6 +125,8 @@ export const devisInitiaux: Devis[] = [
     typeClient: "Particulier",
     societe: "",
     tvaClient: "",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {
@@ -159,6 +165,8 @@ export const devisInitiaux: Devis[] = [
     typeClient: "Professionnel",
     societe: "Résidence Bois",
     tvaClient: "BE0890.345.678",
+    chantierId: "",
+    chantierTitre: "",
     tvaTaux: TVA_PAR_DEFAUT,
     lignes: [
       {

@@ -25,8 +25,15 @@ type EditFormState = {
   statut: StatutDevis;
   date: string;
   adresse: string;
+  codePostal: string;
+  ville: string;
   email: string;
   telephone: string;
+  typeClient: "Particulier" | "Professionnel";
+  societe: string;
+  tvaClient: string;
+  chantierId: string;
+  chantierTitre: string;
   tvaTaux: string;
   acomptePourcentage: string;
   validiteJours: string;
@@ -188,6 +195,17 @@ export default function DevisDetailPanel({
             <p className="mt-1 break-words text-lg font-semibold">
               {devisSelectionne.client}
             </p>
+            <p className="mt-2 text-sm text-slate-600">
+              {devisSelectionne.typeClient}
+              {devisSelectionne.societe ? ` · ${devisSelectionne.societe}` : ""}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Chantier lié</p>
+            <p className="mt-1 break-words font-semibold">
+              {devisSelectionne.chantierTitre || "Aucun chantier lié"}
+            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -195,6 +213,11 @@ export default function DevisDetailPanel({
               <p className="text-sm text-slate-500">Adresse</p>
               <p className="mt-1 break-words font-semibold">
                 {devisSelectionne.adresse || "Non renseignée"}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                {[devisSelectionne.codePostal, devisSelectionne.ville]
+                  .filter(Boolean)
+                  .join(" · ") || "Coordonnées non renseignées"}
               </p>
             </div>
 
@@ -205,6 +228,9 @@ export default function DevisDetailPanel({
               </p>
               <p className="mt-1 break-words font-semibold">
                 {devisSelectionne.telephone || "Non renseigné"}
+              </p>
+              <p className="mt-2 break-words text-sm text-slate-600">
+                TVA client : {devisSelectionne.tvaClient || "Non renseignée"}
               </p>
             </div>
           </div>
@@ -443,6 +469,23 @@ export default function DevisDetailPanel({
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
+            Chantier
+          </label>
+          <input
+            type="text"
+            value={editForm.chantierTitre}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                chantierTitre: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
           </label>
           <input
@@ -452,23 +495,6 @@ export default function DevisDetailPanel({
               setEditForm((prev) => ({
                 ...prev,
                 date: e.target.value,
-              }))
-            }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Adresse
-          </label>
-          <input
-            type="text"
-            value={editForm.adresse}
-            onChange={(e) =>
-              setEditForm((prev) => ({
-                ...prev,
-                adresse: e.target.value,
               }))
             }
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
@@ -495,6 +521,57 @@ export default function DevisDetailPanel({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Adresse
+          </label>
+          <input
+            type="text"
+            value={editForm.adresse}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                adresse: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Code postal
+          </label>
+          <input
+            type="text"
+            value={editForm.codePostal}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                codePostal: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Ville
+          </label>
+          <input
+            type="text"
+            value={editForm.ville}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                ville: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
         </div>
 
         <div>
@@ -525,6 +602,59 @@ export default function DevisDetailPanel({
               setEditForm((prev) => ({
                 ...prev,
                 telephone: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Type client
+          </label>
+          <select
+            value={editForm.typeClient}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                typeClient: e.target.value as "Particulier" | "Professionnel",
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="Particulier">Particulier</option>
+            <option value="Professionnel">Professionnel</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Société
+          </label>
+          <input
+            type="text"
+            value={editForm.societe}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                societe: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            TVA client
+          </label>
+          <input
+            type="text"
+            value={editForm.tvaClient}
+            onChange={(e) =>
+              setEditForm((prev) => ({
+                ...prev,
+                tvaClient: e.target.value,
               }))
             }
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"

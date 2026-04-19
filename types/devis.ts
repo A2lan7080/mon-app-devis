@@ -21,6 +21,8 @@ export type Devis = {
   typeClient: "Particulier" | "Professionnel";
   societe: string;
   tvaClient: string;
+  chantierId: string;
+  chantierTitre: string;
   tvaTaux: number;
   lignes: LigneDevis[];
 };
@@ -37,6 +39,8 @@ export type NouveauDevisState = {
   typeClient: "Particulier" | "Professionnel";
   societe: string;
   tvaClient: string;
+  chantierId: string;
+  chantierTitre: string;
   tvaTaux: string;
 };
 
