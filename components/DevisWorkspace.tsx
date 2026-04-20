@@ -1,11 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import DevisDetailPanel from "./DevisDetailPanel";
 import DevisForm from "./DevisForm";
 import DevisKpiCards from "./DevisKpiCards";
 import DevisList from "./DevisList";
 import DevisSearch from "./DevisSearch";
+import MobileFullscreenModal from "./MobileFullscreenModal";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import type { DevisBusiness, EditFormState } from "../hooks/useDevisActions";
 import type { NouvelleLigneState, StatutDevis } from "../types/devis";
@@ -100,18 +102,19 @@ export default function DevisWorkspace({
   onDevisCree,
   onCloseFormulaire,
 }: Props) {
+  const titreMobile = useMemo(() => {
+    if (afficherFormulaire) return "Nouveau devis";
+    if (!devisSelectionne) return "Détail devis";
+    return modeEdition ? `Édition ${devisSelectionne.id}` : devisSelectionne.id;
+  }, [afficherFormulaire, devisSelectionne, modeEdition]);
+
+  const fermerDetailMobile = () => {
+    setModeEdition(false);
+    setDevisSelectionneId(null);
+  };
+
   return (
     <>
-      {afficherFormulaire && (
-        <DevisForm
-          devis={devis}
-          entrepriseId={entrepriseId}
-          createdByUid={createdByUid}
-          onDevisCree={onDevisCree}
-          onClose={onCloseFormulaire}
-        />
-      )}
-
       <DevisKpiCards
         totalDevis={totalDevis}
         totalBrouillons={totalBrouillons}
@@ -139,31 +142,84 @@ export default function DevisWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          <DevisDetailPanel
-            devisSelectionne={devisSelectionne}
-            modeEdition={modeEdition}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            editLignes={editLignes}
-            setModeEdition={setModeEdition}
-            ouvrirEdition={ouvrirEdition}
-            annulerEdition={annulerEdition}
-            ajouterLigneEdition={ajouterLigneEdition}
-            supprimerLigneEdition={supprimerLigneEdition}
-            mettreAJourLigneEdition={mettreAJourLigneEdition}
-            enregistrerEdition={enregistrerEdition}
-            dupliquerDevis={dupliquerDevis}
-            supprimerDevis={supprimerDevis}
-            archiverDevis={archiverDevis}
-            restaurerDevis={restaurerDevis}
-            handleExporterPdf={handleExporterPdf}
-            handleEnvoyerParMail={handleEnvoyerParMail}
-            envoiEnCours={envoiEnCours}
-            handleChangerStatut={handleChangerStatut}
-          />
+        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6 xl:block">
+          {afficherFormulaire ? (
+            <DevisForm
+              devis={devis}
+              entrepriseId={entrepriseId}
+              createdByUid={createdByUid}
+              onDevisCree={onDevisCree}
+              onClose={onCloseFormulaire}
+            />
+          ) : (
+            <DevisDetailPanel
+              devisSelectionne={devisSelectionne}
+              modeEdition={modeEdition}
+              editForm={editForm}
+              setEditForm={setEditForm}
+              editLignes={editLignes}
+              setModeEdition={setModeEdition}
+              ouvrirEdition={ouvrirEdition}
+              annulerEdition={annulerEdition}
+              ajouterLigneEdition={ajouterLigneEdition}
+              supprimerLigneEdition={supprimerLigneEdition}
+              mettreAJourLigneEdition={mettreAJourLigneEdition}
+              enregistrerEdition={enregistrerEdition}
+              dupliquerDevis={dupliquerDevis}
+              supprimerDevis={supprimerDevis}
+              archiverDevis={archiverDevis}
+              restaurerDevis={restaurerDevis}
+              handleExporterPdf={handleExporterPdf}
+              handleEnvoyerParMail={handleEnvoyerParMail}
+              envoiEnCours={envoiEnCours}
+              handleChangerStatut={handleChangerStatut}
+            />
+          )}
         </div>
       </div>
+
+      <MobileFullscreenModal
+        open={afficherFormulaire}
+        title={titreMobile}
+        onClose={onCloseFormulaire}
+      >
+        <DevisForm
+          devis={devis}
+          entrepriseId={entrepriseId}
+          createdByUid={createdByUid}
+          onDevisCree={onDevisCree}
+          onClose={onCloseFormulaire}
+        />
+      </MobileFullscreenModal>
+
+      <MobileFullscreenModal
+        open={!afficherFormulaire && devisSelectionne !== null}
+        title={titreMobile}
+        onClose={fermerDetailMobile}
+      >
+        <DevisDetailPanel
+          devisSelectionne={devisSelectionne}
+          modeEdition={modeEdition}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          editLignes={editLignes}
+          setModeEdition={setModeEdition}
+          ouvrirEdition={ouvrirEdition}
+          annulerEdition={annulerEdition}
+          ajouterLigneEdition={ajouterLigneEdition}
+          supprimerLigneEdition={supprimerLigneEdition}
+          mettreAJourLigneEdition={mettreAJourLigneEdition}
+          enregistrerEdition={enregistrerEdition}
+          dupliquerDevis={dupliquerDevis}
+          supprimerDevis={supprimerDevis}
+          archiverDevis={archiverDevis}
+          restaurerDevis={restaurerDevis}
+          handleExporterPdf={handleExporterPdf}
+          handleEnvoyerParMail={handleEnvoyerParMail}
+          envoiEnCours={envoiEnCours}
+          handleChangerStatut={handleChangerStatut}
+        />
+      </MobileFullscreenModal>
     </>
   );
 }

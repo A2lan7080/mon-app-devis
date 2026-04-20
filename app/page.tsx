@@ -275,7 +275,7 @@ export default function Home() {
           setFiltreStatut={setFiltreStatut}
           filtreArchivage={filtreArchivage}
           setFiltreArchivage={setFiltreArchivage}
-          devisSelectionneId={devisSelectionne?.id ?? null}
+          devisSelectionneId={devisSelectionneId}
           setDevisSelectionneId={setDevisSelectionneId}
           totalDevis={totalDevis}
           totalBrouillons={totalBrouillons}
