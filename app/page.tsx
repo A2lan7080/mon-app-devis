@@ -245,6 +245,9 @@ export default function Home() {
           totalBrouillons={totalBrouillons}
           totalAcceptes={totalAcceptes}
           totalRefuses={totalRefuses}
+          entrepriseId={entrepriseIdCourante ?? undefined}
+          createdByUid={user?.uid}
+          authChargee={authChargee}
         />
       ) : vueAffichee === "clients" ? (
         <ClientsWorkspace

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import AdminDashboard from "./AdminDashboard";
-import { entreprise as entrepriseParDefaut } from "../lib/devis-constants";
-import type { Entreprise } from "../types/devis";
+import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 
 type Props = {
   valeurBusinessTotale: number;
@@ -18,6 +16,9 @@ type Props = {
   totalBrouillons: number;
   totalAcceptes: number;
   totalRefuses: number;
+  entrepriseId?: string;
+  createdByUid?: string;
+  authChargee?: boolean;
 };
 
 export default function AdminWorkspace({
@@ -33,9 +34,21 @@ export default function AdminWorkspace({
   totalBrouillons,
   totalAcceptes,
   totalRefuses,
+  entrepriseId,
+  createdByUid,
+  authChargee = true,
 }: Props) {
-  const [entreprise, setEntreprise] = useState<Entreprise>(entrepriseParDefaut);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>("");
+  const {
+    entrepriseSettings,
+    setEntrepriseSettings,
+    chargementEntreprise,
+    sauvegardeEntrepriseEnCours,
+    enregistrerEntreprise,
+  } = useEntrepriseSettings({
+    entrepriseIdCourante: entrepriseId ?? null,
+    userId: createdByUid ?? null,
+    authChargee,
+  });
 
   return (
     <AdminDashboard
@@ -51,10 +64,11 @@ export default function AdminWorkspace({
       totalBrouillons={totalBrouillons}
       totalAcceptes={totalAcceptes}
       totalRefuses={totalRefuses}
-      entreprise={entreprise}
-      setEntreprise={setEntreprise}
-      logoPreviewUrl={logoPreviewUrl}
-      setLogoPreviewUrl={setLogoPreviewUrl}
+      entreprise={entrepriseSettings}
+      setEntreprise={setEntrepriseSettings}
+      chargementEntreprise={chargementEntreprise}
+      sauvegardeEntrepriseEnCours={sauvegardeEntrepriseEnCours}
+      enregistrerEntreprise={enregistrerEntreprise}
     />
   );
 }
