@@ -35,8 +35,6 @@ export function useEntreprisePrestations({
       return;
     }
 
-    setChargementInterne(true);
-
     const q = query(
       collection(db, "prestationsBibliotheque"),
       where("entrepriseId", "==", entrepriseIdCourante)
