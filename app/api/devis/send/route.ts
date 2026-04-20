@@ -4,7 +4,7 @@ import {
   renderDevisEmailHtml,
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
-import { entreprise } from "../../../../lib/devis-constants";
+import { getEntrepriseSettings } from "../../../../lib/get-entreprise-settings";
 import type { Devis } from "../../../../types/devis";
 
 export const runtime = "nodejs";
@@ -56,16 +56,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const entreprise = await getEntrepriseSettings(devis.entrepriseId ?? null);
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const subject = `Devis ${devis.id} - ${entreprise.nom}`;
+    const nomEntreprise = entreprise.nom?.trim() || "Batiflow";
+    const subject = `Devis ${devis.id} - ${nomEntreprise}`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
       to: [toEmail],
       subject,
-      html: renderDevisEmailHtml(devis),
-      text: renderDevisEmailText(devis),
+      html: renderDevisEmailHtml(devis, entreprise),
+      text: renderDevisEmailText(devis, entreprise),
     });
 
     if (error) {

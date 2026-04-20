@@ -22,7 +22,7 @@ export async function getEntrepriseSettings(
   }
 
   try {
-    const ref = doc(db, "entrepriseSettings", entrepriseId);
+    const ref = doc(db, "entreprises", entrepriseId);
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {

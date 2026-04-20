@@ -1,11 +1,11 @@
-import { entreprise } from "./devis-constants";
+import { entreprise as entrepriseParDefaut } from "./devis-constants";
 import {
   calculerMontantTva,
   calculerTotalHt,
   calculerTotalTvac,
   formatMontant,
 } from "./devis-helpers";
-import type { Devis } from "../types/devis";
+import type { Devis, Entreprise } from "../types/devis";
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -15,6 +15,10 @@ type DevisBusiness = Devis & {
   createdAt?: number;
   entrepriseId?: string;
   createdByUid?: string;
+};
+
+type EntrepriseSettings = Entreprise & {
+  logoUrl?: string;
 };
 
 function echapperHtml(valeur: string) {
@@ -44,12 +48,27 @@ function texteMultiligneOuDefaut(
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
-export function renderDevisEmailHtml(devis: DevisBusiness) {
+export function renderDevisEmailHtml(
+  devis: DevisBusiness,
+  entreprise: EntrepriseSettings = entrepriseParDefaut
+) {
   const totalHt = calculerTotalHt(devis);
   const montantTva = calculerMontantTva(devis);
   const totalTvac = calculerTotalTvac(devis);
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
+
+  const blocLogo = entreprise.logoUrl
+    ? `
+      <div style="margin-bottom:16px;">
+        <img
+          src="${entreprise.logoUrl}"
+          alt="Logo entreprise"
+          style="max-height:60px; max-width:180px; object-fit:contain;"
+        />
+      </div>
+    `
+    : "";
 
   const lignesHtml = devis.lignes
     .map((ligne) => {
@@ -95,6 +114,7 @@ export function renderDevisEmailHtml(devis: DevisBusiness) {
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
                     <td style="padding-bottom:20px;">
+                      ${blocLogo}
                       <div style="font-size:28px; line-height:34px; font-weight:700; color:#0f172a;">
                         ${echapperHtml(entreprise.nom)}
                       </div>
@@ -255,10 +275,7 @@ export function renderDevisEmailHtml(devis: DevisBusiness) {
                               Conditions
                             </div>
                             <div style="font-size:14px; line-height:24px; color:#334155; word-break:break-word;">
-                              ${texteMultiligneOuDefaut(
-                                devis.conditions,
-                                "Aucune condition particulière."
-                              )}
+                              ${texteMultiligneOuDefaut(devis.conditions)}
                             </div>
                           </td>
                         </tr>
@@ -284,7 +301,10 @@ export function renderDevisEmailHtml(devis: DevisBusiness) {
   `;
 }
 
-export function renderDevisEmailText(devis: DevisBusiness) {
+export function renderDevisEmailText(
+  devis: DevisBusiness,
+  entreprise: EntrepriseSettings = entrepriseParDefaut
+) {
   const totalHt = calculerTotalHt(devis);
   const montantTva = calculerMontantTva(devis);
   const totalTvac = calculerTotalTvac(devis);
