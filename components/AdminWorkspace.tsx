@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import AdminDashboard from "./AdminDashboard";
+import { entreprise as entrepriseParDefaut } from "../lib/devis-constants";
+import type { Entreprise } from "../types/devis";
 
 type Props = {
   valeurBusinessTotale: number;
@@ -31,6 +34,9 @@ export default function AdminWorkspace({
   totalAcceptes,
   totalRefuses,
 }: Props) {
+  const [entreprise, setEntreprise] = useState<Entreprise>(entrepriseParDefaut);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>("");
+
   return (
     <AdminDashboard
       valeurBusinessTotale={valeurBusinessTotale}
@@ -45,6 +51,10 @@ export default function AdminWorkspace({
       totalBrouillons={totalBrouillons}
       totalAcceptes={totalAcceptes}
       totalRefuses={totalRefuses}
+      entreprise={entreprise}
+      setEntreprise={setEntreprise}
+      logoPreviewUrl={logoPreviewUrl}
+      setLogoPreviewUrl={setLogoPreviewUrl}
     />
   );
 }
