@@ -1,13 +1,16 @@
 "use client";
 
-import { formatMontant } from "../lib/devis-helpers";
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
-import AdminDashboard from "./AdminDashboard";
-import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
-import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
+import { formatMontant } from "../lib/devis-helpers";
 import { db } from "../lib/firebase";
-import type { UnitePrestation, PrestationBibliotheque } from "../types/prestations";
+import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
+import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
+import AdminDashboard from "./AdminDashboard";
+import type {
+  PrestationBibliotheque,
+  UnitePrestation,
+} from "../types/prestations";
 
 type Props = {
   valeurBusinessTotale: number;
@@ -153,6 +156,7 @@ export default function AdminWorkspace({
 
   const handleSauvegardeEntreprise = async () => {
     const succes = await enregistrerEntreprise();
+
     if (succes) {
       alert("Informations entreprise enregistrées.");
     }
@@ -220,7 +224,11 @@ export default function AdminWorkspace({
         updatedAt: maintenant,
       };
 
-      await setDoc(doc(db, "prestationsBibliotheque", nouvelId), nouvellePrestation);
+      await setDoc(
+        doc(db, "prestationsBibliotheque", nouvelId),
+        nouvellePrestation
+      );
+
       resetPrestationFormulaire();
     } catch (error) {
       console.error("Erreur enregistrement prestation :", error);
@@ -243,6 +251,7 @@ export default function AdminWorkspace({
   const archiverPrestation = async (prestation: PrestationBibliotheque) => {
     try {
       setSauvegardePrestationEnCours(true);
+
       await updateDoc(doc(db, "prestationsBibliotheque", prestation.id), {
         ...prestation,
         archive: true,
@@ -263,6 +272,7 @@ export default function AdminWorkspace({
   const restaurerPrestation = async (prestation: PrestationBibliotheque) => {
     try {
       setSauvegardePrestationEnCours(true);
+
       await updateDoc(doc(db, "prestationsBibliotheque", prestation.id), {
         ...prestation,
         archive: false,
@@ -285,6 +295,7 @@ export default function AdminWorkspace({
 
     try {
       setSauvegardePrestationEnCours(true);
+
       await deleteDoc(doc(db, "prestationsBibliotheque", prestation.id));
 
       if (prestationEditionId === prestation.id) {
@@ -313,11 +324,6 @@ export default function AdminWorkspace({
         totalBrouillons={totalBrouillons}
         totalAcceptes={totalAcceptes}
         totalRefuses={totalRefuses}
-        entreprise={entrepriseSettings}
-        setEntreprise={setEntrepriseSettings}
-        chargementEntreprise={chargementEntreprise}
-        sauvegardeEntrepriseEnCours={sauvegardeEntrepriseEnCours}
-        enregistrerEntreprise={enregistrerEntreprise}
       />
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

@@ -17,11 +17,11 @@ export const TVA_PAR_DEFAUT = 21;
 export const UNITE_PAR_DEFAUT = "pièce";
 
 export const entreprise: Entreprise = {
-  nom: "Menuiserie Bruyère",
-  adresse: "12 Rue des Artisans, 6690 Vielsalm",
-  email: "contact@menuiserie-bruyere.be",
-  telephone: "+32 80 00 00 00",
-  tva: "BE0123.456.789",
+  nom: "",
+  adresse: "",
+  email: "",
+  telephone: "",
+  tva: "",
 };
 
 export const creerLigneVide = (): NouvelleLigneState => ({
