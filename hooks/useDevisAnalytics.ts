@@ -36,6 +36,7 @@ export function useDevisAnalytics({
         item.adresse ?? "",
         item.email ?? "",
         item.telephone ?? "",
+        item.chantierTitre ?? "",
         formatMontant(total),
       ]
         .join(" ")
@@ -60,10 +61,8 @@ export function useDevisAnalytics({
   }, [recherche, devis, filtreStatut, filtreArchivage]);
 
   const devisSelectionne = useMemo(() => {
-    if (devisFiltres.length === 0) return null;
-
     if (!devisSelectionneId) {
-      return devisFiltres[0];
+      return null;
     }
 
     return devisFiltres.find((item) => item.id === devisSelectionneId) ?? null;
