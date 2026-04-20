@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { PrestationBibliotheque } from "../types/prestations";
@@ -19,26 +19,23 @@ export function useEntreprisePrestations({
   estAdmin,
 }: Params) {
   const [prestations, setPrestations] = useState<PrestationBibliotheque[]>([]);
-  const [chargement, setChargement] = useState(true);
+  const [chargementInterne, setChargementInterne] = useState(true);
+
+  const peutCharger = useMemo(
+    () =>
+      authChargee &&
+      !!userId &&
+      !!entrepriseIdCourante &&
+      estAdmin,
+    [authChargee, userId, entrepriseIdCourante, estAdmin]
+  );
 
   useEffect(() => {
-    if (!authChargee) {
-      setPrestations([]);
-      setChargement(true);
+    if (!peutCharger || !entrepriseIdCourante) {
       return;
     }
 
-    if (!userId || !entrepriseIdCourante) {
-      setPrestations([]);
-      setChargement(false);
-      return;
-    }
-
-    if (!estAdmin) {
-      setPrestations([]);
-      setChargement(false);
-      return;
-    }
+    setChargementInterne(true);
 
     const q = query(
       collection(db, "prestationsBibliotheque"),
@@ -50,6 +47,7 @@ export function useEntreprisePrestations({
       (snapshot) => {
         const items = snapshot.docs.map((docItem) => {
           const data = docItem.data() as Omit<PrestationBibliotheque, "id">;
+
           return {
             id: docItem.id,
             ...data,
@@ -63,20 +61,20 @@ export function useEntreprisePrestations({
         });
 
         setPrestations(items);
-        setChargement(false);
+        setChargementInterne(false);
       },
       (error) => {
         console.error("Erreur chargement prestations :", error);
         setPrestations([]);
-        setChargement(false);
+        setChargementInterne(false);
       }
     );
 
     return () => unsubscribe();
-  }, [authChargee, userId, entrepriseIdCourante, estAdmin]);
+  }, [peutCharger, entrepriseIdCourante]);
 
   return {
-    prestations,
-    chargement,
+    prestations: peutCharger ? prestations : [],
+    chargement: !authChargee ? true : peutCharger ? chargementInterne : false,
   };
 }

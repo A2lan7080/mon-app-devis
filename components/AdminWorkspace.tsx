@@ -1,5 +1,6 @@
 "use client";
 
+import { formatMontant } from "../lib/devis-helpers";
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import AdminDashboard from "./AdminDashboard";
