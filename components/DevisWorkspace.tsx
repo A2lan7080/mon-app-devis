@@ -52,6 +52,8 @@ type Props = {
   archiverDevis: () => void;
   restaurerDevis: () => void;
   handleExporterPdf: () => void;
+  handleEnvoyerParMail: () => void;
+  envoiEnCours: boolean;
   handleChangerStatut: (statut: StatutDevis) => void;
   onDevisCree: (id: string) => void;
   onCloseFormulaire: () => void;
@@ -92,6 +94,8 @@ export default function DevisWorkspace({
   archiverDevis,
   restaurerDevis,
   handleExporterPdf,
+  handleEnvoyerParMail,
+  envoiEnCours,
   handleChangerStatut,
   onDevisCree,
   onCloseFormulaire,
@@ -154,6 +158,8 @@ export default function DevisWorkspace({
             archiverDevis={archiverDevis}
             restaurerDevis={restaurerDevis}
             handleExporterPdf={handleExporterPdf}
+            handleEnvoyerParMail={handleEnvoyerParMail}
+            envoiEnCours={envoiEnCours}
             handleChangerStatut={handleChangerStatut}
           />
         </div>

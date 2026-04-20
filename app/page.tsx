@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { doc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import AccessDeniedState from "../components/AccessDeniedState";
 import AdminShell from "../components/AdminShell";
@@ -41,6 +41,7 @@ export default function Home() {
   const [devisSelectionneId, setDevisSelectionneId] = useState<string | null>(
     null
   );
+  const [envoiDevisEnCours, setEnvoiDevisEnCours] = useState(false);
 
   const { goToLogin, handleDeconnexion } = useSessionNavigation(router);
 
@@ -129,6 +130,59 @@ export default function Home() {
     setFiltreStatut,
     setFiltreArchivage,
   });
+
+  const handleEnvoyerDevisParMail = async () => {
+    if (!devisSelectionne) return;
+
+    const emailClient = devisSelectionne.email?.trim();
+
+    if (!emailClient) {
+      alert("Ce client n’a pas d’adresse email renseignée.");
+      return;
+    }
+
+    try {
+      setEnvoiDevisEnCours(true);
+
+      const response = await fetch("/api/devis/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          devis: devisSelectionne,
+          toEmail: emailClient,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Impossible d’envoyer le devis.");
+      }
+
+      if (devisSelectionne.statut !== "Envoyé") {
+        await updateDoc(getDevisDocRef(devisSelectionne.id), {
+          ...devisSelectionne,
+          statut: "Envoyé",
+        });
+      }
+
+      alert(`Devis envoyé à ${emailClient}.`);
+    } catch (error) {
+      console.error("Erreur envoi devis :", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Impossible d’envoyer le devis."
+      );
+    } finally {
+      setEnvoiDevisEnCours(false);
+    }
+  };
 
   const vueAffichee: VuePrincipale = estAdmin ? vuePrincipale : "devis";
 
@@ -243,6 +297,8 @@ export default function Home() {
           archiverDevis={() => archiverDevis(getDevisDocRef)}
           restaurerDevis={() => restaurerDevis(getDevisDocRef)}
           handleExporterPdf={handleExporterPdf}
+          handleEnvoyerParMail={handleEnvoyerDevisParMail}
+          envoiEnCours={envoiDevisEnCours}
           handleChangerStatut={(statut) =>
             handleChangerStatut(statut, getDevisDocRef)
           }

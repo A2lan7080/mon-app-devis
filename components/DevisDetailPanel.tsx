@@ -62,6 +62,8 @@ type Props = {
   archiverDevis: () => void;
   restaurerDevis: () => void;
   handleExporterPdf: () => void;
+  handleEnvoyerParMail: () => void;
+  envoiEnCours: boolean;
   handleChangerStatut: (statut: StatutDevis) => void;
 };
 
@@ -97,6 +99,8 @@ export default function DevisDetailPanel({
   archiverDevis,
   restaurerDevis,
   handleExporterPdf,
+  handleEnvoyerParMail,
+  envoiEnCours,
   handleChangerStatut,
 }: Props) {
   if (!devisSelectionne) {
@@ -162,6 +166,14 @@ export default function DevisDetailPanel({
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               Export PDF
+            </button>
+
+            <button
+              onClick={handleEnvoyerParMail}
+              disabled={envoiEnCours}
+              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
             </button>
 
             {!devisSelectionne.archive ? (
