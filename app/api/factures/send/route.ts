@@ -52,7 +52,8 @@ export async function POST(request: Request) {
     const entreprise = await getEntrepriseSettings(facture.entrepriseId ?? null);
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const subject = `Facture ${facture.reference} - ${entreprise.nom}`;
+    const nomEntreprise = entreprise.nom?.trim() || "Batiflow";
+    const subject = `Facture ${facture.reference} - ${nomEntreprise}`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
