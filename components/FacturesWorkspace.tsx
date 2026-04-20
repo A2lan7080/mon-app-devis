@@ -2,15 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { db } from "../lib/firebase";
-import {
-  calculerTotalHt,
-  formatMontant,
-} from "../lib/devis-helpers";
+import { calculerTotalHt, formatMontant } from "../lib/devis-helpers";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import type { Facture, StatutFacture } from "../types/factures";
 
@@ -200,16 +198,13 @@ export default function FacturesWorkspace({
   }, [factures, recherche, filtreStatut, filtreArchivage]);
 
   const factureSelectionnee = useMemo(() => {
-    if (facturesFiltrees.length === 0) return null;
-
     if (!factureSelectionneeId) {
-      return facturesFiltrees[0];
+      return null;
     }
 
     return (
-      facturesFiltrees.find(
-        (facture) => facture.id === factureSelectionneeId
-      ) ?? null
+      facturesFiltrees.find((facture) => facture.id === factureSelectionneeId) ??
+      null
     );
   }, [facturesFiltrees, factureSelectionneeId]);
 
@@ -258,6 +253,11 @@ export default function FacturesWorkspace({
     resetFormulaire();
   };
 
+  const fermerDetail = () => {
+    setFactureSelectionneeId(null);
+    setModeEdition(false);
+  };
+
   const ouvrirEdition = () => {
     if (!factureSelectionnee) return;
 
@@ -281,8 +281,7 @@ export default function FacturesWorkspace({
   };
 
   const handleSelectionDevis = (devisId: string) => {
-    const devisSelectionne =
-      devis.find((item) => item.id === devisId) ?? null;
+    const devisSelectionne = devis.find((item) => item.id === devisId) ?? null;
 
     if (!devisSelectionne) {
       setFormulaire((prev) => ({
@@ -352,8 +351,7 @@ export default function FacturesWorkspace({
       chantiers.find((chantier) => chantier.id === formulaire.chantierId) ??
       null;
 
-    const devisAssocie =
-      devis.find((item) => item.id === formulaire.devisId) ?? null;
+    const devisAssocie = devis.find((item) => item.id === formulaire.devisId) ?? null;
 
     const chantierAssocieFinal =
       chantierAssocie ??
@@ -589,6 +587,482 @@ export default function FacturesWorkspace({
     ? calculerNetAPayer(factureSelectionnee)
     : 0;
 
+  const titreMobile = afficherFormulaireFacture
+    ? modeEdition && factureSelectionnee
+      ? factureSelectionnee.reference
+      : "Nouvelle facture"
+    : factureSelectionnee
+    ? factureSelectionnee.reference
+    : "Facture";
+
+  const renderFormulaireOuDetail = () => {
+    if (chargement) {
+      return (
+        <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
+          Chargement des factures...
+        </div>
+      );
+    }
+
+    if (afficherFormulaireFacture) {
+      return (
+        <>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500">
+                {modeEdition ? "Édition facture" : "Nouvelle facture"}
+              </p>
+              <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                {modeEdition && factureSelectionnee
+                  ? factureSelectionnee.reference
+                  : "Créer une facture"}
+              </h3>
+            </div>
+
+            <button
+              onClick={fermerFormulaire}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            >
+              Fermer
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Devis lié
+              </label>
+              <select
+                value={formulaire.devisId}
+                onChange={(e) => handleSelectionDevis(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              >
+                <option value="">Aucun devis lié</option>
+                {devis.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.id} — {item.client}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Objet
+              </label>
+              <input
+                type="text"
+                value={formulaire.objet}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    objet: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Client
+              </label>
+              <select
+                value={formulaire.clientId}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    clientId: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              >
+                <option value="">Sélectionner un client</option>
+                {clients
+                  .filter((client) => !client.archive)
+                  .map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.nom}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Chantier lié
+              </label>
+              <select
+                value={formulaire.chantierId}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    chantierId: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              >
+                <option value="">Aucun chantier lié</option>
+                {chantiers
+                  .filter((chantier) => !chantier.archive)
+                  .map((chantier) => (
+                    <option key={chantier.id} value={chantier.id}>
+                      {chantier.titre}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Date émission
+              </label>
+              <input
+                type="date"
+                value={formulaire.dateEmission}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    dateEmission: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Date échéance
+              </label>
+              <input
+                type="date"
+                value={formulaire.dateEcheance}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    dateEcheance: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Date paiement
+              </label>
+              <input
+                type="date"
+                value={formulaire.datePaiement}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    datePaiement: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Statut
+              </label>
+              <select
+                value={formulaire.statut}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    statut: e.target.value as StatutFacture,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              >
+                {STATUTS_FACTURE.map((statut) => (
+                  <option key={statut} value={statut}>
+                    {statut}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Montant HT
+              </label>
+              <input
+                type="number"
+                value={formulaire.montantHt}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    montantHt: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                TVA (%)
+              </label>
+              <input
+                type="number"
+                value={formulaire.tvaTaux}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    tvaTaux: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div className="md:col-span-2 lg:max-w-xs">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Acompte déduit
+              </label>
+              <input
+                type="number"
+                value={formulaire.acompteDeduit}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    acompteDeduit: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Notes
+            </label>
+            <textarea
+              value={formulaire.notes}
+              onChange={(e) =>
+                setFormulaire((prev) => ({
+                  ...prev,
+                  notes: e.target.value,
+                }))
+              }
+              rows={5}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={enregistrerFacture}
+              disabled={sauvegardeEnCours}
+              className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {sauvegardeEnCours
+                ? "Enregistrement..."
+                : modeEdition
+                ? "Enregistrer les modifications"
+                : "Créer la facture"}
+            </button>
+
+            <button
+              onClick={fermerFormulaire}
+              disabled={sauvegardeEnCours}
+              className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              Annuler
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    if (factureSelectionnee) {
+      return (
+        <>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm text-slate-500">Fiche facture</p>
+                <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                  {factureSelectionnee.reference}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {factureSelectionnee.objet}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                    factureSelectionnee.statut
+                  )}`}
+                >
+                  {factureSelectionnee.statut}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <button
+                onClick={ouvrirEdition}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Modifier
+              </button>
+
+              <button
+                onClick={handleExporterPdf}
+                className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                Export PDF
+              </button>
+
+              <button
+                onClick={handleEnvoyerParMail}
+                disabled={envoiEnCours}
+                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+              </button>
+
+              {!factureSelectionnee.archive ? (
+                <button
+                  onClick={archiverFacture}
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                >
+                  Archiver
+                </button>
+              ) : (
+                <button
+                  onClick={restaurerFacture}
+                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                >
+                  Restaurer
+                </button>
+              )}
+
+              <button
+                onClick={supprimerFacture}
+                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Client</p>
+              <p className="mt-1 text-lg font-semibold">
+                {factureSelectionnee.clientNom}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                {factureSelectionnee.clientAdresse || "Adresse non renseignée"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {[factureSelectionnee.clientCodePostal, factureSelectionnee.clientVille]
+                  .filter(Boolean)
+                  .join(" · ") || "Coordonnées non renseignées"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {factureSelectionnee.clientEmail || "Email non renseigné"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {factureSelectionnee.clientTelephone || "Téléphone non renseigné"}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                {factureSelectionnee.chantierTitre || "Sans chantier lié"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Devis : {factureSelectionnee.devisReference || "Aucun devis lié"}
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Émission</p>
+                <p className="mt-1 font-semibold">
+                  {factureSelectionnee.dateEmission || "Non renseignée"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Échéance</p>
+                <p className="mt-1 font-semibold">
+                  {factureSelectionnee.dateEcheance || "Non renseignée"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
+                <p className="text-sm text-slate-500">Paiement</p>
+                <p className="mt-1 font-semibold">
+                  {factureSelectionnee.datePaiement || "Non renseignée"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Montant HT</p>
+                <p className="mt-1 break-words font-semibold">
+                  {formatMontant(factureSelectionnee.montantHt)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">
+                  TVA ({factureSelectionnee.tvaTaux}%)
+                </p>
+                <p className="mt-1 break-words font-semibold">
+                  {formatMontant(totalTvaSelectionnee)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Total TTC</p>
+                <p className="mt-1 break-words font-semibold">
+                  {formatMontant(totalTtcSelectionnee)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Net à payer</p>
+                <p className="mt-1 break-words font-semibold">
+                  {formatMontant(netAPayerSelectionnee)}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Acompte déduit</p>
+              <p className="mt-1 font-semibold">
+                {formatMontant(factureSelectionnee.acompteDeduit)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Notes</p>
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+                {factureSelectionnee.notes ||
+                  "Aucune note pour cette facture."}
+              </p>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
+        Sélectionne une facture pour voir sa fiche.
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
@@ -676,542 +1150,107 @@ export default function FacturesWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3 overflow-hidden">
+          <div className="mt-6 space-y-2 overflow-hidden">
             {facturesFiltrees.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucune facture trouvée.
               </div>
             ) : (
-              facturesFiltrees.map((facture) => (
-                <button
-                  key={facture.id}
-                  onClick={() => {
-                    setFactureSelectionneeId(facture.id);
-                    setModeEdition(false);
-                    setAfficherFormulaire(false);
-                  }}
-                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
-                    factureSelectionnee?.id === facture.id
-                      ? "border-slate-900 bg-slate-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex min-w-0 flex-col gap-3">
+              facturesFiltrees.map((facture) => {
+                const estSelectionnee = facture.id === factureSelectionneeId;
+
+                return (
+                  <button
+                    key={facture.id}
+                    onClick={() => {
+                      setModeEdition(false);
+                      setAfficherFormulaire(false);
+                      setFactureSelectionneeId(
+                        estSelectionnee ? null : facture.id
+                      );
+                    }}
+                    className={`block w-full min-w-0 overflow-hidden rounded-xl border px-3 py-3 text-left transition ${
+                      estSelectionnee
+                        ? "border-slate-900 bg-slate-50"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm text-slate-500">
-                          {facture.reference}
-                        </p>
-                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-slate-900">
+                            {facture.reference}
+                          </p>
+
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              facture.archive
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}
+                          >
+                            {facture.archive ? "Archivée" : "Active"}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 truncate text-sm font-medium text-slate-700">
                           {facture.objet}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
+                        </p>
+
+                        <p className="mt-1 truncate text-xs text-slate-400">
                           {facture.clientNom}
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-2">
+                      <div className="shrink-0 text-right">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                          className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getStatutClasses(
                             facture.statut
                           )}`}
                         >
                           {facture.statut}
                         </span>
 
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            facture.archive
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {facture.archive ? "Archivée" : "Active"}
-                        </span>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
+                          {formatMontant(calculerNetAPayer(facture))}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {facture.dateEmission || "Sans date"}
+                        </p>
                       </div>
                     </div>
-
-                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
-                      <p className="text-sm text-slate-600">
-                        {facture.chantierTitre || "Sans chantier associé"}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Devis : {facture.devisReference || "Aucun devis lié"}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Émission : {facture.dateEmission || "Non renseignée"}
-                      </p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {formatMontant(calculerNetAPayer(facture))}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          {chargement ? (
-            <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
-              Chargement des factures...
-            </div>
-          ) : afficherFormulaireFacture ? (
-            <>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-500">
-                    {modeEdition ? "Édition facture" : "Nouvelle facture"}
-                  </p>
-                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                    {modeEdition && factureSelectionnee
-                      ? factureSelectionnee.reference
-                      : "Créer une facture"}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={fermerFormulaire}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
-                >
-                  Fermer
-                </button>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Devis lié
-                  </label>
-                  <select
-                    value={formulaire.devisId}
-                    onChange={(e) => handleSelectionDevis(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Aucun devis lié</option>
-                    {devis.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.id} — {item.client}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Objet
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.objet}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        objet: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Client
-                  </label>
-                  <select
-                    value={formulaire.clientId}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        clientId: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Sélectionner un client</option>
-                    {clients
-                      .filter((client) => !client.archive)
-                      .map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.nom}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Chantier lié
-                  </label>
-                  <select
-                    value={formulaire.chantierId}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        chantierId: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Aucun chantier lié</option>
-                    {chantiers
-                      .filter((chantier) => !chantier.archive)
-                      .map((chantier) => (
-                        <option key={chantier.id} value={chantier.id}>
-                          {chantier.titre}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date émission
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.dateEmission}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        dateEmission: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date échéance
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.dateEcheance}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        dateEcheance: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date paiement
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.datePaiement}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        datePaiement: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Statut
-                  </label>
-                  <select
-                    value={formulaire.statut}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        statut: e.target.value as StatutFacture,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    {STATUTS_FACTURE.map((statut) => (
-                      <option key={statut} value={statut}>
-                        {statut}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Montant HT
-                  </label>
-                  <input
-                    type="number"
-                    value={formulaire.montantHt}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        montantHt: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    TVA (%)
-                  </label>
-                  <input
-                    type="number"
-                    value={formulaire.tvaTaux}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        tvaTaux: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div className="md:col-span-2 lg:max-w-xs">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Acompte déduit
-                  </label>
-                  <input
-                    type="number"
-                    value={formulaire.acompteDeduit}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        acompteDeduit: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Notes
-                </label>
-                <textarea
-                  value={formulaire.notes}
-                  onChange={(e) =>
-                    setFormulaire((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
-                  rows={5}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                />
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={enregistrerFacture}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  {sauvegardeEnCours
-                    ? "Enregistrement..."
-                    : modeEdition
-                    ? "Enregistrer les modifications"
-                    : "Créer la facture"}
-                </button>
-
-                <button
-                  onClick={fermerFormulaire}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  Annuler
-                </button>
-              </div>
-            </>
-          ) : factureSelectionnee ? (
-            <>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-500">Fiche facture</p>
-                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                      {factureSelectionnee.reference}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {factureSelectionnee.objet}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                        factureSelectionnee.statut
-                      )}`}
-                    >
-                      {factureSelectionnee.statut}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  <button
-                    onClick={ouvrirEdition}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    Modifier
-                  </button>
-
-                  <button
-                    onClick={handleExporterPdf}
-                    className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                  >
-                    Export PDF
-                  </button>
-
-                  <button
-                    onClick={handleEnvoyerParMail}
-                    disabled={envoiEnCours}
-                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
-                  </button>
-
-                  {!factureSelectionnee.archive ? (
-                    <button
-                      onClick={archiverFacture}
-                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
-                    >
-                      Archiver
-                    </button>
-                  ) : (
-                    <button
-                      onClick={restaurerFacture}
-                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                    >
-                      Restaurer
-                    </button>
-                  )}
-
-                  <button
-                    onClick={supprimerFacture}
-                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Client</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {factureSelectionnee.clientNom}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {factureSelectionnee.clientAdresse || "Adresse non renseignée"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {[
-                      factureSelectionnee.clientCodePostal,
-                      factureSelectionnee.clientVille,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "Coordonnées non renseignées"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {factureSelectionnee.clientEmail || "Email non renseigné"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {factureSelectionnee.clientTelephone ||
-                      "Téléphone non renseigné"}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {factureSelectionnee.chantierTitre || "Sans chantier lié"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Devis : {factureSelectionnee.devisReference || "Aucun devis lié"}
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Émission</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.dateEmission || "Non renseignée"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Échéance</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.dateEcheance || "Non renseignée"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
-                    <p className="text-sm text-slate-500">Paiement</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.datePaiement || "Non renseignée"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Montant HT</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(factureSelectionnee.montantHt)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">
-                      TVA ({factureSelectionnee.tvaTaux}%)
-                    </p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(totalTvaSelectionnee)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Total TTC</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(totalTtcSelectionnee)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Net à payer</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(netAPayerSelectionnee)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Acompte déduit</p>
-                  <p className="mt-1 font-semibold">
-                    {formatMontant(factureSelectionnee.acompteDeduit)}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Notes</p>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
-                    {factureSelectionnee.notes ||
-                      "Aucune note pour cette facture."}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
-              Aucune facture pour cette entreprise.
-            </div>
-          )}
+        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6 xl:block">
+          {renderFormulaireOuDetail()}
         </div>
       </div>
+
+      <MobileFullscreenModal
+        open={afficherFormulaireFacture}
+        title={titreMobile}
+        onClose={fermerFormulaire}
+      >
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          {renderFormulaireOuDetail()}
+        </div>
+      </MobileFullscreenModal>
+
+      <MobileFullscreenModal
+        open={!afficherFormulaireFacture && factureSelectionnee !== null}
+        title={titreMobile}
+        onClose={fermerDetail}
+      >
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          {renderFormulaireOuDetail()}
+        </div>
+      </MobileFullscreenModal>
     </>
   );
 }
