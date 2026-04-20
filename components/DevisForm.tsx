@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
+import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import {
   creerLigneVide,
   STATUTS_DEVIS,
@@ -24,6 +25,7 @@ import type {
   NouveauDevisState,
   StatutDevis,
 } from "../types/devis";
+import type { PrestationBibliotheque } from "../types/prestations";
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -81,6 +83,17 @@ function creerLigneVideAvecUnite(): NouvelleLigneState {
   };
 }
 
+function creerLigneDepuisPrestation(
+  prestation: PrestationBibliotheque
+): NouvelleLigneState {
+  return {
+    designation: prestation.designation,
+    quantite: "1",
+    unite: prestation.unite,
+    prixUnitaire: String(prestation.prixUnitaire),
+  };
+}
+
 export default function DevisForm({
   devis,
   entrepriseId,
@@ -91,6 +104,7 @@ export default function DevisForm({
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [clientSelectionneId, setClientSelectionneId] = useState("");
   const [chantierSelectionneId, setChantierSelectionneId] = useState("");
+  const [prestationSelectionneeId, setPrestationSelectionneeId] = useState("");
   const [nouveauChantierDateDebut, setNouveauChantierDateDebut] = useState("");
   const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
   const [nouveauChantierStatut, setNouveauChantierStatut] =
@@ -110,6 +124,13 @@ export default function DevisForm({
     estAdmin: true,
   });
 
+  const { prestations } = useEntreprisePrestations({
+    authChargee: true,
+    userId: createdByUid ?? null,
+    entrepriseIdCourante: entrepriseId ?? null,
+    estAdmin: true,
+  });
+
   const clientsActifs = useMemo(
     () => clients.filter((client) => !client.archive),
     [clients]
@@ -118,6 +139,11 @@ export default function DevisForm({
   const chantiersActifs = useMemo(
     () => chantiers.filter((chantier) => !chantier.archive),
     [chantiers]
+  );
+
+  const prestationsActives = useMemo(
+    () => prestations.filter((prestation) => !prestation.archive),
+    [prestations]
   );
 
   const [nouveauDevis, setNouveauDevis] = useState<
@@ -154,6 +180,7 @@ export default function DevisForm({
   const reinitialiserFormulaire = () => {
     setClientSelectionneId("");
     setChantierSelectionneId("");
+    setPrestationSelectionneeId("");
     setNouveauChantierDateDebut("");
     setNouveauChantierDateFin("");
     setNouveauChantierStatut("À planifier");
@@ -182,6 +209,19 @@ export default function DevisForm({
 
   const ajouterLigne = () => {
     setLignes((prev) => [...prev, creerLigneVideAvecUnite()]);
+  };
+
+  const ajouterPrestationDepuisBibliotheque = () => {
+    if (!prestationSelectionneeId) return;
+
+    const prestation =
+      prestationsActives.find((item) => item.id === prestationSelectionneeId) ??
+      null;
+
+    if (!prestation) return;
+
+    setLignes((prev) => [...prev, creerLigneDepuisPrestation(prestation)]);
+    setPrestationSelectionneeId("");
   };
 
   const supprimerLigne = (index: number) => {
@@ -840,6 +880,42 @@ export default function DevisForm({
             Ajouter une ligne
           </button>
         </div>
+
+        {prestationsActives.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Ajouter depuis la bibliothèque
+                </label>
+                <select
+                  value={prestationSelectionneeId}
+                  onChange={(e) => setPrestationSelectionneeId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                >
+                  <option value="">Sélectionner une prestation enregistrée</option>
+                  {prestationsActives.map((prestation) => (
+                    <option key={prestation.id} value={prestation.id}>
+                      {prestation.designation} — {formatMontant(prestation.prixUnitaire)} /{" "}
+                      {prestation.unite}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={ajouterPrestationDepuisBibliotheque}
+                  disabled={!prestationSelectionneeId}
+                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
+                >
+                  Ajouter la prestation
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 space-y-4">
           {lignes.map((ligne, index) => (
