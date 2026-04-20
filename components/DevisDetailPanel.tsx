@@ -106,7 +106,7 @@ export default function DevisDetailPanel({
   if (!devisSelectionne) {
     return (
       <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
-        Aucun devis pour cette entreprise.
+        Sélectionne un devis pour voir sa fiche.
       </div>
     );
   }
