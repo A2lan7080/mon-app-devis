@@ -1,4 +1,4 @@
-import { entreprise } from "./devis-constants";
+import { getEntrepriseSettings } from "./get-entreprise-settings";
 import {
   calculerMontantTva,
   calculerTotalHt,
@@ -17,31 +17,37 @@ type DevisBusiness = Devis & {
   createdByUid?: string;
 };
 
-export function exporterDevisPdf(devisSelectionne: DevisBusiness) {
+function echapperHtml(valeur: string) {
+  return valeur
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function texteOuDefaut(valeur: string, defaut = "-") {
+  const nettoyee = valeur.trim();
+  return nettoyee ? echapperHtml(nettoyee) : defaut;
+}
+
+function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune condition particulière.") {
+  const nettoyee = valeur.trim();
+
+  if (!nettoyee) {
+    return defaut;
+  }
+
+  return echapperHtml(nettoyee).replaceAll("\n", "<br />");
+}
+
+export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
   const totalHt = calculerTotalHt(devisSelectionne);
   const montantTva = calculerMontantTva(devisSelectionne);
   const totalTvac = calculerTotalTvac(devisSelectionne);
   const montantAcompte =
     totalTvac * (devisSelectionne.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
-
-  const lignesHtml = devisSelectionne.lignes
-    .map((ligne) => {
-      const sousTotal = ligne.quantite * ligne.prixUnitaire;
-
-      return `
-        <tr>
-          <td>${ligne.designation}</td>
-          <td style="text-align:center;">${ligne.quantite}</td>
-          <td style="text-align:center;">${ligne.unite}</td>
-          <td style="text-align:right;">${formatMontant(
-            ligne.prixUnitaire
-          )}</td>
-          <td style="text-align:right;">${formatMontant(sousTotal)}</td>
-        </tr>
-      `;
-    })
-    .join("");
 
   const fenetre = window.open("", "_blank", "width=1100,height=900");
 
@@ -50,12 +56,44 @@ export function exporterDevisPdf(devisSelectionne: DevisBusiness) {
     return;
   }
 
+  const entreprise = await getEntrepriseSettings(
+    devisSelectionne.entrepriseId ?? null
+  );
+
+  const lignesHtml = devisSelectionne.lignes
+    .map((ligne) => {
+      const sousTotal = ligne.quantite * ligne.prixUnitaire;
+
+      return `
+        <tr>
+          <td>${echapperHtml(ligne.designation)}</td>
+          <td style="text-align:center;">${ligne.quantite}</td>
+          <td style="text-align:center;">${echapperHtml(ligne.unite)}</td>
+          <td style="text-align:right;">${formatMontant(ligne.prixUnitaire)}</td>
+          <td style="text-align:right;">${formatMontant(sousTotal)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const blocLogo = entreprise.logoUrl
+    ? `
+      <div style="margin-bottom:18px;">
+        <img
+          src="${entreprise.logoUrl}"
+          alt="Logo entreprise"
+          style="max-height:70px; max-width:180px; object-fit:contain;"
+        />
+      </div>
+    `
+    : "";
+
   fenetre.document.write(`
     <!DOCTYPE html>
     <html lang="fr">
       <head>
         <meta charset="UTF-8" />
-        <title>${devisSelectionne.id}</title>
+        <title>${echapperHtml(devisSelectionne.id)}</title>
         <style>
           * { box-sizing: border-box; }
           body {
@@ -169,33 +207,42 @@ export function exporterDevisPdf(devisSelectionne: DevisBusiness) {
         <div class="page">
           <div class="topbar">
             <div class="bloc">
-              <h1 class="title">${entreprise.nom}</h1>
-              <p class="subtitle">${entreprise.adresse}</p>
-              <p class="subtitle">${entreprise.email} · ${entreprise.telephone}</p>
-              <p class="subtitle">TVA ${entreprise.tva}</p>
+              ${blocLogo}
+              <h1 class="title">${echapperHtml(entreprise.nom)}</h1>
+              <p class="subtitle">${echapperHtml(entreprise.adresse)}</p>
+              <p class="subtitle">${echapperHtml(entreprise.email)} · ${echapperHtml(entreprise.telephone)}</p>
+              <p class="subtitle">TVA ${echapperHtml(entreprise.tva)}</p>
             </div>
             <div class="bloc" style="text-align:right;">
               <h2 class="title">Devis</h2>
-              <p class="subtitle">N° ${devisSelectionne.id}</p>
-              <p class="subtitle">Date : ${devisSelectionne.date}</p>
-              <p class="subtitle">Statut : ${devisSelectionne.statut}</p>
+              <p class="subtitle">N° ${echapperHtml(devisSelectionne.id)}</p>
+              <p class="subtitle">Date : ${texteOuDefaut(devisSelectionne.date)}</p>
+              <p class="subtitle">Statut : ${texteOuDefaut(devisSelectionne.statut)}</p>
               <p class="subtitle">Validité : ${devisSelectionne.validiteJours} jours</p>
             </div>
           </div>
 
           <div class="card">
             <div class="label">Client</div>
-            <div class="value">${devisSelectionne.client}</div>
+            <div class="value">${texteOuDefaut(devisSelectionne.client)}</div>
             <div style="height:12px;"></div>
             <div class="grid">
               <div>
                 <div class="label">Adresse</div>
-                <div class="value">${devisSelectionne.adresse || "-"}</div>
+                <div class="value">${texteOuDefaut(devisSelectionne.adresse)}</div>
+                <div class="subtitle" style="margin-top:8px;">
+                  ${texteOuDefaut(
+                    [devisSelectionne.codePostal, devisSelectionne.ville]
+                      .filter(Boolean)
+                      .join(" · "),
+                    "Coordonnées non renseignées"
+                  )}
+                </div>
               </div>
               <div>
                 <div class="label">Contact</div>
-                <div class="value">${devisSelectionne.email || "-"}</div>
-                <div class="value" style="margin-top:6px;">${devisSelectionne.telephone || "-"}</div>
+                <div class="value">${texteOuDefaut(devisSelectionne.email)}</div>
+                <div class="value" style="margin-top:6px;">${texteOuDefaut(devisSelectionne.telephone)}</div>
               </div>
             </div>
           </div>
@@ -244,7 +291,7 @@ export function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           <div class="card">
             <div class="label">Conditions</div>
             <div class="value" style="font-size:14px; font-weight:400; line-height:1.6;">
-              ${devisSelectionne.conditions || "Aucune condition particulière."}
+              ${texteMultiligneOuDefaut(devisSelectionne.conditions)}
             </div>
           </div>
 
@@ -258,7 +305,7 @@ export function exporterDevisPdf(devisSelectionne: DevisBusiness) {
             <div class="signature-box">
               <div class="label">Pour l’entreprise</div>
               <div class="value" style="font-size:14px; font-weight:400;">
-                ${entreprise.nom}
+                ${echapperHtml(entreprise.nom)}
               </div>
             </div>
           </div>

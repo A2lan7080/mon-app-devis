@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { renderFactureEmailHtml, renderFactureEmailText } from "../../../../lib/render-facture-email";
-import { entreprise } from "../../../../lib/devis-constants";
+import {
+  renderFactureEmailHtml,
+  renderFactureEmailText,
+} from "../../../../lib/render-facture-email";
+import { getEntrepriseSettings } from "../../../../lib/get-entreprise-settings";
 import type { Facture } from "../../../../types/factures";
 
 export const runtime = "nodejs";
@@ -46,16 +49,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const entreprise = await getEntrepriseSettings(facture.entrepriseId ?? null);
 
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Facture ${facture.reference} - ${entreprise.nom}`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
       to: [toEmail],
       subject,
-      html: renderFactureEmailHtml(facture),
-      text: renderFactureEmailText(facture),
+      html: renderFactureEmailHtml(facture, entreprise),
+      text: renderFactureEmailText(facture, entreprise),
     });
 
     if (error) {

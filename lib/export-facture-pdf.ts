@@ -1,4 +1,4 @@
-import { entreprise } from "./devis-constants";
+import { getEntrepriseSettings } from "./get-entreprise-settings";
 import { formatMontant } from "./devis-helpers";
 import type { Facture } from "../types/factures";
 
@@ -38,7 +38,7 @@ function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune note.") {
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
-export function exporterFacturePdf(factureSelectionnee: Facture) {
+export async function exporterFacturePdf(factureSelectionnee: Facture) {
   const montantTva = calculerMontantTva(factureSelectionnee);
   const totalTtc = calculerTotalTtc(factureSelectionnee);
   const netAPayer = calculerNetAPayer(factureSelectionnee);
@@ -49,6 +49,22 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
     alert("Impossible d’ouvrir la fenêtre d’export PDF.");
     return;
   }
+
+  const entreprise = await getEntrepriseSettings(
+    factureSelectionnee.entrepriseId ?? null
+  );
+
+  const blocLogo = entreprise.logoUrl
+    ? `
+      <div style="margin-bottom:18px;">
+        <img
+          src="${entreprise.logoUrl}"
+          alt="Logo entreprise"
+          style="max-height:70px; max-width:180px; object-fit:contain;"
+        />
+      </div>
+    `
+    : "";
 
   fenetre.document.write(`
     <!DOCTYPE html>
@@ -170,6 +186,7 @@ export function exporterFacturePdf(factureSelectionnee: Facture) {
         <div class="page">
           <div class="topbar">
             <div class="bloc">
+              ${blocLogo}
               <h1 class="title">${echapperHtml(entreprise.nom)}</h1>
               <p class="subtitle">${echapperHtml(entreprise.adresse)}</p>
               <p class="subtitle">${echapperHtml(entreprise.email)} · ${echapperHtml(entreprise.telephone)}</p>

@@ -1,6 +1,11 @@
-import { entreprise } from "./devis-constants";
+import { entreprise as entrepriseParDefaut } from "./devis-constants";
 import { formatMontant } from "./devis-helpers";
 import type { Facture } from "../types/factures";
+import type { Entreprise } from "../types/devis";
+
+type EntrepriseSettings = Entreprise & {
+  logoUrl?: string;
+};
 
 function calculerMontantTva(facture: Facture) {
   return facture.montantHt * (facture.tvaTaux / 100);
@@ -38,10 +43,25 @@ function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune note.") {
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
-export function renderFactureEmailHtml(facture: Facture) {
+export function renderFactureEmailHtml(
+  facture: Facture,
+  entreprise: EntrepriseSettings = entrepriseParDefaut
+) {
   const montantTva = calculerMontantTva(facture);
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
+
+  const blocLogo = entreprise.logoUrl
+    ? `
+      <div style="margin-bottom:16px;">
+        <img
+          src="${entreprise.logoUrl}"
+          alt="Logo entreprise"
+          style="max-height:60px; max-width:180px; object-fit:contain;"
+        />
+      </div>
+    `
+    : "";
 
   return `
 <!DOCTYPE html>
@@ -61,6 +81,7 @@ export function renderFactureEmailHtml(facture: Facture) {
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
                     <td style="padding-bottom:20px;">
+                      ${blocLogo}
                       <div style="font-size:28px; line-height:34px; font-weight:700; color:#0f172a;">
                         ${echapperHtml(entreprise.nom)}
                       </div>
@@ -114,6 +135,23 @@ export function renderFactureEmailHtml(facture: Facture) {
                         </tr>
                         <tr>
                           <td style="padding:0 18px 18px 18px;">
+                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+                              <strong>Adresse :</strong> ${texteOuDefaut(facture.clientAdresse, "Adresse non renseignée")}
+                            </div>
+                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+                              <strong>Coordonnées :</strong> ${texteOuDefaut(
+                                [facture.clientCodePostal, facture.clientVille]
+                                  .filter(Boolean)
+                                  .join(" · "),
+                                "Coordonnées non renseignées"
+                              )}
+                            </div>
+                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+                              <strong>Email :</strong> ${texteOuDefaut(facture.clientEmail, "Email non renseigné")}
+                            </div>
+                            <div style="font-size:14px; line-height:22px; color:#475569;">
+                              <strong>Téléphone :</strong> ${texteOuDefaut(facture.clientTelephone, "Téléphone non renseigné")}
+                            </div>
                             <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
                               <strong>Chantier :</strong> ${texteOuDefaut(facture.chantierTitre, "Aucun chantier lié")}
                             </div>
@@ -223,7 +261,10 @@ export function renderFactureEmailHtml(facture: Facture) {
   `;
 }
 
-export function renderFactureEmailText(facture: Facture) {
+export function renderFactureEmailText(
+  facture: Facture,
+  entreprise: EntrepriseSettings = entrepriseParDefaut
+) {
   const montantTva = calculerMontantTva(facture);
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
@@ -237,6 +278,10 @@ TVA ${entreprise.tva}
 FACTURE ${facture.reference}
 Objet : ${facture.objet}
 Client : ${facture.clientNom}
+Adresse client : ${facture.clientAdresse || "-"}
+Coordonnées client : ${[facture.clientCodePostal, facture.clientVille].filter(Boolean).join(" · ") || "-"}
+Email client : ${facture.clientEmail || "-"}
+Téléphone client : ${facture.clientTelephone || "-"}
 Chantier : ${facture.chantierTitre || "Aucun chantier lié"}
 Date émission : ${facture.dateEmission || "-"}
 Date échéance : ${facture.dateEcheance || "-"}
