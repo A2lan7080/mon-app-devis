@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { db } from "../lib/firebase";
 import type { Client, TypeClient } from "../types/clients";
@@ -109,15 +110,11 @@ export default function ClientsWorkspace({
   }, [clients, recherche, filtreArchivage]);
 
   const clientSelectionne = useMemo(() => {
-    if (clientsFiltres.length === 0) return null;
-
     if (!clientSelectionneId) {
-      return clientsFiltres[0];
+      return null;
     }
 
-    return (
-      clientsFiltres.find((client) => client.id === clientSelectionneId) ?? null
-    );
+    return clientsFiltres.find((client) => client.id === clientSelectionneId) ?? null;
   }, [clientsFiltres, clientSelectionneId]);
 
   const totalClients = useMemo(
@@ -160,6 +157,11 @@ export default function ClientsWorkspace({
     setAfficherFormulaire(false);
     setModeEdition(false);
     resetFormulaire();
+  };
+
+  const fermerDetail = () => {
+    setClientSelectionneId(null);
+    setModeEdition(false);
   };
 
   const ouvrirEdition = () => {
@@ -320,6 +322,400 @@ export default function ClientsWorkspace({
 
   const afficherFormulaireClient = afficherFormulaire || modeEdition;
 
+  const titreMobile = afficherFormulaireClient
+    ? modeEdition && clientSelectionne
+      ? clientSelectionne.reference
+      : "Nouveau client"
+    : clientSelectionne
+    ? clientSelectionne.nom
+    : "Client";
+
+  const renderFormulaireOuDetail = () => {
+    if (chargement) {
+      return (
+        <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
+          Chargement des clients...
+        </div>
+      );
+    }
+
+    if (afficherFormulaireClient) {
+      return (
+        <>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500">
+                {modeEdition ? "Édition client" : "Nouveau client"}
+              </p>
+              <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                {modeEdition && clientSelectionne
+                  ? clientSelectionne.reference
+                  : "Créer une fiche client"}
+              </h3>
+            </div>
+
+            <button
+              onClick={fermerFormulaire}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            >
+              Fermer
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Nom du client
+              </label>
+              <input
+                type="text"
+                value={formulaire.nom}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    nom: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Type
+              </label>
+              <select
+                value={formulaire.typeClient}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    typeClient: e.target.value as TypeClient,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              >
+                {TYPES_CLIENT.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Société
+              </label>
+              <input
+                type="text"
+                value={formulaire.societe}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    societe: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                TVA
+              </label>
+              <input
+                type="text"
+                value={formulaire.tva}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    tva: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Email
+              </label>
+              <input
+                type="email"
+                value={formulaire.email}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Téléphone
+              </label>
+              <input
+                type="text"
+                value={formulaire.telephone}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    telephone: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Adresse
+              </label>
+              <input
+                type="text"
+                value={formulaire.adresse}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    adresse: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Code postal
+              </label>
+              <input
+                type="text"
+                value={formulaire.codePostal}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    codePostal: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Ville
+              </label>
+              <input
+                type="text"
+                value={formulaire.ville}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    ville: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+
+            <div className="md:col-span-2 lg:max-w-xs">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Pays
+              </label>
+              <input
+                type="text"
+                value={formulaire.pays}
+                onChange={(e) =>
+                  setFormulaire((prev) => ({
+                    ...prev,
+                    pays: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Notes
+            </label>
+            <textarea
+              value={formulaire.notes}
+              onChange={(e) =>
+                setFormulaire((prev) => ({
+                  ...prev,
+                  notes: e.target.value,
+                }))
+              }
+              rows={5}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={enregistrerClient}
+              disabled={sauvegardeEnCours}
+              className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {sauvegardeEnCours
+                ? "Enregistrement..."
+                : modeEdition
+                ? "Enregistrer les modifications"
+                : "Créer le client"}
+            </button>
+
+            <button
+              onClick={fermerFormulaire}
+              disabled={sauvegardeEnCours}
+              className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              Annuler
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    if (clientSelectionne) {
+      return (
+        <>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm text-slate-500">Fiche client</p>
+                <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                  {clientSelectionne.nom}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {clientSelectionne.reference}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                    clientSelectionne.archive
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {clientSelectionne.archive ? "Archivé" : "Actif"}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <button
+                onClick={ouvrirEdition}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Modifier
+              </button>
+
+              {!clientSelectionne.archive ? (
+                <button
+                  onClick={archiverClient}
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                >
+                  Archiver
+                </button>
+              ) : (
+                <button
+                  onClick={restaurerClient}
+                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                >
+                  Restaurer
+                </button>
+              )}
+
+              <button
+                onClick={supprimerClient}
+                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Type</p>
+              <p className="mt-1 text-lg font-semibold">
+                {clientSelectionne.typeClient}
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Société</p>
+                <p className="mt-1 font-semibold">
+                  {clientSelectionne.societe || "Non renseignée"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">TVA</p>
+                <p className="mt-1 font-semibold">
+                  {clientSelectionne.tva || "Non renseignée"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Email</p>
+                <p className="mt-1 break-all font-semibold">
+                  {clientSelectionne.email || "Non renseigné"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Téléphone</p>
+                <p className="mt-1 font-semibold">
+                  {clientSelectionne.telephone || "Non renseigné"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Adresse</p>
+              <p className="mt-1 font-semibold">
+                {clientSelectionne.adresse || "Non renseignée"}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                {[
+                  clientSelectionne.codePostal,
+                  clientSelectionne.ville,
+                  clientSelectionne.pays,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "Coordonnées non renseignées"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Notes</p>
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+                {clientSelectionne.notes || "Aucune note pour ce client."}
+              </p>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
+        Sélectionne un client pour voir sa fiche.
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
@@ -394,443 +790,96 @@ export default function ClientsWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3 overflow-hidden">
+          <div className="mt-6 space-y-2 overflow-hidden">
             {clientsFiltres.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucun client trouvé.
               </div>
             ) : (
-              clientsFiltres.map((client) => (
-                <button
-                  key={client.id}
-                  onClick={() => {
-                    setClientSelectionneId(client.id);
-                    setModeEdition(false);
-                    setAfficherFormulaire(false);
-                  }}
-                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
-                    clientSelectionne?.id === client.id
-                      ? "border-slate-900 bg-slate-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex min-w-0 flex-col gap-3">
+              clientsFiltres.map((client) => {
+                const estSelectionne = client.id === clientSelectionneId;
+
+                return (
+                  <button
+                    key={client.id}
+                    onClick={() => {
+                      setModeEdition(false);
+                      setAfficherFormulaire(false);
+                      setClientSelectionneId(estSelectionne ? null : client.id);
+                    }}
+                    className={`block w-full min-w-0 overflow-hidden rounded-xl border px-3 py-3 text-left transition ${
+                      estSelectionne
+                        ? "border-slate-900 bg-slate-50"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm text-slate-500">
-                          {client.reference}
-                        </p>
-                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-slate-900">
+                            {client.reference}
+                          </p>
+
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              client.archive
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}
+                          >
+                            {client.archive ? "Archivé" : "Actif"}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 truncate text-sm font-medium text-slate-700">
                           {client.nom}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
+                        </p>
+
+                        <p className="mt-1 truncate text-xs text-slate-400">
                           {client.societe || client.typeClient}
                         </p>
                       </div>
 
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                          client.archive
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-700"
-                        }`}
-                      >
-                        {client.archive ? "Archivé" : "Actif"}
-                      </span>
+                      <div className="shrink-0 text-right">
+                        <p className="text-xs text-slate-500">
+                          {client.ville || "Ville"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {client.telephone || "Téléphone"}
+                        </p>
+                      </div>
                     </div>
-
-                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
-                      <p className="text-sm text-slate-600">
-                        {client.email || "Email non renseigné"}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {client.telephone || "Téléphone non renseigné"}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {client.ville || "Ville non renseignée"}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          {chargement ? (
-            <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
-              Chargement des clients...
-            </div>
-          ) : afficherFormulaireClient ? (
-            <>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-500">
-                    {modeEdition ? "Édition client" : "Nouveau client"}
-                  </p>
-                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                    {modeEdition && clientSelectionne
-                      ? clientSelectionne.reference
-                      : "Créer une fiche client"}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={fermerFormulaire}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
-                >
-                  Fermer
-                </button>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Nom du client
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.nom}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        nom: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Type
-                  </label>
-                  <select
-                    value={formulaire.typeClient}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        typeClient: e.target.value as TypeClient,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    {TYPES_CLIENT.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Société
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.societe}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        societe: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    TVA
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.tva}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        tva: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formulaire.email}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Téléphone
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.telephone}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        telephone: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Adresse
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.adresse}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        adresse: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Code postal
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.codePostal}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        codePostal: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Ville
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.ville}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        ville: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div className="md:col-span-2 lg:max-w-xs">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Pays
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.pays}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        pays: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Notes
-                </label>
-                <textarea
-                  value={formulaire.notes}
-                  onChange={(e) =>
-                    setFormulaire((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
-                  rows={5}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                />
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={enregistrerClient}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  {sauvegardeEnCours
-                    ? "Enregistrement..."
-                    : modeEdition
-                    ? "Enregistrer les modifications"
-                    : "Créer le client"}
-                </button>
-
-                <button
-                  onClick={fermerFormulaire}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  Annuler
-                </button>
-              </div>
-            </>
-          ) : clientSelectionne ? (
-            <>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-500">Fiche client</p>
-                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                      {clientSelectionne.nom}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {clientSelectionne.reference}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                        clientSelectionne.archive
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      {clientSelectionne.archive ? "Archivé" : "Actif"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  <button
-                    onClick={ouvrirEdition}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    Modifier
-                  </button>
-
-                  {!clientSelectionne.archive ? (
-                    <button
-                      onClick={archiverClient}
-                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
-                    >
-                      Archiver
-                    </button>
-                  ) : (
-                    <button
-                      onClick={restaurerClient}
-                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                    >
-                      Restaurer
-                    </button>
-                  )}
-
-                  <button
-                    onClick={supprimerClient}
-                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Type</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {clientSelectionne.typeClient}
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Société</p>
-                    <p className="mt-1 font-semibold">
-                      {clientSelectionne.societe || "Non renseignée"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">TVA</p>
-                    <p className="mt-1 font-semibold">
-                      {clientSelectionne.tva || "Non renseignée"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Email</p>
-                    <p className="mt-1 break-all font-semibold">
-                      {clientSelectionne.email || "Non renseigné"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Téléphone</p>
-                    <p className="mt-1 font-semibold">
-                      {clientSelectionne.telephone || "Non renseigné"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Adresse</p>
-                  <p className="mt-1 font-semibold">
-                    {clientSelectionne.adresse || "Non renseignée"}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {[
-                      clientSelectionne.codePostal,
-                      clientSelectionne.ville,
-                      clientSelectionne.pays,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "Coordonnées non renseignées"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Notes</p>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
-                    {clientSelectionne.notes || "Aucune note pour ce client."}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
-              Aucun client pour cette entreprise.
-            </div>
-          )}
+        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6 xl:block">
+          {renderFormulaireOuDetail()}
         </div>
       </div>
+
+      <MobileFullscreenModal
+        open={afficherFormulaireClient}
+        title={titreMobile}
+        onClose={fermerFormulaire}
+      >
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          {renderFormulaireOuDetail()}
+        </div>
+      </MobileFullscreenModal>
+
+      <MobileFullscreenModal
+        open={!afficherFormulaireClient && clientSelectionne !== null}
+        title={titreMobile}
+        onClose={fermerDetail}
+      >
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+          {renderFormulaireOuDetail()}
+        </div>
+      </MobileFullscreenModal>
     </>
   );
 }
