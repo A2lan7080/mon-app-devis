@@ -50,3 +50,5 @@ firestore-debug.log
 ui-debug.log
 
 serviceAccountKey.json
+.vercel
+.env*.local

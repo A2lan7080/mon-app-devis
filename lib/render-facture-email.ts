@@ -43,6 +43,26 @@ function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune note.") {
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
+function getBlocLogoEmail(logoUrl?: string) {
+  if (!logoUrl) return "";
+  const estUrlPublique =
+    logoUrl.startsWith("https://") || logoUrl.startsWith("http://");
+
+  if (!estUrlPublique) {
+    return "";
+  }
+
+  return `
+    <div style="margin-bottom:16px;">
+      <img
+        src="${logoUrl}"
+        alt="Logo entreprise"
+        style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
+      />
+    </div>
+  `;
+}
+
 export function renderFactureEmailHtml(
   facture: Facture,
   entreprise: EntrepriseSettings = entrepriseParDefaut
@@ -51,17 +71,7 @@ export function renderFactureEmailHtml(
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
 
-  const blocLogo = entreprise.logoUrl
-    ? `
-      <div style="margin-bottom:16px;">
-        <img
-          src="${entreprise.logoUrl}"
-          alt="Logo entreprise"
-          style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
-        />
-      </div>
-    `
-    : "";
+  const blocLogo = getBlocLogoEmail(entreprise.logoUrl);
 
   return `
 <!DOCTYPE html>

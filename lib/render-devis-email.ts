@@ -48,6 +48,26 @@ function texteMultiligneOuDefaut(
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
+function getBlocLogoEmail(logoUrl?: string) {
+  if (!logoUrl) return "";
+  const estUrlPublique =
+    logoUrl.startsWith("https://") || logoUrl.startsWith("http://");
+
+  if (!estUrlPublique) {
+    return "";
+  }
+
+  return `
+    <div style="margin-bottom:16px;">
+      <img
+        src="${logoUrl}"
+        alt="Logo entreprise"
+        style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
+      />
+    </div>
+  `;
+}
+
 export function renderDevisEmailHtml(
   devis: DevisBusiness,
   entreprise: EntrepriseSettings = entrepriseParDefaut
@@ -58,17 +78,7 @@ export function renderDevisEmailHtml(
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
 
-  const blocLogo = entreprise.logoUrl
-    ? `
-      <div style="margin-bottom:16px;">
-        <img
-          src="${entreprise.logoUrl}"
-          alt="Logo entreprise"
-          style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
-        />
-      </div>
-    `
-    : "";
+  const blocLogo = getBlocLogoEmail(entreprise.logoUrl);
 
   const lignesHtml = devis.lignes
     .map((ligne) => {

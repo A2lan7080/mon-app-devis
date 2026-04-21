@@ -25,7 +25,6 @@ import type {
   NouveauDevisState,
   StatutDevis,
 } from "../types/devis";
-import type { PrestationBibliotheque } from "../types/prestations";
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -80,17 +79,6 @@ function creerLigneVideAvecUnite(): NouvelleLigneState {
   return {
     ...creerLigneVide(),
     unite: "forfait",
-  };
-}
-
-function creerLigneDepuisPrestation(
-  prestation: PrestationBibliotheque
-): NouvelleLigneState {
-  return {
-    designation: prestation.designation,
-    quantite: "1",
-    unite: prestation.unite,
-    prixUnitaire: String(prestation.prixUnitaire),
   };
 }
 
@@ -211,16 +199,26 @@ export default function DevisForm({
     setLignes((prev) => [...prev, creerLigneVideAvecUnite()]);
   };
 
-  const ajouterPrestationDepuisBibliotheque = () => {
-    if (!prestationSelectionneeId) return;
+  const ajouterPrestationDansLignes = (prestationId: string) => {
+    setPrestationSelectionneeId(prestationId);
+
+    if (!prestationId) return;
 
     const prestation =
-      prestationsActives.find((item) => item.id === prestationSelectionneeId) ??
-      null;
+      prestationsActives.find((item) => item.id === prestationId) ?? null;
 
     if (!prestation) return;
 
-    setLignes((prev) => [...prev, creerLigneDepuisPrestation(prestation)]);
+    setLignes((prev) => [
+      ...prev,
+      {
+        designation: prestation.designation,
+        quantite: "1",
+        unite: prestation.unite,
+        prixUnitaire: String(prestation.prixUnitaire),
+      },
+    ]);
+
     setPrestationSelectionneeId("");
   };
 
@@ -531,6 +529,24 @@ export default function DevisForm({
               <option key={chantier.id} value={chantier.id}>
                 {chantier.titre}
                 {chantier.clientNom ? ` — ${chantier.clientNom}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Ajouter depuis la bibliothèque de prestations
+          </label>
+          <select
+            value={prestationSelectionneeId}
+            onChange={(e) => ajouterPrestationDansLignes(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          >
+            <option value="">Choisir une prestation enregistrée</option>
+            {prestationsActives.map((prestation) => (
+              <option key={prestation.id} value={prestation.id}>
+                {prestation.designation} — {formatMontant(prestation.prixUnitaire)} / {prestation.unite}
               </option>
             ))}
           </select>
@@ -880,42 +896,6 @@ export default function DevisForm({
             Ajouter une ligne
           </button>
         </div>
-
-        {prestationsActives.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Ajouter depuis la bibliothèque
-                </label>
-                <select
-                  value={prestationSelectionneeId}
-                  onChange={(e) => setPrestationSelectionneeId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
-                >
-                  <option value="">Sélectionner une prestation enregistrée</option>
-                  {prestationsActives.map((prestation) => (
-                    <option key={prestation.id} value={prestation.id}>
-                      {prestation.designation} — {formatMontant(prestation.prixUnitaire)} /{" "}
-                      {prestation.unite}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={ajouterPrestationDepuisBibliotheque}
-                  disabled={!prestationSelectionneeId}
-                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
-                >
-                  Ajouter la prestation
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="mt-4 space-y-4">
           {lignes.map((ligne, index) => (

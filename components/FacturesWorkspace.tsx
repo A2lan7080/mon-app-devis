@@ -8,7 +8,11 @@ import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { db } from "../lib/firebase";
-import { calculerTotalHt, formatMontant } from "../lib/devis-helpers";
+import {
+  calculerTotalHt,
+  calculerTotalTvac,
+  formatMontant,
+} from "../lib/devis-helpers";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import type { Facture, StatutFacture } from "../types/factures";
 
@@ -315,11 +319,53 @@ export default function FacturesWorkspace({
       montantHt: String(calculerTotalHt(devisSelectionne)),
       tvaTaux: String(devisSelectionne.tvaTaux),
       acompteDeduit: String(
-        ((calculerTotalHt(devisSelectionne) *
-          (1 + devisSelectionne.tvaTaux / 100)) *
-          ((devisSelectionne.acomptePourcentage ?? 0) / 100)) || 0
+        ((calculerTotalTvac(devisSelectionne) *
+          ((devisSelectionne.acomptePourcentage ?? 0) / 100)) || 0)
       ),
       notes: devisSelectionne.conditions ?? prev.notes,
+    }));
+  };
+
+  const handleSelectionChantier = (chantierId: string) => {
+    const chantier =
+      chantiers.find((item) => item.id === chantierId && !item.archive) ?? null;
+
+    if (!chantier) {
+      setFormulaire((prev) => ({
+        ...prev,
+        chantierId: "",
+      }));
+      return;
+    }
+
+    const clientAssocie =
+      clients.find((client) => client.id === chantier.clientId) ?? null;
+
+    const devisDuChantier = devis
+      .filter((item) => item.chantierId === chantier.id && !item.archive)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+
+    const devisAssocie = devisDuChantier[0] ?? null;
+
+    setFormulaire((prev) => ({
+      ...prev,
+      chantierId: chantier.id,
+      clientId: clientAssocie?.id ?? prev.clientId,
+      devisId: devisAssocie?.id ?? prev.devisId,
+      objet: devisAssocie
+        ? `Facture - ${devisAssocie.id}`
+        : prev.objet || `Facture - ${chantier.titre}`,
+      montantHt: devisAssocie
+        ? String(calculerTotalHt(devisAssocie))
+        : prev.montantHt,
+      tvaTaux: devisAssocie ? String(devisAssocie.tvaTaux) : prev.tvaTaux,
+      acompteDeduit: devisAssocie
+        ? String(
+            ((calculerTotalTvac(devisAssocie) *
+              ((devisAssocie.acomptePourcentage ?? 0) / 100)) || 0)
+          )
+        : prev.acompteDeduit,
+      notes: devisAssocie?.conditions ?? prev.notes,
     }));
   };
 
@@ -803,23 +849,6 @@ export default function FacturesWorkspace({
                   </select>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Objet
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.objet}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        objet: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Client
@@ -851,12 +880,7 @@ export default function FacturesWorkspace({
                   </label>
                   <select
                     value={formulaire.chantierId}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        chantierId: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => handleSelectionChantier(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
                   >
                     <option value="">Aucun chantier lié</option>
@@ -868,6 +892,23 @@ export default function FacturesWorkspace({
                         </option>
                       ))}
                   </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Objet
+                  </label>
+                  <input
+                    type="text"
+                    value={formulaire.objet}
+                    onChange={(e) =>
+                      setFormulaire((prev) => ({
+                        ...prev,
+                        objet: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                  />
                 </div>
 
                 <div>

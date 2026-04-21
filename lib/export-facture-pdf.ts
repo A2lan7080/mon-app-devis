@@ -60,7 +60,7 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
         <img
           src="${entreprise.logoUrl}"
           alt="Logo entreprise"
-          style="max-height:70px; max-width:180px; object-fit:contain;"
+          style="max-height:100px; max-width:260px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `
@@ -215,13 +215,13 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
               </div>
 
               <div>
-                <div class="label">Code postal / Ville :</div>
+                <div class="label">Code postal / Ville</div>
                 <div class="small-value">
                   ${texteOuDefaut(
                     [factureSelectionnee.clientCodePostal, factureSelectionnee.clientVille]
                       .filter(Boolean)
                       .join(" · "),
-                    "Code postal / Ville : non renseignés"
+                    "Coordonnées non renseignées"
                   )}
                 </div>
               </div>
