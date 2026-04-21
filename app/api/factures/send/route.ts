@@ -4,14 +4,19 @@ import {
   renderFactureEmailHtml,
   renderFactureEmailText,
 } from "../../../../lib/render-facture-email";
-import { getEntrepriseSettings } from "../../../../lib/get-entreprise-settings";
 import type { Facture } from "../../../../types/factures";
+import type { Entreprise } from "../../../../types/devis";
 
 export const runtime = "nodejs";
+
+type EntrepriseSettings = Entreprise & {
+  logoUrl?: string;
+};
 
 type Payload = {
   facture?: Facture;
   toEmail?: string;
+  entreprise?: EntrepriseSettings;
 };
 
 export async function POST(request: Request) {
@@ -34,6 +39,7 @@ export async function POST(request: Request) {
 
     const facture = body.facture;
     const toEmail = body.toEmail?.trim();
+    const entreprise = body.entreprise;
 
     if (!facture) {
       return NextResponse.json(
@@ -49,11 +55,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const entreprise = await getEntrepriseSettings(facture.entrepriseId ?? null);
+    if (!entreprise) {
+      return NextResponse.json(
+        { error: "Informations entreprise manquantes." },
+        { status: 400 }
+      );
+    }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const nomEntreprise = entreprise.nom?.trim() || "Batiflow";
-    const subject = `Facture ${facture.reference} - ${nomEntreprise}`;
+    const subject = `Facture ${facture.reference} - ${entreprise.nom}`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,

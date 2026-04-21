@@ -215,13 +215,13 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
               </div>
 
               <div>
-                <div class="label">Coordonnées</div>
+                <div class="label">Code postal / Ville :</div>
                 <div class="small-value">
                   ${texteOuDefaut(
                     [factureSelectionnee.clientCodePostal, factureSelectionnee.clientVille]
                       .filter(Boolean)
                       .join(" · "),
-                    "Coordonnées non renseignées"
+                    "Code postal / Ville : non renseignés"
                   )}
                 </div>
               </div>

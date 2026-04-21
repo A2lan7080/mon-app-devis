@@ -31,7 +31,10 @@ function texteOuDefaut(valeur: string, defaut = "-") {
   return nettoyee ? echapperHtml(nettoyee) : defaut;
 }
 
-function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune condition particulière.") {
+function texteMultiligneOuDefaut(
+  valeur: string,
+  defaut = "Aucune condition particulière."
+) {
   const nettoyee = valeur.trim();
 
   if (!nettoyee) {
@@ -82,7 +85,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
         <img
           src="${entreprise.logoUrl}"
           alt="Logo entreprise"
-          style="max-height:70px; max-width:180px; object-fit:contain;"
+          style="max-height:100px; max-width:260px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `

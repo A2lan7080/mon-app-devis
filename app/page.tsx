@@ -18,6 +18,7 @@ import { useDevisActions } from "../hooks/useDevisActions";
 import { useDevisAnalytics } from "../hooks/useDevisAnalytics";
 import { useDevisPageUi } from "../hooks/useDevisPageUi";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
+import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import { useSessionNavigation } from "../hooks/useSessionNavigation";
 import { db } from "../lib/firebase";
 import type { StatutDevis } from "../types/devis";
@@ -50,6 +51,12 @@ export default function Home() {
 
   const estAdmin = profilUtilisateur?.role === "admin";
   const entrepriseIdCourante = profilUtilisateur?.entrepriseId ?? null;
+
+  const { entrepriseSettings } = useEntrepriseSettings({
+    entrepriseIdCourante,
+    userId: user?.uid ?? null,
+    authChargee,
+  });
 
   const { devis, chargement } = useEntrepriseDevis({
     authChargee,
@@ -152,6 +159,7 @@ export default function Home() {
         body: JSON.stringify({
           devis: devisSelectionne,
           toEmail: emailClient,
+          entreprise: entrepriseSettings,
         }),
       });
 
@@ -266,47 +274,47 @@ export default function Home() {
         />
       ) : (
         <DevisWorkspace
-            devis={devis}
-            devisFiltres={devisFiltres}
-            devisSelectionne={devisSelectionne}
-            entrepriseId={entrepriseIdCourante ?? undefined}
-            createdByUid={user?.uid}
-            afficherFormulaire={afficherFormulaire}
-            recherche={recherche}
-            setRecherche={setRecherche}
-            filtreStatut={filtreStatut}
-            setFiltreStatut={setFiltreStatut}
-            filtreArchivage={filtreArchivage}
-            setFiltreArchivage={setFiltreArchivage}
-            devisSelectionneId={devisSelectionneId}
-            setDevisSelectionneId={setDevisSelectionneId}
-            totalDevis={totalDevis}
-            totalBrouillons={totalBrouillons}
-            totalAcceptes={totalAcceptes}
-            caSigne={caSigne}
-            modeEdition={modeEdition}
-            setModeEdition={setModeEdition}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            editLignes={editLignes}
-            ouvrirEdition={ouvrirEdition}
-            annulerEdition={annulerEdition}
-            ajouterLigneEdition={ajouterLigneEdition}
-            supprimerLigneEdition={supprimerLigneEdition}
-            mettreAJourLigneEdition={mettreAJourLigneEdition}
-            enregistrerEdition={() => enregistrerEdition(getDevisDocRef)}
-            dupliquerDevis={() => dupliquerDevis(getDevisDocRef)}
-            supprimerDevis={() => supprimerDevis(getDevisDocRef)}
-            archiverDevis={() => archiverDevis(getDevisDocRef)}
-            restaurerDevis={() => restaurerDevis(getDevisDocRef)}
-            handleExporterPdf={handleExporterPdf}
-            handleEnvoyerParMail={handleEnvoyerDevisParMail}
-            envoiEnCours={envoiDevisEnCours}
-            handleChangerStatut={(statut) =>
-              handleChangerStatut(statut, getDevisDocRef)
-            }
-            onDevisCree={handleDevisCree}
-            onCloseFormulaire={fermerFormulaireDevis}
+          devis={devis}
+          devisFiltres={devisFiltres}
+          devisSelectionne={devisSelectionne}
+          entrepriseId={entrepriseIdCourante ?? undefined}
+          createdByUid={user?.uid}
+          afficherFormulaire={afficherFormulaire}
+          recherche={recherche}
+          setRecherche={setRecherche}
+          filtreStatut={filtreStatut}
+          setFiltreStatut={setFiltreStatut}
+          filtreArchivage={filtreArchivage}
+          setFiltreArchivage={setFiltreArchivage}
+          devisSelectionneId={devisSelectionneId}
+          setDevisSelectionneId={setDevisSelectionneId}
+          totalDevis={totalDevis}
+          totalBrouillons={totalBrouillons}
+          totalAcceptes={totalAcceptes}
+          caSigne={caSigne}
+          modeEdition={modeEdition}
+          setModeEdition={setModeEdition}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          editLignes={editLignes}
+          ouvrirEdition={ouvrirEdition}
+          annulerEdition={annulerEdition}
+          ajouterLigneEdition={ajouterLigneEdition}
+          supprimerLigneEdition={supprimerLigneEdition}
+          mettreAJourLigneEdition={mettreAJourLigneEdition}
+          enregistrerEdition={() => enregistrerEdition(getDevisDocRef)}
+          dupliquerDevis={() => dupliquerDevis(getDevisDocRef)}
+          supprimerDevis={() => supprimerDevis(getDevisDocRef)}
+          archiverDevis={() => archiverDevis(getDevisDocRef)}
+          restaurerDevis={() => restaurerDevis(getDevisDocRef)}
+          handleExporterPdf={handleExporterPdf}
+          handleEnvoyerParMail={handleEnvoyerDevisParMail}
+          envoiEnCours={envoiDevisEnCours}
+          handleChangerStatut={(statut) =>
+            handleChangerStatut(statut, getDevisDocRef)
+          }
+          onDevisCree={handleDevisCree}
+          onCloseFormulaire={fermerFormulaireDevis}
         />
       )}
     </AdminShell>

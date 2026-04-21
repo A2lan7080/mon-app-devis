@@ -64,7 +64,7 @@ export function renderDevisEmailHtml(
         <img
           src="${entreprise.logoUrl}"
           alt="Logo entreprise"
-          style="max-height:60px; max-width:180px; object-fit:contain;"
+          style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `
@@ -176,7 +176,7 @@ export function renderDevisEmailHtml(
                               <strong>Adresse :</strong> ${texteOuDefaut(devis.adresse, "Non renseignée")}
                             </div>
                             <div style="font-size:14px; line-height:22px; color:#475569;">
-                              <strong>Coordonnées :</strong> ${texteOuDefaut(
+                              <strong>Code postal / Ville :</strong> ${texteOuDefaut(
                                 [devis.codePostal, devis.ville].filter(Boolean).join(" · "),
                                 "Coordonnées non renseignées"
                               )}
@@ -275,7 +275,10 @@ export function renderDevisEmailHtml(
                               Conditions
                             </div>
                             <div style="font-size:14px; line-height:24px; color:#334155; word-break:break-word;">
-                              ${texteMultiligneOuDefaut(devis.conditions)}
+                              ${texteMultiligneOuDefaut(
+                                devis.conditions,
+                                "Aucune condition particulière."
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -326,7 +329,7 @@ Client : ${devis.client}
 Type : ${devis.typeClient}${devis.societe ? ` - ${devis.societe}` : ""}
 Chantier : ${devis.chantierTitre || "Aucun chantier lié"}
 Adresse : ${devis.adresse || "-"}
-Coordonnées : ${[devis.codePostal, devis.ville].filter(Boolean).join(" · ") || "-"}
+Code postal / Ville : ${[devis.codePostal, devis.ville].filter(Boolean).join(" · ") || "-"}
 Email : ${devis.email || "-"}
 Téléphone : ${devis.telephone || "-"}
 

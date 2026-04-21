@@ -57,7 +57,7 @@ export function renderFactureEmailHtml(
         <img
           src="${entreprise.logoUrl}"
           alt="Logo entreprise"
-          style="max-height:60px; max-width:180px; object-fit:contain;"
+          style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `
@@ -139,7 +139,7 @@ export function renderFactureEmailHtml(
                               <strong>Adresse :</strong> ${texteOuDefaut(facture.clientAdresse, "Adresse non renseignée")}
                             </div>
                             <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-                              <strong>Coordonnées :</strong> ${texteOuDefaut(
+                              <strong>Code postal / Ville :</strong> ${texteOuDefaut(
                                 [facture.clientCodePostal, facture.clientVille]
                                   .filter(Boolean)
                                   .join(" · "),
@@ -279,7 +279,7 @@ FACTURE ${facture.reference}
 Objet : ${facture.objet}
 Client : ${facture.clientNom}
 Adresse client : ${facture.clientAdresse || "-"}
-Coordonnées client : ${[facture.clientCodePostal, facture.clientVille].filter(Boolean).join(" · ") || "-"}
+Code postal / Ville : ${[facture.clientCodePostal, facture.clientVille].filter(Boolean).join(" · ") || "-"}
 Email client : ${facture.clientEmail || "-"}
 Téléphone client : ${facture.clientTelephone || "-"}
 Chantier : ${facture.chantierTitre || "Aucun chantier lié"}

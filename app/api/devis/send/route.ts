@@ -4,8 +4,7 @@ import {
   renderDevisEmailHtml,
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
-import { getEntrepriseSettings } from "../../../../lib/get-entreprise-settings";
-import type { Devis } from "../../../../types/devis";
+import type { Devis, Entreprise } from "../../../../types/devis";
 
 export const runtime = "nodejs";
 
@@ -19,9 +18,14 @@ type DevisBusiness = Devis & {
   createdByUid?: string;
 };
 
+type EntrepriseSettings = Entreprise & {
+  logoUrl?: string;
+};
+
 type Payload = {
   devis?: DevisBusiness;
   toEmail?: string;
+  entreprise?: EntrepriseSettings;
 };
 
 export async function POST(request: Request) {
@@ -44,6 +48,7 @@ export async function POST(request: Request) {
 
     const devis = body.devis;
     const toEmail = body.toEmail?.trim();
+    const entreprise = body.entreprise;
 
     if (!devis) {
       return NextResponse.json({ error: "Devis manquant." }, { status: 400 });
@@ -56,11 +61,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const entreprise = await getEntrepriseSettings(devis.entrepriseId ?? null);
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    if (!entreprise) {
+      return NextResponse.json(
+        { error: "Informations entreprise manquantes." },
+        { status: 400 }
+      );
+    }
 
-    const nomEntreprise = entreprise.nom?.trim() || "Batiflow";
-    const subject = `Devis ${devis.id} - ${nomEntreprise}`;
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const subject = `Devis ${devis.id} - ${entreprise.nom}`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
