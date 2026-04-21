@@ -34,7 +34,7 @@ export default function DevisKpiCards({
 
       <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 col-span-2 xl:col-span-1">
         <p className="text-xs text-slate-500 sm:text-sm">CA signé</p>
-        <p className="mt-2 break-words text-2xl font-bold sm:text-3xl">
+        <p className="mt-2 wrap-break-word text-2xl font-bold sm:text-3xl">
           {formatMontant(caSigne)}
         </p>
       </div>

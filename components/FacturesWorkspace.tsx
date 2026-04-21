@@ -1008,7 +1008,7 @@ export default function FacturesWorkspace({
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Montant HT</p>
-                <p className="mt-1 break-words font-semibold">
+                <p className="mt-1 wrap-break-word font-semibold">
                   {formatMontant(factureSelectionnee.montantHt)}
                 </p>
               </div>
@@ -1017,21 +1017,21 @@ export default function FacturesWorkspace({
                 <p className="text-sm text-slate-500">
                   TVA ({factureSelectionnee.tvaTaux}%)
                 </p>
-                <p className="mt-1 break-words font-semibold">
+                <p className="mt-1 wrap-break-word font-semibold">
                   {formatMontant(totalTvaSelectionnee)}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Total TTC</p>
-                <p className="mt-1 break-words font-semibold">
+                <p className="mt-1 wrap-break-word font-semibold">
                   {formatMontant(totalTtcSelectionnee)}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Net à payer</p>
-                <p className="mt-1 break-words font-semibold">
+                <p className="mt-1 wrap-break-word font-semibold">
                   {formatMontant(netAPayerSelectionnee)}
                 </p>
               </div>
@@ -1107,7 +1107,7 @@ export default function FacturesWorkspace({
 
         <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
           <p className="text-xs text-slate-500 sm:text-sm">Net facturé</p>
-          <p className="mt-2 break-words text-2xl font-bold sm:text-3xl">
+          <p className="mt-2 wrap-break-word text-2xl font-bold sm:text-3xl">
             {formatMontant(totalNetFacture)}
           </p>
         </div>

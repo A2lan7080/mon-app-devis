@@ -204,7 +204,7 @@ export default function DevisDetailPanel({
         <div className="mt-6 space-y-4">
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Client</p>
-            <p className="mt-1 break-words text-lg font-semibold">
+            <p className="mt-1 wrap-break-word text-lg font-semibold">
               {devisSelectionne.client}
             </p>
             <p className="mt-2 text-sm text-slate-600">
@@ -215,7 +215,7 @@ export default function DevisDetailPanel({
 
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Chantier lié</p>
-            <p className="mt-1 break-words font-semibold">
+            <p className="mt-1 wrap-break-word font-semibold">
               {devisSelectionne.chantierTitre || "Aucun chantier lié"}
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function DevisDetailPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Adresse</p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {devisSelectionne.adresse || "Non renseignée"}
               </p>
               <p className="mt-2 text-sm text-slate-600">
@@ -235,13 +235,13 @@ export default function DevisDetailPanel({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Contact</p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {devisSelectionne.email || "Non renseigné"}
               </p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {devisSelectionne.telephone || "Non renseigné"}
               </p>
-              <p className="mt-2 break-words text-sm text-slate-600">
+              <p className="mt-2 wrap-break-word text-sm text-slate-600">
                 TVA client : {devisSelectionne.tvaClient || "Non renseignée"}
               </p>
             </div>
@@ -372,7 +372,7 @@ export default function DevisDetailPanel({
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Total HT</p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {formatMontant(totalHtSelectionne)}
               </p>
             </div>
@@ -381,21 +381,21 @@ export default function DevisDetailPanel({
               <p className="text-sm text-slate-500">
                 TVA ({devisSelectionne.tvaTaux}%)
               </p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {formatMontant(totalTvaSelectionne)}
               </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Total TVAC</p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {formatMontant(totalTvacSelectionne)}
               </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Acompte</p>
-              <p className="mt-1 break-words font-semibold">
+              <p className="mt-1 wrap-break-word font-semibold">
                 {formatMontant(acompteSelectionne)}
               </p>
             </div>
@@ -403,7 +403,7 @@ export default function DevisDetailPanel({
 
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Conditions</p>
-            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700">
+            <p className="mt-2 whitespace-pre-line wrap-break-word text-sm leading-6 text-slate-700">
               {devisSelectionne.conditions || "Aucune condition particulière."}
             </p>
           </div>

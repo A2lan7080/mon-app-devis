@@ -18,7 +18,7 @@ export default function MobileFullscreenModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] md:hidden">
+    <div className="fixed inset-0 z-80 md:hidden">
       <button
         aria-label="Fermer"
         className="absolute inset-0 bg-slate-900/40"
