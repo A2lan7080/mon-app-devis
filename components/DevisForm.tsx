@@ -58,7 +58,7 @@ const champFormulaireClasses =
   "w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400";
 
 const champDateMobileClasses =
-  "block w-full min-w-0 max-w-[calc(100vw-4rem)] rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:max-w-full sm:px-4 sm:text-sm";
+  "block w-[220px] max-w-full rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:w-full sm:px-4 sm:text-sm";
 
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
