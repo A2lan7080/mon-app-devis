@@ -45,6 +45,7 @@ type DevisFormProps = {
 };
 
 const UNITES_PREDEFINIES = ["pièce", "forfait", "m²", "ml", "heure", "jour"];
+
 const STATUTS_CHANTIER: StatutChantier[] = [
   "À planifier",
   "Planifié",
@@ -92,7 +93,7 @@ export default function DevisForm({
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [clientSelectionneId, setClientSelectionneId] = useState("");
   const [chantierSelectionneId, setChantierSelectionneId] = useState("");
-  const [prestationSelectionneeId, setPrestationSelectionneeId] = useState("");
+  const [recherchePrestation, setRecherchePrestation] = useState("");
   const [nouveauChantierDateDebut, setNouveauChantierDateDebut] = useState("");
   const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
   const [nouveauChantierStatut, setNouveauChantierStatut] =
@@ -134,6 +135,24 @@ export default function DevisForm({
     [prestations]
   );
 
+  const prestationsFiltrees = useMemo(() => {
+    const recherche = recherchePrestation.trim().toLowerCase();
+
+    if (!recherche) return prestationsActives;
+
+    return prestationsActives.filter((prestation) => {
+      const designation = prestation.designation?.toLowerCase() ?? "";
+      const unite = prestation.unite?.toLowerCase() ?? "";
+      const prix = String(prestation.prixUnitaire ?? "").toLowerCase();
+
+      return (
+        designation.includes(recherche) ||
+        unite.includes(recherche) ||
+        prix.includes(recherche)
+      );
+    });
+  }, [prestationsActives, recherchePrestation]);
+
   const [nouveauDevis, setNouveauDevis] = useState<
     NouveauDevisState & {
       acomptePourcentage: string;
@@ -168,7 +187,7 @@ export default function DevisForm({
   const reinitialiserFormulaire = () => {
     setClientSelectionneId("");
     setChantierSelectionneId("");
-    setPrestationSelectionneeId("");
+    setRecherchePrestation("");
     setNouveauChantierDateDebut("");
     setNouveauChantierDateFin("");
     setNouveauChantierStatut("À planifier");
@@ -200,8 +219,6 @@ export default function DevisForm({
   };
 
   const ajouterPrestationDansLignes = (prestationId: string) => {
-    setPrestationSelectionneeId(prestationId);
-
     if (!prestationId) return;
 
     const prestation =
@@ -218,8 +235,6 @@ export default function DevisForm({
         prixUnitaire: String(prestation.prixUnitaire),
       },
     ]);
-
-    setPrestationSelectionneeId("");
   };
 
   const supprimerLigne = (index: number) => {
@@ -244,9 +259,7 @@ export default function DevisForm({
   const handleSelectionClient = (clientId: string) => {
     setClientSelectionneId(clientId);
 
-    if (!clientId) {
-      return;
-    }
+    if (!clientId) return;
 
     const client = clientsActifs.find((item) => item.id === clientId);
     if (!client) return;
@@ -869,29 +882,20 @@ export default function DevisForm({
 
       <div className="mt-8 rounded-2xl bg-slate-50 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-lg font-semibold">Prestations</h4>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <select
-              value={prestationSelectionneeId}
-              onChange={(e) => ajouterPrestationDansLignes(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 sm:min-w-[280px]"
-            >
-              <option value="">Ajouter depuis la bibliothèque</option>
-              {prestationsActives.map((prestation) => (
-                <option key={prestation.id} value={prestation.id}>
-                  {prestation.designation} — {formatMontant(prestation.prixUnitaire)} / {prestation.unite}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={ajouterLigne}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
-            >
-              Ajouter une ligne
-            </button>
+          <div>
+            <h4 className="text-lg font-semibold">Prestations du devis</h4>
+            <p className="mt-1 text-sm text-slate-500">
+              Ajoute des lignes manuellement ou depuis la bibliothèque en bas.
+            </p>
           </div>
+
+          <button
+            type="button"
+            onClick={ajouterLigne}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
+          >
+            Ajouter une ligne
+          </button>
         </div>
 
         <div className="mt-4 space-y-4">
@@ -900,53 +904,89 @@ export default function DevisForm({
               key={index}
               className="rounded-2xl border border-slate-200 bg-white p-4"
             >
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <input
-                  type="text"
-                  placeholder="Désignation"
-                  value={ligne.designation}
-                  onChange={(e) =>
-                    mettreAJourLigne(index, "designation", e.target.value)
-                  }
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-700">
+                  Ligne {index + 1}
+                </p>
 
-                <input
-                  type="number"
-                  placeholder="Quantité"
-                  value={ligne.quantite}
-                  onChange={(e) =>
-                    mettreAJourLigne(index, "quantite", e.target.value)
-                  }
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
-
-                <select
-                  value={ligne.unite}
-                  onChange={(e) =>
-                    mettreAJourLigne(index, "unite", e.target.value)
-                  }
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                >
-                  {UNITES_PREDEFINIES.map((unite) => (
-                    <option key={unite} value={unite}>
-                      {unite}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="number"
-                  placeholder="Prix unitaire"
-                  value={ligne.prixUnitaire}
-                  onChange={(e) =>
-                    mettreAJourLigne(index, "prixUnitaire", e.target.value)
-                  }
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
+                {lignes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => supprimerLigne(index)}
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                  >
+                    Supprimer
+                  </button>
+                )}
               </div>
 
-              <div className="mt-3 text-sm text-slate-600">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="xl:col-span-1">
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Désignation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex. Pose porte intérieure"
+                    value={ligne.designation}
+                    onChange={(e) =>
+                      mettreAJourLigne(index, "designation", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Quantité
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={ligne.quantite}
+                    onChange={(e) =>
+                      mettreAJourLigne(index, "quantite", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Unité
+                  </label>
+                  <select
+                    value={ligne.unite}
+                    onChange={(e) =>
+                      mettreAJourLigne(index, "unite", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  >
+                    {UNITES_PREDEFINIES.map((unite) => (
+                      <option key={unite} value={unite}>
+                        {unite}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Prix unitaire HT
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={ligne.prixUnitaire}
+                    onChange={(e) =>
+                      mettreAJourLigne(index, "prixUnitaire", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                 Total ligne :{" "}
                 <span className="font-semibold text-slate-900">
                   {formatMontant(
@@ -955,16 +995,77 @@ export default function DevisForm({
                   )}
                 </span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => supprimerLigne(index)}
-                className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700 hover:bg-red-100 sm:w-auto"
-              >
-                Supprimer
-              </button>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h5 className="text-base font-semibold text-slate-900">
+                Bibliothèque de prestations
+              </h5>
+              <p className="mt-1 text-sm text-slate-500">
+                Sélectionne rapidement une prestation enregistrée pour l’ajouter
+                au devis.
+              </p>
+            </div>
+
+            <div className="w-full lg:max-w-sm">
+              <label className="mb-2 block text-xs font-medium text-slate-500">
+                Rechercher une prestation
+              </label>
+              <input
+                type="search"
+                value={recherchePrestation}
+                onChange={(e) => setRecherchePrestation(e.target.value)}
+                placeholder="Ex. porte, pose, m², forfait..."
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+              />
+            </div>
+          </div>
+
+          {prestationsActives.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              Aucune prestation n’est encore enregistrée dans la bibliothèque.
+            </div>
+          ) : prestationsFiltrees.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              Aucune prestation ne correspond à cette recherche.
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {prestationsFiltrees.map((prestation) => (
+                <div
+                  key={prestation.id}
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {prestation.designation}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                      <span className="rounded-full bg-white px-3 py-1 font-medium">
+                        {formatMontant(prestation.prixUnitaire)} HT
+                      </span>
+                      <span className="rounded-full bg-white px-3 py-1 font-medium">
+                        {prestation.unite}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => ajouterPrestationDansLignes(prestation.id)}
+                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
+                  >
+                    Ajouter au devis
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
