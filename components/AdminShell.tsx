@@ -281,7 +281,7 @@ export default function AdminShell({
   ];
 
   const renderNav = (items: NavItem[], compact = false) => (
-    <nav className={compact ? "mt-5 space-y-1.5" : "mt-8 space-y-2"}>
+    <nav className={compact ? "space-y-1.5" : "space-y-2"}>
       {items.map((item) => {
         const estActif = vueAffichee === item.id;
 
@@ -319,40 +319,44 @@ export default function AdminShell({
   );
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
-      <div className="flex min-h-screen">
-        <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white p-6 md:sticky md:top-0 md:flex">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white">
-                B
-              </div>
+    <main className="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900 md:h-screen md:overflow-hidden">
+      <div className="flex min-h-screen md:h-screen">
+        <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
+          <div className="flex h-full min-h-0 flex-col p-6">
+            <div className="shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white">
+                  B
+                </div>
 
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
-                <p className="mt-0.5 truncate text-xs text-slate-400">
-                  {entrepriseNom || entrepriseId}
-                </p>
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
+                  <p className="mt-0.5 truncate text-xs text-slate-400">
+                    {entrepriseNom || entrepriseId}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {renderNav(navDesktop)}
+            <div className="mt-8 min-h-0 flex-1 overflow-y-auto pr-1">
+              {renderNav(navDesktop)}
+            </div>
 
-          <div className="sticky bottom-0 mt-auto bg-white pt-6">
-            <AccountPanel
-              mode="menu"
-              displayName={displayName}
-              email={email}
-              role={role}
-              entrepriseId={entrepriseId}
-              entrepriseNom={entrepriseNom}
-              onDeconnexion={onDeconnexion}
-            />
+            <div className="shrink-0 border-t border-slate-100 bg-white pt-4">
+              <AccountPanel
+                mode="menu"
+                displayName={displayName}
+                email={email}
+                role={role}
+                entrepriseId={entrepriseId}
+                entrepriseNom={entrepriseNom}
+                onDeconnexion={onDeconnexion}
+              />
+            </div>
           </div>
         </aside>
 
-        <section className="min-w-0 flex-1 p-4 pb-28 md:p-8 md:pb-8">
+        <section className="min-w-0 flex-1 p-4 pb-28 md:h-screen md:overflow-y-auto md:p-8 md:pb-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm md:hidden">
               <div className="flex items-center gap-3">
@@ -458,7 +462,7 @@ export default function AdminShell({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
               {renderNav(navMobile, true)}
             </div>
 
