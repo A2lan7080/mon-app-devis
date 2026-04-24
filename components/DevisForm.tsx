@@ -58,7 +58,16 @@ const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
 
 const champDateMobileClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+
+const styleDateMobile = {
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  WebkitAppearance: "none",
+  appearance: "none",
+} as const;
 
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
@@ -517,7 +526,7 @@ export default function DevisForm({
       <h3 className="text-xl font-semibold sm:text-2xl">Créer un devis</h3>
 
       <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client existant
           </label>
@@ -536,7 +545,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier existant
           </label>
@@ -555,7 +564,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Titre du chantier
           </label>
@@ -580,7 +589,7 @@ export default function DevisForm({
 
         {!chantierSelectionneId && nouveauDevis.chantierTitre.trim() && (
           <>
-            <div className="min-w-0">
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Statut du chantier
               </label>
@@ -599,7 +608,7 @@ export default function DevisForm({
               </select>
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date début chantier
               </label>
@@ -608,10 +617,11 @@ export default function DevisForm({
                 value={nouveauChantierDateDebut}
                 onChange={(e) => setNouveauChantierDateDebut(e.target.value)}
                 className={champDateMobileClasses}
+                style={styleDateMobile}
               />
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date fin chantier
               </label>
@@ -620,12 +630,13 @@ export default function DevisForm({
                 value={nouveauChantierDateFin}
                 onChange={(e) => setNouveauChantierDateFin(e.target.value)}
                 className={champDateMobileClasses}
+                style={styleDateMobile}
               />
             </div>
           </>
         )}
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Nom du client
           </label>
@@ -642,7 +653,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Type de client
           </label>
@@ -661,7 +672,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Société
           </label>
@@ -678,7 +689,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA client
           </label>
@@ -695,7 +706,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
           </label>
@@ -709,10 +720,11 @@ export default function DevisForm({
               }))
             }
             className={champDateMobileClasses}
+            style={styleDateMobile}
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -734,7 +746,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -751,7 +763,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Adresse
           </label>
@@ -768,7 +780,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Code postal
           </label>
@@ -785,7 +797,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Ville / commune
           </label>
@@ -802,7 +814,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Email
           </label>
@@ -819,7 +831,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Téléphone
           </label>
@@ -836,7 +848,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte (%)
           </label>
@@ -853,7 +865,7 @@ export default function DevisForm({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Validité (jours)
           </label>
@@ -871,7 +883,7 @@ export default function DevisForm({
         </div>
       </div>
 
-      <div className="mt-4 min-w-0">
+      <div className="mt-4 min-w-0 overflow-hidden">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Conditions
         </label>
@@ -888,9 +900,9 @@ export default function DevisForm({
         />
       </div>
 
-      <div className="mt-8 rounded-2xl bg-slate-50 p-4 sm:p-5">
+      <div className="mt-8 max-w-full overflow-hidden rounded-2xl bg-slate-50 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="min-w-0">
             <h4 className="text-lg font-semibold">Prestations du devis</h4>
             <p className="mt-1 text-sm text-slate-500">
               Ajoute des lignes manuellement ou depuis la bibliothèque en bas.
@@ -910,7 +922,7 @@ export default function DevisForm({
           {lignes.map((ligne, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
+              className="max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-700">
@@ -929,7 +941,7 @@ export default function DevisForm({
               </div>
 
               <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="min-w-0 xl:col-span-1">
+                <div className="min-w-0 overflow-hidden xl:col-span-1">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Désignation
                   </label>
@@ -944,7 +956,7 @@ export default function DevisForm({
                   />
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Quantité
                   </label>
@@ -959,7 +971,7 @@ export default function DevisForm({
                   />
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Unité
                   </label>
@@ -978,7 +990,7 @@ export default function DevisForm({
                   </select>
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Prix unitaire HT
                   </label>
@@ -1007,9 +1019,9 @@ export default function DevisForm({
           ))}
         </div>
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="mt-6 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+            <div className="min-w-0">
               <h5 className="text-base font-semibold text-slate-900">
                 Bibliothèque de prestations
               </h5>
@@ -1019,7 +1031,7 @@ export default function DevisForm({
               </p>
             </div>
 
-            <div className="w-full lg:max-w-sm">
+            <div className="w-full min-w-0 lg:max-w-sm">
               <label className="mb-2 block text-xs font-medium text-slate-500">
                 Rechercher une prestation
               </label>
@@ -1046,10 +1058,10 @@ export default function DevisForm({
               {prestationsFiltrees.map((prestation) => (
                 <div
                   key={prestation.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  className="flex max-w-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4"
                 >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-semibold text-slate-900">
                       {prestation.designation}
                     </p>
 
