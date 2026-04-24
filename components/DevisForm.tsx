@@ -58,7 +58,7 @@ const champFormulaireClasses =
   "w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400";
 
 const champDateMobileClasses =
-  "block w-[180px] max-w-full rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:w-full sm:px-4 sm:text-sm";
+  "block w-full min-w-0 max-w-[calc(100vw-4rem)] rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:max-w-full sm:px-4 sm:text-sm";
 
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
@@ -606,7 +606,7 @@ export default function DevisForm({
                 value={nouveauChantierDateDebut}
                 onChange={(e) => setNouveauChantierDateDebut(e.target.value)}
                 className={champDateMobileClasses}
-                style={{ width: "180px", maxWidth: "100%" }}
+                style={{ width: "100%", maxWidth: "calc(100vw - 4rem)" }}
               />
             </div>
 
@@ -619,7 +619,7 @@ export default function DevisForm({
                 value={nouveauChantierDateFin}
                 onChange={(e) => setNouveauChantierDateFin(e.target.value)}
                 className={champDateMobileClasses}
-                style={{ width: "180px", maxWidth: "100%" }}
+                style={{ width: "100%", maxWidth: "calc(100vw - 4rem)" }}
               />
             </div>
           </>
@@ -709,7 +709,7 @@ export default function DevisForm({
               }))
             }
             className={champDateMobileClasses}
-            style={{ width: "180px", maxWidth: "100%" }}
+            style={{ width: "100%", maxWidth: "calc(100vw - 4rem)" }}
           />
         </div>
 
