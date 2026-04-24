@@ -20,6 +20,7 @@ import { useDevisPageUi } from "../hooks/useDevisPageUi";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import { useSessionNavigation } from "../hooks/useSessionNavigation";
+import { getEntrepriseSettings } from "../lib/get-entreprise-settings";
 import { db } from "../lib/firebase";
 import type { StatutDevis } from "../types/devis";
 
@@ -149,8 +150,17 @@ export default function Home() {
       return;
     }
 
+    if (!entrepriseIdCourante) {
+      alert("Impossible d’identifier l’entreprise active.");
+      return;
+    }
+
     try {
       setEnvoiDevisEnCours(true);
+
+      const entreprisePourMail = await getEntrepriseSettings(
+        entrepriseIdCourante
+      );
 
       const response = await fetch("/api/devis/send", {
         method: "POST",
@@ -160,7 +170,7 @@ export default function Home() {
         body: JSON.stringify({
           devis: devisSelectionne,
           toEmail: emailClient,
-          entreprise: entrepriseSettings,
+          entreprise: entreprisePourMail,
         }),
       });
 
