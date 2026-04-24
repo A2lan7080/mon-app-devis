@@ -140,6 +140,16 @@ export default function AdminWorkspace({
     }));
   };
 
+  const handleEntrepriseBooleanChange = (
+    champ: keyof typeof entrepriseSettings,
+    valeur: boolean
+  ) => {
+    setEntrepriseSettings((prev) => ({
+      ...prev,
+      [champ]: valeur,
+    }));
+  };
+
   const handleLogoChange = async (file: File | null) => {
     if (!file) return;
 
@@ -179,7 +189,9 @@ export default function AdminWorkspace({
         logoStoragePath: chemin,
       }));
 
-      alert("Logo envoyé. Clique maintenant sur Enregistrer pour sauvegarder les informations entreprise.");
+      alert(
+        "Logo envoyé. Clique maintenant sur Enregistrer pour sauvegarder les informations entreprise."
+      );
     } catch (error) {
       console.error("Erreur upload logo :", error);
       alert("Impossible d’envoyer le logo.");
@@ -195,6 +207,7 @@ export default function AdminWorkspace({
       ...prev,
       logoUrl: "",
       logoStoragePath: "",
+      logoRemplaceNomEntreprise: false,
     }));
 
     if (!ancienChemin) return;
@@ -530,6 +543,32 @@ export default function AdminWorkspace({
                     : "Le logo est envoyé dans Firebase Storage pour être visible dans les emails."}
                 </p>
               </div>
+
+              {entrepriseSettings.logoUrl && (
+                <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <input
+                    type="checkbox"
+                    checked={entrepriseSettings.logoRemplaceNomEntreprise === true}
+                    onChange={(e) =>
+                      handleEntrepriseBooleanChange(
+                        "logoRemplaceNomEntreprise",
+                        e.target.checked
+                      )
+                    }
+                    className="mt-1 h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-800">
+                      Utiliser le logo à la place du nom de l’entreprise dans les emails
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      Si cette option est cochée, le logo remplacera le gros nom
+                      de l’entreprise dans les emails devis et factures. Les
+                      coordonnées resteront affichées en dessous.
+                    </span>
+                  </span>
+                </label>
+              )}
 
               <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
                 {entrepriseSettings.logoUrl ? (

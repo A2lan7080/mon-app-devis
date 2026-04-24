@@ -5,6 +5,7 @@ import type { Entreprise } from "../types/devis";
 
 type EntrepriseSettings = Entreprise & {
   logoUrl?: string;
+  logoRemplaceNomEntreprise?: boolean;
 };
 
 function calculerMontantTva(facture: Facture) {
@@ -62,7 +63,7 @@ function getLogoState(logoUrl?: string) {
         <img
           src="${echapperHtml(logoUrl)}"
           alt="Logo entreprise"
-          style="max-height:86px; max-width:260px; width:auto; object-fit:contain; display:block;"
+          style="max-height:130px; max-width:360px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `,
@@ -78,6 +79,9 @@ function renderEntrepriseBloc(
     .filter(Boolean)
     .join(" · ");
 
+  const afficherNom =
+    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
+
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">
       <tr>
@@ -86,10 +90,16 @@ function renderEntrepriseBloc(
           <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">
             Entreprise
           </div>
+          ${
+            afficherNom
+              ? `
           <div style="margin-top:6px; font-size:22px; line-height:30px; font-weight:700; color:#0f172a; word-break:break-word;">
-            ${texteOuDefaut(entreprise.nom, afficherLogo ? "Entreprise" : "BatiFlow")}
+            ${texteOuDefaut(entreprise.nom, "BatiFlow")}
           </div>
-          <div style="margin-top:8px; font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+          `
+              : ""
+          }
+          <div style="${afficherNom ? "margin-top:8px;" : "margin-top:10px;"} font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
             <strong>Adresse :</strong> ${texteOuDefaut(entreprise.adresse, "Adresse non renseignée")}
           </div>
           <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
@@ -221,36 +231,20 @@ export function renderFactureEmailHtml(
 
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                               <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">
-                                  Montant HT
-                                </td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">
-                                  ${formatMontant(facture.montantHt)}
-                                </td>
+                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Montant HT</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(facture.montantHt)}</td>
                               </tr>
                               <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">
-                                  TVA (${facture.tvaTaux}%)
-                                </td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">
-                                  ${formatMontant(montantTva)}
-                                </td>
+                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA (${facture.tvaTaux}%)</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(montantTva)}</td>
                               </tr>
                               <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">
-                                  Total TTC
-                                </td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">
-                                  ${formatMontant(totalTtc)}
-                                </td>
+                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Total TTC</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(totalTtc)}</td>
                               </tr>
                               <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">
-                                  Acompte déduit
-                                </td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">
-                                  ${formatMontant(facture.acompteDeduit)}
-                                </td>
+                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Acompte déduit</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(facture.acompteDeduit)}</td>
                               </tr>
                               <tr>
                                 <td colspan="2" style="padding-top:10px;">
@@ -258,12 +252,8 @@ export function renderFactureEmailHtml(
                                 </td>
                               </tr>
                               <tr>
-                                <td style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">
-                                  Net à payer
-                                </td>
-                                <td align="right" style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">
-                                  ${formatMontant(netAPayer)}
-                                </td>
+                                <td style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">Net à payer</td>
+                                <td align="right" style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">${formatMontant(netAPayer)}</td>
                               </tr>
                             </table>
                           </td>

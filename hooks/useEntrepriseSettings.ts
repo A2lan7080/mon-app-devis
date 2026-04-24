@@ -16,6 +16,7 @@ type EntrepriseSettings = Entreprise & {
   entrepriseId?: string;
   logoUrl?: string;
   logoStoragePath?: string;
+  logoRemplaceNomEntreprise?: boolean;
   updatedAt?: number;
   createdAt?: number;
   updatedByUid?: string;
@@ -28,6 +29,7 @@ function creerEntrepriseDefaut(): EntrepriseSettings {
     ville: "",
     logoUrl: "",
     logoStoragePath: "",
+    logoRemplaceNomEntreprise: false,
   };
 }
 
@@ -97,6 +99,10 @@ export function useEntrepriseSettings({
             typeof data.logoStoragePath === "string"
               ? data.logoStoragePath
               : "",
+          logoRemplaceNomEntreprise:
+            typeof data.logoRemplaceNomEntreprise === "boolean"
+              ? data.logoRemplaceNomEntreprise
+              : false,
           createdAt:
             typeof data.createdAt === "number" ? data.createdAt : undefined,
           updatedAt:
@@ -142,6 +148,8 @@ export function useEntrepriseSettings({
           tva: entrepriseSettings.tva.trim(),
           logoUrl: entrepriseSettings.logoUrl ?? "",
           logoStoragePath: entrepriseSettings.logoStoragePath ?? "",
+          logoRemplaceNomEntreprise:
+            entrepriseSettings.logoRemplaceNomEntreprise === true,
           updatedAt: maintenant,
           createdAt: entrepriseSettings.createdAt ?? maintenant,
           updatedByUid: userId,

@@ -8,6 +8,8 @@ export type EntrepriseSettings = Entreprise & {
   createdByUid?: string;
   updatedByUid?: string;
   logoUrl?: string;
+  logoStoragePath?: string;
+  logoRemplaceNomEntreprise?: boolean;
   updatedAt?: number;
   createdAt?: number;
 };
@@ -21,6 +23,8 @@ export async function getEntrepriseSettings(
       codePostal: "",
       ville: "",
       logoUrl: "",
+      logoStoragePath: "",
+      logoRemplaceNomEntreprise: false,
     };
   }
 
@@ -34,6 +38,8 @@ export async function getEntrepriseSettings(
         codePostal: "",
         ville: "",
         logoUrl: "",
+        logoStoragePath: "",
+        logoRemplaceNomEntreprise: false,
       };
     }
 
@@ -45,8 +51,7 @@ export async function getEntrepriseSettings(
         typeof data.adresse === "string"
           ? data.adresse
           : entrepriseParDefaut.adresse,
-      codePostal:
-        typeof data.codePostal === "string" ? data.codePostal : "",
+      codePostal: typeof data.codePostal === "string" ? data.codePostal : "",
       ville: typeof data.ville === "string" ? data.ville : "",
       email:
         typeof data.email === "string" ? data.email : entrepriseParDefaut.email,
@@ -62,6 +67,12 @@ export async function getEntrepriseSettings(
       updatedByUid:
         typeof data.updatedByUid === "string" ? data.updatedByUid : "",
       logoUrl: typeof data.logoUrl === "string" ? data.logoUrl : "",
+      logoStoragePath:
+        typeof data.logoStoragePath === "string" ? data.logoStoragePath : "",
+      logoRemplaceNomEntreprise:
+        typeof data.logoRemplaceNomEntreprise === "boolean"
+          ? data.logoRemplaceNomEntreprise
+          : false,
       createdAt: typeof data.createdAt === "number" ? data.createdAt : undefined,
       updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : undefined,
     };
@@ -73,6 +84,8 @@ export async function getEntrepriseSettings(
       codePostal: "",
       ville: "",
       logoUrl: "",
+      logoStoragePath: "",
+      logoRemplaceNomEntreprise: false,
     };
   }
 }
