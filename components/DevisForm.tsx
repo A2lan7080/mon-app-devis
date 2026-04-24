@@ -536,24 +536,6 @@ export default function DevisForm({
 
         <div className="md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Ajouter depuis la bibliothèque de prestations
-          </label>
-          <select
-            value={prestationSelectionneeId}
-            onChange={(e) => ajouterPrestationDansLignes(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
-          >
-            <option value="">Choisir une prestation enregistrée</option>
-            {prestationsActives.map((prestation) => (
-              <option key={prestation.id} value={prestation.id}>
-                {prestation.designation} — {formatMontant(prestation.prixUnitaire)} / {prestation.unite}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="mb-2 block text-sm font-medium text-slate-700">
             Titre du chantier
           </label>
           <input
@@ -888,13 +870,28 @@ export default function DevisForm({
       <div className="mt-8 rounded-2xl bg-slate-50 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-lg font-semibold">Prestations</h4>
-          <button
-            type="button"
-            onClick={ajouterLigne}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
-          >
-            Ajouter une ligne
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <select
+              value={prestationSelectionneeId}
+              onChange={(e) => ajouterPrestationDansLignes(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 sm:min-w-[280px]"
+            >
+              <option value="">Ajouter depuis la bibliothèque</option>
+              {prestationsActives.map((prestation) => (
+                <option key={prestation.id} value={prestation.id}>
+                  {prestation.designation} — {formatMontant(prestation.prixUnitaire)} / {prestation.unite}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={ajouterLigne}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
+            >
+              Ajouter une ligne
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 space-y-4">

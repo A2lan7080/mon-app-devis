@@ -84,6 +84,10 @@ function convertirNombre(valeur: string) {
   return nombre;
 }
 
+function arrondirMontant(valeur: number) {
+  return Math.round((valeur + Number.EPSILON) * 100) / 100;
+}
+
 function calculerMontantTva(facture: {
   montantHt: number;
   tvaTaux: number;
@@ -310,18 +314,20 @@ export default function FacturesWorkspace({
         return memeNom || memeEmail;
       }) ?? null;
 
+    const acompte = arrondirMontant(
+      calculerTotalTvac(devisSelectionne) *
+        ((devisSelectionne.acomptePourcentage ?? 0) / 100)
+    );
+
     setFormulaire((prev) => ({
       ...prev,
       devisId,
       objet: `Facture - ${devisSelectionne.id}`,
       clientId: clientAssocie?.id ?? prev.clientId,
       chantierId: devisSelectionne.chantierId ?? "",
-      montantHt: String(calculerTotalHt(devisSelectionne)),
+      montantHt: String(arrondirMontant(calculerTotalHt(devisSelectionne))),
       tvaTaux: String(devisSelectionne.tvaTaux),
-      acompteDeduit: String(
-        ((calculerTotalTvac(devisSelectionne) *
-          ((devisSelectionne.acomptePourcentage ?? 0) / 100)) || 0)
-      ),
+      acompteDeduit: String(acompte),
       notes: devisSelectionne.conditions ?? prev.notes,
     }));
   };
@@ -347,24 +353,27 @@ export default function FacturesWorkspace({
 
     const devisAssocie = devisDuChantier[0] ?? null;
 
+    const acompte = devisAssocie
+      ? arrondirMontant(
+          calculerTotalTvac(devisAssocie) *
+            ((devisAssocie.acomptePourcentage ?? 0) / 100)
+        )
+      : null;
+
     setFormulaire((prev) => ({
       ...prev,
       chantierId: chantier.id,
       clientId: clientAssocie?.id ?? prev.clientId,
-      devisId: devisAssocie?.id ?? prev.devisId,
+      devisId: devisAssocie?.id ?? "",
       objet: devisAssocie
         ? `Facture - ${devisAssocie.id}`
-        : prev.objet || `Facture - ${chantier.titre}`,
+        : `Facture - ${chantier.titre}`,
       montantHt: devisAssocie
-        ? String(calculerTotalHt(devisAssocie))
+        ? String(arrondirMontant(calculerTotalHt(devisAssocie)))
         : prev.montantHt,
       tvaTaux: devisAssocie ? String(devisAssocie.tvaTaux) : prev.tvaTaux,
-      acompteDeduit: devisAssocie
-        ? String(
-            ((calculerTotalTvac(devisAssocie) *
-              ((devisAssocie.acomptePourcentage ?? 0) / 100)) || 0)
-          )
-        : prev.acompteDeduit,
+      acompteDeduit:
+        acompte !== null ? String(acompte) : prev.acompteDeduit,
       notes: devisAssocie?.conditions ?? prev.notes,
     }));
   };
@@ -412,9 +421,11 @@ export default function FacturesWorkspace({
           null
         : null);
 
-    const montantHt = convertirNombre(formulaire.montantHt);
-    const tvaTaux = convertirNombre(formulaire.tvaTaux);
-    const acompteDeduit = convertirNombre(formulaire.acompteDeduit);
+    const montantHt = arrondirMontant(convertirNombre(formulaire.montantHt));
+    const tvaTaux = arrondirMontant(convertirNombre(formulaire.tvaTaux));
+    const acompteDeduit = arrondirMontant(
+      convertirNombre(formulaire.acompteDeduit)
+    );
 
     if (montantHt < 0 || tvaTaux < 0 || acompteDeduit < 0) {
       alert("Les montants doivent être valides.");
@@ -990,6 +1001,7 @@ export default function FacturesWorkspace({
                   </label>
                   <input
                     type="number"
+                    step="0.01"
                     value={formulaire.montantHt}
                     onChange={(e) =>
                       setFormulaire((prev) => ({
@@ -1007,6 +1019,7 @@ export default function FacturesWorkspace({
                   </label>
                   <input
                     type="number"
+                    step="0.01"
                     value={formulaire.tvaTaux}
                     onChange={(e) =>
                       setFormulaire((prev) => ({
@@ -1024,6 +1037,7 @@ export default function FacturesWorkspace({
                   </label>
                   <input
                     type="number"
+                    step="0.01"
                     value={formulaire.acompteDeduit}
                     onChange={(e) =>
                       setFormulaire((prev) => ({

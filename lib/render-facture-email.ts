@@ -43,24 +43,30 @@ function texteMultiligneOuDefaut(valeur: string, defaut = "Aucune note.") {
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
-function getBlocLogoEmail(logoUrl?: string) {
-  if (!logoUrl) return "";
+function getLogoState(logoUrl?: string) {
+  if (!logoUrl) {
+    return { afficherLogo: false, blocLogo: "" };
+  }
+
   const estUrlPublique =
     logoUrl.startsWith("https://") || logoUrl.startsWith("http://");
 
   if (!estUrlPublique) {
-    return "";
+    return { afficherLogo: false, blocLogo: "" };
   }
 
-  return `
-    <div style="margin-bottom:16px;">
-      <img
-        src="${logoUrl}"
-        alt="Logo entreprise"
-        style="max-height:90px; max-width:260px; width:auto; object-fit:contain; display:block;"
-      />
-    </div>
-  `;
+  return {
+    afficherLogo: true,
+    blocLogo: `
+      <div style="margin-bottom:16px;">
+        <img
+          src="${logoUrl}"
+          alt="Logo entreprise"
+          style="max-height:95px; max-width:280px; width:auto; object-fit:contain; display:block;"
+        />
+      </div>
+    `,
+  };
 }
 
 export function renderFactureEmailHtml(
@@ -71,7 +77,7 @@ export function renderFactureEmailHtml(
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
 
-  const blocLogo = getBlocLogoEmail(entreprise.logoUrl);
+  const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
 
   return `
 <!DOCTYPE html>
@@ -92,9 +98,15 @@ export function renderFactureEmailHtml(
                   <tr>
                     <td style="padding-bottom:20px;">
                       ${blocLogo}
+                      ${
+                        afficherLogo
+                          ? ""
+                          : `
                       <div style="font-size:28px; line-height:34px; font-weight:700; color:#0f172a;">
                         ${echapperHtml(entreprise.nom)}
                       </div>
+                      `
+                      }
                       <div style="margin-top:8px; font-size:14px; line-height:21px; color:#475569;">
                         ${echapperHtml(entreprise.adresse)}
                       </div>
