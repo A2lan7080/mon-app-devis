@@ -34,25 +34,10 @@ type NavItem = {
   label: string;
   icon: string;
   accent: string;
-  activeAccent: string;
+  activeButton: string;
+  activeDot: string;
   onClick: () => void;
-  variante?: "standard" | "admin";
 };
-
-function getNavButtonClasses(
-  estActif: boolean,
-  variante: "standard" | "admin" = "standard"
-) {
-  if (estActif && variante === "admin") {
-    return "border-amber-300 bg-amber-50 text-amber-800 shadow-sm";
-  }
-
-  if (estActif) {
-    return "border-slate-900 bg-slate-900 text-white shadow-sm";
-  }
-
-  return "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900";
-}
 
 function getPageAccent(vue: VuePrincipale) {
   switch (vue) {
@@ -203,7 +188,8 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
-      activeAccent: "bg-blue-500/20 text-white",
+      activeButton: "border-blue-200 bg-blue-50 text-blue-800 shadow-sm",
+      activeDot: "bg-blue-500",
       onClick: onOuvrirVueDevis,
     },
     {
@@ -211,7 +197,9 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
-      activeAccent: "bg-emerald-500/20 text-white",
+      activeButton:
+        "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm",
+      activeDot: "bg-emerald-500",
       onClick: onOuvrirVueClients,
     },
     {
@@ -219,7 +207,8 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
-      activeAccent: "bg-orange-500/20 text-white",
+      activeButton: "border-orange-200 bg-orange-50 text-orange-800 shadow-sm",
+      activeDot: "bg-orange-500",
       onClick: onOuvrirVueChantiers,
     },
     {
@@ -227,7 +216,8 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
-      activeAccent: "bg-violet-500/20 text-white",
+      activeButton: "border-violet-200 bg-violet-50 text-violet-800 shadow-sm",
+      activeDot: "bg-violet-500",
       onClick: onOuvrirVueFactures,
     },
     {
@@ -235,9 +225,9 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
-      activeAccent: "bg-amber-100 text-amber-800",
+      activeButton: "border-amber-200 bg-amber-50 text-amber-800 shadow-sm",
+      activeDot: "bg-amber-500",
       onClick: onOuvrirVueAdmin,
-      variante: "admin",
     },
   ];
 
@@ -247,7 +237,8 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
-      activeAccent: "bg-blue-500/20 text-white",
+      activeButton: "border-blue-200 bg-blue-50 text-blue-800 shadow-sm",
+      activeDot: "bg-blue-500",
       onClick: ouvrirVueDevisMobile,
     },
     {
@@ -255,7 +246,9 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
-      activeAccent: "bg-emerald-500/20 text-white",
+      activeButton:
+        "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm",
+      activeDot: "bg-emerald-500",
       onClick: ouvrirVueClientsMobile,
     },
     {
@@ -263,7 +256,8 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
-      activeAccent: "bg-orange-500/20 text-white",
+      activeButton: "border-orange-200 bg-orange-50 text-orange-800 shadow-sm",
+      activeDot: "bg-orange-500",
       onClick: ouvrirVueChantiersMobile,
     },
     {
@@ -271,7 +265,8 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
-      activeAccent: "bg-violet-500/20 text-white",
+      activeButton: "border-violet-200 bg-violet-50 text-violet-800 shadow-sm",
+      activeDot: "bg-violet-500",
       onClick: ouvrirVueFacturesMobile,
     },
     {
@@ -279,9 +274,9 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
-      activeAccent: "bg-amber-100 text-amber-800",
+      activeButton: "border-amber-200 bg-amber-50 text-amber-800 shadow-sm",
+      activeDot: "bg-amber-500",
       onClick: ouvrirVueAdminMobile,
-      variante: "admin",
     },
   ];
 
@@ -296,12 +291,16 @@ export default function AdminShell({
             onClick={item.onClick}
             className={`flex w-full items-center gap-3 rounded-xl border text-left font-medium transition ${
               compact ? "px-3 py-2.5 text-sm" : "px-3 py-3 text-sm"
-            } ${getNavButtonClasses(estActif, item.variante ?? "standard")}`}
+            } ${
+              estActif
+                ? item.activeButton
+                : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+            }`}
           >
             <span
               className={`flex shrink-0 items-center justify-center rounded-xl text-base ${
                 compact ? "h-8 w-8" : "h-9 w-9"
-              } ${estActif ? item.activeAccent : item.accent}`}
+              } ${item.accent}`}
             >
               {item.icon}
             </span>
@@ -309,7 +308,9 @@ export default function AdminShell({
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
 
             {estActif && (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-current opacity-80" />
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${item.activeDot}`}
+              />
             )}
           </button>
         );
