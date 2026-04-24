@@ -15,6 +15,7 @@ type UseEntrepriseSettingsParams = {
 type EntrepriseSettings = Entreprise & {
   entrepriseId?: string;
   logoUrl?: string;
+  logoStoragePath?: string;
   updatedAt?: number;
   createdAt?: number;
   updatedByUid?: string;
@@ -26,6 +27,7 @@ function creerEntrepriseDefaut(): EntrepriseSettings {
     codePostal: "",
     ville: "",
     logoUrl: "",
+    logoStoragePath: "",
   };
 }
 
@@ -91,6 +93,10 @@ export function useEntrepriseSettings({
           tva:
             typeof data.tva === "string" ? data.tva : entrepriseParDefaut.tva,
           logoUrl: typeof data.logoUrl === "string" ? data.logoUrl : "",
+          logoStoragePath:
+            typeof data.logoStoragePath === "string"
+              ? data.logoStoragePath
+              : "",
           createdAt:
             typeof data.createdAt === "number" ? data.createdAt : undefined,
           updatedAt:
@@ -135,6 +141,7 @@ export function useEntrepriseSettings({
           telephone: entrepriseSettings.telephone.trim(),
           tva: entrepriseSettings.tva.trim(),
           logoUrl: entrepriseSettings.logoUrl ?? "",
+          logoStoragePath: entrepriseSettings.logoStoragePath ?? "",
           updatedAt: maintenant,
           createdAt: entrepriseSettings.createdAt ?? maintenant,
           updatedByUid: userId,

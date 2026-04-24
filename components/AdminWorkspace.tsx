@@ -2,8 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes,
+} from "firebase/storage";
 import { formatMontant } from "../lib/devis-helpers";
-import { db } from "../lib/firebase";
+import { db, storage } from "../lib/firebase";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import AdminDashboard from "./AdminDashboard";
@@ -60,6 +66,7 @@ function genererReferencePrestation(prestations: PrestationBibliotheque[]) {
   const plusGrandNumero = prestations.reduce((max, prestation) => {
     const match = prestation.reference?.match(/PRE-(\d+)/);
     if (!match) return max;
+
     const numero = Number(match[1]);
     return Number.isNaN(numero) ? max : Math.max(max, numero);
   }, 0);
@@ -111,6 +118,7 @@ export default function AdminWorkspace({
   );
   const [sauvegardePrestationEnCours, setSauvegardePrestationEnCours] =
     useState(false);
+  const [uploadLogoEnCours, setUploadLogoEnCours] = useState(false);
 
   const prestationsActives = useMemo(
     () => prestations.filter((prestation) => !prestation.archive),
@@ -132,29 +140,70 @@ export default function AdminWorkspace({
     }));
   };
 
-  const handleLogoChange = (file: File | null) => {
+  const handleLogoChange = async (file: File | null) => {
     if (!file) return;
 
-    const reader = new FileReader();
+    if (!entrepriseId) {
+      alert("Impossible d’identifier l’entreprise.");
+      return;
+    }
 
-    reader.onload = () => {
-      const resultat = reader.result;
-      if (typeof resultat === "string") {
-        setEntrepriseSettings((prev) => ({
-          ...prev,
-          logoUrl: resultat,
-        }));
-      }
-    };
+    if (!file.type.startsWith("image/")) {
+      alert("Le fichier doit être une image.");
+      return;
+    }
 
-    reader.readAsDataURL(file);
+    const tailleMax = 2 * 1024 * 1024;
+
+    if (file.size > tailleMax) {
+      alert("Le logo ne peut pas dépasser 2 Mo.");
+      return;
+    }
+
+    try {
+      setUploadLogoEnCours(true);
+
+      const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+      const chemin = `entreprises/${entrepriseId}/logos/logo-${Date.now()}.${extension}`;
+      const reference = storageRef(storage, chemin);
+
+      await uploadBytes(reference, file, {
+        contentType: file.type,
+      });
+
+      const url = await getDownloadURL(reference);
+
+      setEntrepriseSettings((prev) => ({
+        ...prev,
+        logoUrl: url,
+        logoStoragePath: chemin,
+      }));
+
+      alert("Logo envoyé. Clique maintenant sur Enregistrer pour sauvegarder les informations entreprise.");
+    } catch (error) {
+      console.error("Erreur upload logo :", error);
+      alert("Impossible d’envoyer le logo.");
+    } finally {
+      setUploadLogoEnCours(false);
+    }
   };
 
-  const supprimerLogo = () => {
+  const supprimerLogo = async () => {
+    const ancienChemin = entrepriseSettings.logoStoragePath;
+
     setEntrepriseSettings((prev) => ({
       ...prev,
       logoUrl: "",
+      logoStoragePath: "",
     }));
+
+    if (!ancienChemin) return;
+
+    try {
+      await deleteObject(storageRef(storage, ancienChemin));
+    } catch (error) {
+      console.error("Erreur suppression logo Storage :", error);
+    }
   };
 
   const handleSauvegardeEntreprise = async () => {
@@ -343,10 +392,16 @@ export default function AdminWorkspace({
 
             <button
               onClick={handleSauvegardeEntreprise}
-              disabled={chargementEntreprise || sauvegardeEntrepriseEnCours}
+              disabled={
+                chargementEntreprise ||
+                sauvegardeEntrepriseEnCours ||
+                uploadLogoEnCours
+              }
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
-              {sauvegardeEntrepriseEnCours ? "Enregistrement..." : "Enregistrer"}
+              {sauvegardeEntrepriseEnCours
+                ? "Enregistrement..."
+                : "Enregistrer"}
             </button>
           </div>
 
@@ -448,7 +503,9 @@ export default function AdminWorkspace({
                   <input
                     type="text"
                     value={entrepriseSettings.tva}
-                    onChange={(e) => handleEntrepriseChange("tva", e.target.value)}
+                    onChange={(e) =>
+                      handleEntrepriseChange("tva", e.target.value)
+                    }
                     className={champFormulaireClasses}
                   />
                 </div>
@@ -461,12 +518,16 @@ export default function AdminWorkspace({
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleLogoChange(e.target.files?.[0] ?? null)}
-                  className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                  disabled={uploadLogoEnCours}
+                  onChange={(e) =>
+                    handleLogoChange(e.target.files?.[0] ?? null)
+                  }
+                  className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <p className="mt-2 text-xs text-slate-400">
-                  Le logo est affiché dans l’interface. Pour les emails, il devra
-                  être envoyé via Firebase Storage à l’étape suivante.
+                  {uploadLogoEnCours
+                    ? "Upload du logo en cours..."
+                    : "Le logo est envoyé dans Firebase Storage pour être visible dans les emails."}
                 </p>
               </div>
 
@@ -481,9 +542,19 @@ export default function AdminWorkspace({
                       />
                     </div>
 
+                    <div className="rounded-xl bg-white p-3 text-xs text-slate-500">
+                      <p className="font-semibold text-slate-700">
+                        URL logo utilisée dans les emails :
+                      </p>
+                      <p className="mt-1 break-all">
+                        {entrepriseSettings.logoUrl}
+                      </p>
+                    </div>
+
                     <button
-                      onClick={supprimerLogo}
-                      className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                      onClick={() => void supprimerLogo()}
+                      disabled={uploadLogoEnCours}
+                      className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Supprimer le logo
                     </button>
@@ -645,7 +716,8 @@ export default function AdminWorkspace({
                           {prestation.designation}
                         </h4>
                         <p className="mt-1 text-sm text-slate-600">
-                          {formatMontant(prestation.prixUnitaire)} · {prestation.unite}
+                          {formatMontant(prestation.prixUnitaire)} ·{" "}
+                          {prestation.unite}
                         </p>
                         <p className="mt-2 text-sm text-slate-500">
                           {prestation.description || "Aucune description"}
