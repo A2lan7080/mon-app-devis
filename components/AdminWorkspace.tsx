@@ -46,6 +46,9 @@ const UNITES_PREDEFINIES: UnitePrestation[] = [
   "jour",
 ];
 
+const champFormulaireClasses =
+  "w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 const creerPrestationVide = (): PrestationFormState => ({
   designation: "",
   unite: "forfait",
@@ -353,20 +356,22 @@ export default function AdminWorkspace({
             </div>
           ) : (
             <>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
+              <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+                <div className="min-w-0 md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Nom de l’entreprise
                   </label>
                   <input
                     type="text"
                     value={entrepriseSettings.nom}
-                    onChange={(e) => handleEntrepriseChange("nom", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    onChange={(e) =>
+                      handleEntrepriseChange("nom", e.target.value)
+                    }
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="min-w-0 md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Adresse
                   </label>
@@ -376,11 +381,39 @@ export default function AdminWorkspace({
                     onChange={(e) =>
                       handleEntrepriseChange("adresse", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Code postal
+                  </label>
+                  <input
+                    type="text"
+                    value={entrepriseSettings.codePostal ?? ""}
+                    onChange={(e) =>
+                      handleEntrepriseChange("codePostal", e.target.value)
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Ville / commune
+                  </label>
+                  <input
+                    type="text"
+                    value={entrepriseSettings.ville ?? ""}
+                    onChange={(e) =>
+                      handleEntrepriseChange("ville", e.target.value)
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+
+                <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Email
                   </label>
@@ -390,11 +423,11 @@ export default function AdminWorkspace({
                     onChange={(e) =>
                       handleEntrepriseChange("email", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Téléphone
                   </label>
@@ -404,11 +437,11 @@ export default function AdminWorkspace({
                     onChange={(e) =>
                       handleEntrepriseChange("telephone", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="min-w-0 md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     TVA
                   </label>
@@ -416,7 +449,7 @@ export default function AdminWorkspace({
                     type="text"
                     value={entrepriseSettings.tva}
                     onChange={(e) => handleEntrepriseChange("tva", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
               </div>
@@ -431,6 +464,10 @@ export default function AdminWorkspace({
                   onChange={(e) => handleLogoChange(e.target.files?.[0] ?? null)}
                   className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
                 />
+                <p className="mt-2 text-xs text-slate-400">
+                  Le logo est affiché dans l’interface. Pour les emails, il devra
+                  être envoyé via Firebase Storage à l’étape suivante.
+                </p>
               </div>
 
               <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
@@ -496,7 +533,7 @@ export default function AdminWorkspace({
                     designation: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
@@ -512,7 +549,7 @@ export default function AdminWorkspace({
                     unite: e.target.value as UnitePrestation,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               >
                 {UNITES_PREDEFINIES.map((unite) => (
                   <option key={unite} value={unite}>
@@ -535,7 +572,7 @@ export default function AdminWorkspace({
                     prixUnitaire: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
@@ -552,7 +589,7 @@ export default function AdminWorkspace({
                   }))
                 }
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
           </div>

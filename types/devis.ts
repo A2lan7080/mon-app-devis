@@ -54,6 +54,8 @@ export type NouvelleLigneState = {
 export type Entreprise = {
   nom: string;
   adresse: string;
+  codePostal?: string;
+  ville?: string;
   email: string;
   telephone: string;
   tva: string;

@@ -28,8 +28,8 @@ function echapperHtml(valeur: string) {
     .replaceAll("'", "&#039;");
 }
 
-function texteOuDefaut(valeur: string, defaut = "-") {
-  const nettoyee = valeur.trim();
+function texteOuDefaut(valeur?: string, defaut = "-") {
+  const nettoyee = typeof valeur === "string" ? valeur.trim() : "";
   return nettoyee ? echapperHtml(nettoyee) : defaut;
 }
 
@@ -58,15 +58,56 @@ function getLogoState(logoUrl?: string) {
   return {
     afficherLogo: true,
     blocLogo: `
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:14px;">
         <img
-          src="${logoUrl}"
+          src="${echapperHtml(logoUrl)}"
           alt="Logo entreprise"
-          style="max-height:95px; max-width:280px; width:auto; object-fit:contain; display:block;"
+          style="max-height:86px; max-width:260px; width:auto; object-fit:contain; display:block;"
         />
       </div>
     `,
   };
+}
+
+function renderEntrepriseBloc(
+  entreprise: EntrepriseSettings,
+  blocLogo: string,
+  afficherLogo: boolean
+) {
+  const codePostalVille = [entreprise.codePostal, entreprise.ville]
+    .filter(Boolean)
+    .join(" · ");
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">
+      <tr>
+        <td style="padding:18px;">
+          ${blocLogo}
+          <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">
+            Entreprise
+          </div>
+          <div style="margin-top:6px; font-size:22px; line-height:30px; font-weight:700; color:#0f172a; word-break:break-word;">
+            ${texteOuDefaut(entreprise.nom, afficherLogo ? "Entreprise" : "BatiFlow")}
+          </div>
+          <div style="margin-top:8px; font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+            <strong>Adresse :</strong> ${texteOuDefaut(entreprise.adresse, "Adresse non renseignée")}
+          </div>
+          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+            <strong>Code postal / Ville :</strong> ${texteOuDefaut(codePostalVille, "Coordonnées non renseignées")}
+          </div>
+          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+            <strong>Email :</strong> ${texteOuDefaut(entreprise.email, "Email non renseigné")}
+          </div>
+          <div style="font-size:14px; line-height:22px; color:#475569;">
+            <strong>Téléphone :</strong> ${texteOuDefaut(entreprise.telephone, "Téléphone non renseigné")}
+          </div>
+          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+            <strong>TVA :</strong> ${texteOuDefaut(entreprise.tva, "Non renseignée")}
+          </div>
+        </td>
+      </tr>
+    </table>
+  `;
 }
 
 export function renderFactureEmailHtml(
@@ -78,6 +119,11 @@ export function renderFactureEmailHtml(
   const netAPayer = calculerNetAPayer(facture);
 
   const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
+  const blocEntreprise = renderEntrepriseBloc(
+    entreprise,
+    blocLogo,
+    afficherLogo
+  );
 
   return `
 <!DOCTYPE html>
@@ -94,31 +140,9 @@ export function renderFactureEmailHtml(
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:680px; width:100%; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px;">
             <tr>
               <td style="padding:24px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                  <tr>
-                    <td style="padding-bottom:20px;">
-                      ${blocLogo}
-                      ${
-                        afficherLogo
-                          ? ""
-                          : `
-                      <div style="font-size:28px; line-height:34px; font-weight:700; color:#0f172a;">
-                        ${echapperHtml(entreprise.nom)}
-                      </div>
-                      `
-                      }
-                      <div style="margin-top:8px; font-size:14px; line-height:21px; color:#475569;">
-                        ${echapperHtml(entreprise.adresse)}
-                      </div>
-                      <div style="font-size:14px; line-height:21px; color:#475569;">
-                        ${echapperHtml(entreprise.email)} · ${echapperHtml(entreprise.telephone)}
-                      </div>
-                      <div style="font-size:14px; line-height:21px; color:#475569;">
-                        TVA ${echapperHtml(entreprise.tva)}
-                      </div>
-                    </td>
-                  </tr>
+                ${blocEntreprise}
 
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
                     <td style="padding-bottom:20px;">
                       <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">
@@ -290,21 +314,30 @@ export function renderFactureEmailText(
   const montantTva = calculerMontantTva(facture);
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
+  const codePostalVille = [entreprise.codePostal, entreprise.ville]
+    .filter(Boolean)
+    .join(" · ");
 
   return `
+ENTREPRISE
 ${entreprise.nom}
-${entreprise.adresse}
-${entreprise.email} - ${entreprise.telephone}
-TVA ${entreprise.tva}
+Adresse : ${entreprise.adresse || "-"}
+Code postal / Ville : ${codePostalVille || "-"}
+Email : ${entreprise.email || "-"}
+Téléphone : ${entreprise.telephone || "-"}
+TVA : ${entreprise.tva || "-"}
 
 FACTURE ${facture.reference}
 Objet : ${facture.objet}
+
+CLIENT
 Client : ${facture.clientNom}
 Adresse client : ${facture.clientAdresse || "-"}
 Code postal / Ville : ${[facture.clientCodePostal, facture.clientVille].filter(Boolean).join(" · ") || "-"}
 Email client : ${facture.clientEmail || "-"}
 Téléphone client : ${facture.clientTelephone || "-"}
 Chantier : ${facture.chantierTitre || "Aucun chantier lié"}
+
 Date émission : ${facture.dateEmission || "-"}
 Date échéance : ${facture.dateEcheance || "-"}
 Date paiement : ${facture.datePaiement || "-"}

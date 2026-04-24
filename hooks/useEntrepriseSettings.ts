@@ -13,10 +13,21 @@ type UseEntrepriseSettingsParams = {
 };
 
 type EntrepriseSettings = Entreprise & {
+  entrepriseId?: string;
   logoUrl?: string;
   updatedAt?: number;
   createdAt?: number;
+  updatedByUid?: string;
 };
+
+function creerEntrepriseDefaut(): EntrepriseSettings {
+  return {
+    ...entrepriseParDefaut,
+    codePostal: "",
+    ville: "",
+    logoUrl: "",
+  };
+}
 
 export function useEntrepriseSettings({
   entrepriseIdCourante,
@@ -24,10 +35,8 @@ export function useEntrepriseSettings({
   authChargee,
 }: UseEntrepriseSettingsParams) {
   const [entrepriseSettings, setEntrepriseSettings] =
-    useState<EntrepriseSettings>({
-      ...entrepriseParDefaut,
-      logoUrl: "",
-    });
+    useState<EntrepriseSettings>(creerEntrepriseDefaut());
+
   const [chargementEntreprise, setChargementEntreprise] = useState(true);
   const [sauvegardeEntrepriseEnCours, setSauvegardeEntrepriseEnCours] =
     useState(false);
@@ -37,10 +46,7 @@ export function useEntrepriseSettings({
       if (!authChargee) return;
 
       if (!entrepriseIdCourante) {
-        setEntrepriseSettings({
-          ...entrepriseParDefaut,
-          logoUrl: "",
-        });
+        setEntrepriseSettings(creerEntrepriseDefaut());
         setChargementEntreprise(false);
         return;
       }
@@ -52,16 +58,17 @@ export function useEntrepriseSettings({
         const snap = await getDoc(ref);
 
         if (!snap.exists()) {
-          setEntrepriseSettings({
-            ...entrepriseParDefaut,
-            logoUrl: "",
-          });
+          setEntrepriseSettings(creerEntrepriseDefaut());
           return;
         }
 
         const data = snap.data() as Partial<EntrepriseSettings>;
 
         setEntrepriseSettings({
+          entrepriseId:
+            typeof data.entrepriseId === "string"
+              ? data.entrepriseId
+              : entrepriseIdCourante,
           nom:
             typeof data.nom === "string" && data.nom.trim()
               ? data.nom
@@ -70,6 +77,9 @@ export function useEntrepriseSettings({
             typeof data.adresse === "string"
               ? data.adresse
               : entrepriseParDefaut.adresse,
+          codePostal:
+            typeof data.codePostal === "string" ? data.codePostal : "",
+          ville: typeof data.ville === "string" ? data.ville : "",
           email:
             typeof data.email === "string"
               ? data.email
@@ -85,13 +95,14 @@ export function useEntrepriseSettings({
             typeof data.createdAt === "number" ? data.createdAt : undefined,
           updatedAt:
             typeof data.updatedAt === "number" ? data.updatedAt : undefined,
+          updatedByUid:
+            typeof data.updatedByUid === "string"
+              ? data.updatedByUid
+              : undefined,
         });
       } catch (error) {
         console.error("Erreur chargement entreprise :", error);
-        setEntrepriseSettings({
-          ...entrepriseParDefaut,
-          logoUrl: "",
-        });
+        setEntrepriseSettings(creerEntrepriseDefaut());
       } finally {
         setChargementEntreprise(false);
       }
@@ -116,6 +127,14 @@ export function useEntrepriseSettings({
         {
           ...entrepriseSettings,
           entrepriseId: entrepriseIdCourante,
+          nom: entrepriseSettings.nom.trim(),
+          adresse: entrepriseSettings.adresse.trim(),
+          codePostal: entrepriseSettings.codePostal?.trim() ?? "",
+          ville: entrepriseSettings.ville?.trim() ?? "",
+          email: entrepriseSettings.email.trim(),
+          telephone: entrepriseSettings.telephone.trim(),
+          tva: entrepriseSettings.tva.trim(),
+          logoUrl: entrepriseSettings.logoUrl ?? "",
           updatedAt: maintenant,
           createdAt: entrepriseSettings.createdAt ?? maintenant,
           updatedByUid: userId,
