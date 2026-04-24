@@ -146,6 +146,8 @@ export default function FacturesWorkspace({
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
+  useState(false);
   const [formulaire, setFormulaire] = useState<FactureFormState>(
     creerFormulaireVide()
   );
@@ -1086,7 +1088,65 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 md:hidden">
+          <button
+            onClick={ouvrirEdition}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Modifier
+          </button>
+
+          <button
+            onClick={handleExporterPdf}
+            className="rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
+          >
+            PDF
+          </button>
+
+          <button
+            onClick={() => setAfficherActionsFactureMobile((prev) => !prev)}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Plus
+          </button>
+        </div>
+
+        {afficherActionsFactureMobile && (
+          <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 md:hidden">
+            <button
+              onClick={handleEnvoyerParMail}
+              disabled={envoiEnCours}
+              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+            </button>
+
+            {!factureSelectionnee.archive ? (
+              <button
+                onClick={archiverFacture}
+                className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800"
+              >
+                Archiver
+              </button>
+            ) : (
+              <button
+                onClick={restaurerFacture}
+                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800"
+              >
+                Restaurer
+              </button>
+            )}
+
+            <button
+              onClick={supprimerFacture}
+              className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"
+            >
+              Supprimer
+            </button>
+          </div>
+        )}
+
+        <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
           <button
             onClick={ouvrirEdition}
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"

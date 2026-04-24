@@ -87,6 +87,11 @@ function getStatutClasses(statut: StatutDevis) {
   }
 }
 
+const actionPrincipaleMobile =
+  "rounded-xl px-3 py-2.5 text-xs font-semibold transition";
+const actionDesktop =
+  "w-full rounded-xl px-4 py-3 text-sm font-semibold transition";
+
 export default function DevisDetailPanel({
   devisSelectionne,
   modeEdition,
@@ -112,6 +117,8 @@ export default function DevisDetailPanel({
   handleChangerStatut,
 }: Props) {
   const [recherchePrestation, setRecherchePrestation] = useState("");
+  const [afficherActionsMobile, setAfficherActionsMobile] = useState(false);
+  const [afficherStatutsMobile, setAfficherStatutsMobile] = useState(false);
 
   const { prestations } = useEntreprisePrestations({
     authChargee: true,
@@ -186,24 +193,125 @@ export default function DevisDetailPanel({
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 md:hidden">
             <button
               onClick={ouvrirEdition}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+            >
+              Modifier
+            </button>
+
+            <button
+              onClick={handleExporterPdf}
+              className={`${actionPrincipaleMobile} bg-slate-900 text-white hover:opacity-90`}
+            >
+              PDF
+            </button>
+
+            <button
+              onClick={() => setAfficherActionsMobile((prev) => !prev)}
+              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+            >
+              Plus
+            </button>
+          </div>
+
+          {afficherActionsMobile && (
+            <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 md:hidden">
+              <button
+                onClick={dupliquerDevis}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Dupliquer
+              </button>
+
+              <button
+                onClick={handleEnvoyerParMail}
+                disabled={envoiEnCours}
+                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+              </button>
+
+              {!devisSelectionne.archive ? (
+                <button
+                  onClick={archiverDevis}
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800"
+                >
+                  Archiver
+                </button>
+              ) : (
+                <button
+                  onClick={restaurerDevis}
+                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800"
+                >
+                  Restaurer
+                </button>
+              )}
+
+              <button
+                onClick={() => setAfficherStatutsMobile((prev) => !prev)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Changer le statut
+              </button>
+
+              {afficherStatutsMobile && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleChangerStatut("Brouillon")}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                  >
+                    Brouillon
+                  </button>
+                  <button
+                    onClick={() => handleChangerStatut("Envoyé")}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700"
+                  >
+                    Envoyé
+                  </button>
+                  <button
+                    onClick={() => handleChangerStatut("Accepté")}
+                    className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
+                  >
+                    Accepté
+                  </button>
+                  <button
+                    onClick={() => handleChangerStatut("Refusé")}
+                    className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+                  >
+                    Refusé
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={supprimerDevis}
+                className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
+          )}
+
+          <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
+            <button
+              onClick={ouvrirEdition}
+              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
             >
               Modifier
             </button>
 
             <button
               onClick={dupliquerDevis}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
             >
               Dupliquer
             </button>
 
             <button
               onClick={handleExporterPdf}
-              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+              className={`${actionDesktop} bg-slate-900 text-white hover:opacity-90`}
             >
               Export PDF
             </button>
@@ -211,7 +319,7 @@ export default function DevisDetailPanel({
             <button
               onClick={handleEnvoyerParMail}
               disabled={envoiEnCours}
-              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
             >
               {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
             </button>
@@ -219,14 +327,14 @@ export default function DevisDetailPanel({
             {!devisSelectionne.archive ? (
               <button
                 onClick={archiverDevis}
-                className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                className={`${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100`}
               >
                 Archiver
               </button>
             ) : (
               <button
                 onClick={restaurerDevis}
-                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                className={`${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100`}
               >
                 Restaurer
               </button>
@@ -234,7 +342,7 @@ export default function DevisDetailPanel({
 
             <button
               onClick={supprimerDevis}
-              className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+              className={`${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1`}
             >
               Supprimer
             </button>
@@ -448,7 +556,7 @@ export default function DevisDetailPanel({
             </p>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="hidden rounded-2xl bg-slate-50 p-4 md:block">
             <p className="text-sm text-slate-500">Actions rapides</p>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
