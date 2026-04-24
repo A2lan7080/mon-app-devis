@@ -57,37 +57,31 @@ function getPageAccent(vue: VuePrincipale) {
   switch (vue) {
     case "devis":
       return {
-        badge: "bg-blue-50 text-blue-700 border-blue-100",
         dot: "bg-blue-500",
         subtitle: "Crée, suis et envoie tes devis clients.",
       };
     case "clients":
       return {
-        badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
         dot: "bg-emerald-500",
         subtitle: "Centralise les coordonnées et informations clients.",
       };
     case "chantiers":
       return {
-        badge: "bg-orange-50 text-orange-700 border-orange-100",
         dot: "bg-orange-500",
         subtitle: "Suis les chantiers, statuts, dates et notes.",
       };
     case "factures":
       return {
-        badge: "bg-violet-50 text-violet-700 border-violet-100",
         dot: "bg-violet-500",
         subtitle: "Gère les factures, paiements et relances.",
       };
     case "admin":
       return {
-        badge: "bg-amber-50 text-amber-800 border-amber-100",
         dot: "bg-amber-500",
         subtitle: "Pilote les réglages, la bibliothèque et la valeur business.",
       };
     default:
       return {
-        badge: "bg-slate-50 text-slate-700 border-slate-100",
         dot: "bg-slate-500",
         subtitle: "Tableau de bord BatiFlow.",
       };
@@ -331,15 +325,6 @@ export default function AdminShell({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${accentPage.badge}`}
-                      >
-                        <span
-                          className={`h-2 w-2 rounded-full ${accentPage.dot}`}
-                        />
-                        Espace {titre}
-                      </span>
-
                       {sauvegardeEnCours && (
                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
                           Synchronisation...
@@ -347,7 +332,15 @@ export default function AdminShell({
                       )}
                     </div>
 
-                    <h2 className="text-2xl font-bold md:text-3xl">{titre}</h2>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`h-3 w-3 shrink-0 rounded-full ${accentPage.dot}`}
+                      />
+                      <h2 className="text-2xl font-bold md:text-3xl">
+                        {titre}
+                      </h2>
+                    </div>
+
                     <p className="mt-2 text-sm text-slate-500">
                       {accentPage.subtitle}
                     </p>
