@@ -37,6 +37,21 @@ const STATUTS_CHANTIER: StatutChantier[] = [
   "Suspendu",
 ];
 
+const champFormulaireClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
+const champDateMobileClasses =
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+
+const styleDateMobile = {
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  WebkitAppearance: "none",
+  appearance: "none",
+} as const;
+
 const creerFormulaireVide = (): ChantierFormState => ({
   titre: "",
   clientId: "",
@@ -418,8 +433,8 @@ export default function ChantiersWorkspace({
             </button>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2">
+          <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+            <div className="min-w-0 overflow-hidden md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Titre du chantier
               </label>
@@ -432,18 +447,18 @@ export default function ChantiersWorkspace({
                     titre: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Client associé
               </label>
               <select
                 value={formulaire.clientId}
                 onChange={(e) => handleSelectionClient(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               >
                 <option value="">Aucun client associé</option>
                 {clientsActifs.map((client) => (
@@ -454,7 +469,7 @@ export default function ChantiersWorkspace({
               </select>
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Statut
               </label>
@@ -466,7 +481,7 @@ export default function ChantiersWorkspace({
                     statut: e.target.value as StatutChantier,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               >
                 {STATUTS_CHANTIER.map((statut) => (
                   <option key={statut} value={statut}>
@@ -476,7 +491,7 @@ export default function ChantiersWorkspace({
               </select>
             </div>
 
-            <div className="md:col-span-2">
+            <div className="min-w-0 overflow-hidden md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Adresse
               </label>
@@ -489,11 +504,11 @@ export default function ChantiersWorkspace({
                     adresse: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Code postal
               </label>
@@ -506,11 +521,11 @@ export default function ChantiersWorkspace({
                     codePostal: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Ville
               </label>
@@ -523,11 +538,11 @@ export default function ChantiersWorkspace({
                     ville: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date début
               </label>
@@ -540,11 +555,12 @@ export default function ChantiersWorkspace({
                     dateDebut: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champDateMobileClasses}
+                style={styleDateMobile}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date fin
               </label>
@@ -557,12 +573,13 @@ export default function ChantiersWorkspace({
                     dateFin: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champDateMobileClasses}
+                style={styleDateMobile}
               />
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 min-w-0 overflow-hidden">
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Description
             </label>
@@ -575,11 +592,11 @@ export default function ChantiersWorkspace({
                 }))
               }
               rows={4}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 min-w-0 overflow-hidden">
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Notes
             </label>
@@ -592,7 +609,7 @@ export default function ChantiersWorkspace({
                 }))
               }
               rows={4}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
           </div>
 
@@ -628,7 +645,7 @@ export default function ChantiersWorkspace({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className="text-sm text-slate-500">Fiche chantier</p>
-                <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                <h3 className="mt-1 break-words text-xl font-bold sm:text-2xl">
                   {chantierSelectionne.titre}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
@@ -693,7 +710,7 @@ export default function ChantiersWorkspace({
           <div className="mt-6 space-y-4">
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Client associé</p>
-              <p className="mt-1 text-lg font-semibold">
+              <p className="mt-1 break-words text-lg font-semibold">
                 {chantierSelectionne.clientNom || "Aucun client associé"}
               </p>
             </div>
@@ -701,7 +718,7 @@ export default function ChantiersWorkspace({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Adresse</p>
-                <p className="mt-1 font-semibold">
+                <p className="mt-1 break-words font-semibold">
                   {chantierSelectionne.adresse || "Non renseignée"}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">
@@ -724,7 +741,7 @@ export default function ChantiersWorkspace({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Description</p>
-              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+              <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700">
                 {chantierSelectionne.description ||
                   "Aucune description pour ce chantier."}
               </p>
@@ -732,7 +749,7 @@ export default function ChantiersWorkspace({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Notes</p>
-              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+              <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700">
                 {chantierSelectionne.notes || "Aucune note pour ce chantier."}
               </p>
             </div>
@@ -758,14 +775,16 @@ export default function ChantiersWorkspace({
           <p className="mt-1 text-xs text-slate-400">
             {chargement
               ? "Chargement des chantiers..."
-              : `${chantiers.length} chantier${chantiers.length > 1 ? "s" : ""} chargé${
+              : `${chantiers.length} chantier${
                   chantiers.length > 1 ? "s" : ""
-                }`}
+                } chargé${chantiers.length > 1 ? "s" : ""}`}
           </p>
         </div>
 
         <button
-          onClick={afficherFormulaireChantier ? fermerFormulaire : ouvrirCreation}
+          onClick={
+            afficherFormulaireChantier ? fermerFormulaire : ouvrirCreation
+          }
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
         >
           {afficherFormulaireChantier ? "Fermer" : "Nouveau chantier"}
@@ -808,13 +827,13 @@ export default function ChantiersWorkspace({
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un chantier, client, ville..."
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
 
             <select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value as FiltreStatut)}
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             >
               <option value="Tous">Tous les statuts</option>
               {STATUTS_CHANTIER.map((statut) => (
@@ -829,7 +848,7 @@ export default function ChantiersWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             >
               <option value="actifs">Chantiers actifs</option>
               <option value="archives">Chantiers archivés</option>
@@ -852,7 +871,9 @@ export default function ChantiersWorkspace({
                     onClick={() => {
                       setModeEdition(false);
                       setAfficherFormulaire(false);
-                      setChantierSelectionneId(estSelectionne ? null : chantier.id);
+                      setChantierSelectionneId(
+                        estSelectionne ? null : chantier.id
+                      );
                     }}
                     className={`block w-full min-w-0 overflow-hidden rounded-xl border px-3 py-3 text-left transition ${
                       estSelectionne
@@ -922,7 +943,7 @@ export default function ChantiersWorkspace({
         title={titreMobile}
         onClose={fermerFormulaire}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {renderFormulaireOuDetail()}
         </div>
       </MobileFullscreenModal>
@@ -932,7 +953,7 @@ export default function ChantiersWorkspace({
         title={titreMobile}
         onClose={fermerDetail}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {renderFormulaireOuDetail()}
         </div>
       </MobileFullscreenModal>
