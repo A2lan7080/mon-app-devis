@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
+import { useEffect, useState, type ReactNode } from "react";
 import AccountPanel from "./AccountPanel";
 
 type VuePrincipale =
@@ -90,6 +90,25 @@ function getActionPrincipale(vue: VuePrincipale, afficherFormulaire: boolean) {
     default:
       return "";
   }
+}
+
+function LogoBatiflow({ mobile = false }: { mobile?: boolean }) {
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden bg-white ring-1 ring-slate-200 ${
+        mobile ? "h-10 w-10 rounded-xl" : "h-11 w-11 rounded-2xl"
+      }`}
+    >
+      <Image
+        src="/logo-batiflow.png"
+        alt="Logo BatiFlow"
+        fill
+        className="object-contain p-1"
+        sizes={mobile ? "40px" : "44px"}
+        priority
+      />
+    </div>
+  );
 }
 
 export default function AdminShell({
@@ -326,16 +345,7 @@ export default function AdminShell({
           <div className="flex h-full min-h-0 flex-col p-6">
             <div className="shrink-0">
               <div className="flex items-center gap-3">
-                <div className="relative h-11 w-11 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
-                  <Image
-                    src="/logo-batiflow.png"
-                    alt="Logo Batiflow"
-                    fill
-                    className="object-cover"
-                    sizes="44px"
-                    priority
-                  />
-                </div>
+                <LogoBatiflow />
 
                 <div className="min-w-0">
                   <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
@@ -368,16 +378,7 @@ export default function AdminShell({
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm md:hidden">
               <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-                  <Image
-                    src="/logo-batiflow.png"
-                    alt="Logo Batiflow"
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                    priority
-                  />
-                </div>
+                <LogoBatiflow mobile />
 
                 <div className="min-w-0">
                   <h1 className="text-2xl font-bold leading-tight">
@@ -455,16 +456,7 @@ export default function AdminShell({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-                      <Image
-                        src="/logo-batiflow.png"
-                        alt="Logo Batiflow"
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                        priority
-                      />
-                    </div>
+                    <LogoBatiflow mobile />
 
                     <div className="min-w-0">
                       <h2 className="text-xl font-bold">Batiflow</h2>
