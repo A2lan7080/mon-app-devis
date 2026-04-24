@@ -34,7 +34,7 @@ type NavItem = {
   label: string;
   icon: string;
   accent: string;
-  accentBar: string;
+  activeAccent: string;
   onClick: () => void;
   variante?: "standard" | "admin";
 };
@@ -44,7 +44,7 @@ function getNavButtonClasses(
   variante: "standard" | "admin" = "standard"
 ) {
   if (estActif && variante === "admin") {
-    return "border-amber-200 bg-amber-50 text-amber-800 shadow-sm";
+    return "border-amber-300 bg-amber-50 text-amber-800 shadow-sm";
   }
 
   if (estActif) {
@@ -164,7 +164,7 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
-      accentBar: "bg-blue-500",
+      activeAccent: "bg-blue-500/20 text-white",
       onClick: onOuvrirVueDevis,
     },
     {
@@ -172,7 +172,7 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
-      accentBar: "bg-emerald-500",
+      activeAccent: "bg-emerald-500/20 text-white",
       onClick: onOuvrirVueClients,
     },
     {
@@ -180,7 +180,7 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
-      accentBar: "bg-orange-500",
+      activeAccent: "bg-orange-500/20 text-white",
       onClick: onOuvrirVueChantiers,
     },
     {
@@ -188,7 +188,7 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
-      accentBar: "bg-violet-500",
+      activeAccent: "bg-violet-500/20 text-white",
       onClick: onOuvrirVueFactures,
     },
     {
@@ -196,7 +196,7 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
-      accentBar: "bg-amber-500",
+      activeAccent: "bg-amber-100 text-amber-800",
       onClick: onOuvrirVueAdmin,
       variante: "admin",
     },
@@ -208,7 +208,7 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
-      accentBar: "bg-blue-500",
+      activeAccent: "bg-blue-500/20 text-white",
       onClick: ouvrirVueDevisMobile,
     },
     {
@@ -216,7 +216,7 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
-      accentBar: "bg-emerald-500",
+      activeAccent: "bg-emerald-500/20 text-white",
       onClick: ouvrirVueClientsMobile,
     },
     {
@@ -224,7 +224,7 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
-      accentBar: "bg-orange-500",
+      activeAccent: "bg-orange-500/20 text-white",
       onClick: ouvrirVueChantiersMobile,
     },
     {
@@ -232,7 +232,7 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
-      accentBar: "bg-violet-500",
+      activeAccent: "bg-violet-500/20 text-white",
       onClick: ouvrirVueFacturesMobile,
     },
     {
@@ -240,14 +240,14 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
-      accentBar: "bg-amber-500",
+      activeAccent: "bg-amber-100 text-amber-800",
       onClick: ouvrirVueAdminMobile,
       variante: "admin",
     },
   ];
 
-  const renderNav = (items: NavItem[]) => (
-    <nav className="mt-8 space-y-2">
+  const renderNav = (items: NavItem[], compact = false) => (
+    <nav className={compact ? "mt-5 space-y-1.5" : "mt-8 space-y-2"}>
       {items.map((item) => {
         const estActif = vueAffichee === item.id;
 
@@ -255,25 +255,14 @@ export default function AdminShell({
           <button
             key={item.id}
             onClick={item.onClick}
-            className={`relative flex w-full items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
-              estActif,
-              item.variante ?? "standard"
-            )}`}
+            className={`flex w-full items-center gap-3 rounded-xl border text-left font-medium transition ${
+              compact ? "px-3 py-2.5 text-sm" : "px-3 py-3 text-sm"
+            } ${getNavButtonClasses(estActif, item.variante ?? "standard")}`}
           >
-            {estActif && (
-              <span
-                className={`absolute left-0 top-0 h-full w-1.5 ${item.accentBar}`}
-              />
-            )}
-
             <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ${
-                estActif
-                  ? item.variante === "admin"
-                    ? "bg-white/70 text-amber-800"
-                    : "bg-white/15 text-white"
-                  : item.accent
-              }`}
+              className={`flex shrink-0 items-center justify-center rounded-xl text-base ${
+                compact ? "h-8 w-8" : "h-9 w-9"
+              } ${estActif ? item.activeAccent : item.accent}`}
             >
               {item.icon}
             </span>
@@ -281,11 +270,7 @@ export default function AdminShell({
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
 
             {estActif && (
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  item.variante === "admin" ? item.accentBar : item.accentBar
-                }`}
-              />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-current opacity-80" />
             )}
           </button>
         );
@@ -334,11 +319,12 @@ export default function AdminShell({
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-black text-white">
                   B
                 </div>
-                <div>
+
+                <div className="min-w-0">
                   <h1 className="text-2xl font-bold leading-tight">
                     Batiflow
                   </h1>
-                  <p className="text-xs text-slate-400">
+                  <p className="truncate text-xs text-slate-400">
                     {entrepriseNom || entrepriseId}
                   </p>
                 </div>
@@ -405,33 +391,38 @@ export default function AdminShell({
             onClick={() => setMenuMobileOuvert(false)}
           />
 
-          <div className="absolute inset-y-0 left-0 flex w-[88%] max-w-sm flex-col bg-white p-5 shadow-2xl">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white">
-                    B
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-2xl font-bold">Batiflow</h2>
-                    <p className="mt-0.5 truncate text-xs text-slate-400">
-                      {entrepriseNom || entrepriseId}
-                    </p>
+          <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl">
+            <div className="shrink-0 border-b border-slate-100 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-black text-white">
+                      B
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="text-xl font-bold">Batiflow</h2>
+                      <p className="mt-0.5 truncate text-xs text-slate-400">
+                        {entrepriseNom || entrepriseId}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => setMenuMobileOuvert(false)}
-                className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
-              >
-                Fermer
-              </button>
+                <button
+                  onClick={() => setMenuMobileOuvert(false)}
+                  className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
 
-            {renderNav(navMobile)}
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+              {renderNav(navMobile, true)}
+            </div>
 
-            <div className="mt-auto pt-6">
+            <div className="shrink-0 border-t border-slate-100 bg-white p-4">
               <AccountPanel
                 mode="menu"
                 displayName={displayName}

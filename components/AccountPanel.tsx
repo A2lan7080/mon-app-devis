@@ -5,24 +5,24 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
 type Props = {
+  mode?: "card" | "menu";
   displayName: string;
   email: string;
   role: string;
   entrepriseId: string;
   entrepriseNom?: string;
   onDeconnexion: () => void;
-  mode?: "large" | "menu";
   onCloseMenu?: () => void;
 };
 
 export default function AccountPanel({
+  mode = "card",
   displayName,
   email,
   role,
   entrepriseId,
   entrepriseNom,
   onDeconnexion,
-  mode = "large",
   onCloseMenu,
 }: Props) {
   const [ouvert, setOuvert] = useState(false);
@@ -30,8 +30,7 @@ export default function AccountPanel({
   const [message, setMessage] = useState("");
   const [erreur, setErreur] = useState("");
 
-  const initiale =
-    displayName?.slice(0, 1) || email?.slice(0, 1) || role?.slice(0, 1) || "U";
+  const initiale = displayName?.slice(0, 1) || email?.slice(0, 1) || "U";
 
   const handleResetPassword = async () => {
     setMessage("");
@@ -63,11 +62,7 @@ export default function AccountPanel({
   if (mode === "menu") {
     return (
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-        <button
-          type="button"
-          onClick={() => setOuvert((prev) => !prev)}
-          className="flex w-full items-center gap-3 text-left"
-        >
+        <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold uppercase text-white">
             {initiale}
           </div>
@@ -76,45 +71,34 @@ export default function AccountPanel({
             <p className="truncate text-sm font-semibold text-slate-900">
               {displayName || "Utilisateur"}
             </p>
-            <p className="truncate text-xs text-slate-500">{role}</p>
+            <p className="truncate text-xs text-slate-500">
+              {email || "Email non renseigné"}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl bg-white px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Rôle
+            </p>
+            <p className="mt-0.5 truncate font-semibold text-slate-800">
+              {role}
+            </p>
           </div>
 
-          <span className="shrink-0 text-xs font-semibold text-slate-500">
-            {ouvert ? "−" : "+"}
-          </span>
-        </button>
+          <div className="rounded-xl bg-white px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Entreprise
+            </p>
+            <p className="mt-0.5 truncate font-semibold text-slate-800">
+              {entrepriseNom || entrepriseId}
+            </p>
+          </div>
+        </div>
 
-        {ouvert && (
-          <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
-            <div className="space-y-2 text-xs">
-              <div>
-                <p className="font-semibold uppercase tracking-wide text-slate-400">
-                  Email
-                </p>
-                <p className="mt-1 break-all text-slate-700">
-                  {email || "Non renseigné"}
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold uppercase tracking-wide text-slate-400">
-                  Entreprise
-                </p>
-                <p className="mt-1 break-words text-slate-700">
-                  {entrepriseNom || entrepriseId}
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold uppercase tracking-wide text-slate-400">
-                  Identifiant
-                </p>
-                <p className="mt-1 break-words text-slate-700">
-                  {entrepriseId}
-                </p>
-              </div>
-            </div>
-
+        {(message || erreur) && (
+          <div className="mt-3 space-y-2">
             {message && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
                 {message}
@@ -126,25 +110,27 @@ export default function AccountPanel({
                 {erreur}
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={handleResetPassword}
-              disabled={chargementReset}
-              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {chargementReset ? "Envoi..." : "Changer mon mot de passe"}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDeconnexion}
-              className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-            >
-              Se déconnecter
-            </button>
           </div>
         )}
+
+        <div className="mt-3 space-y-2">
+          <button
+            type="button"
+            onClick={handleResetPassword}
+            disabled={chargementReset}
+            className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {chargementReset ? "Envoi en cours..." : "Changer mon mot de passe"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDeconnexion}
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+          >
+            Se déconnecter
+          </button>
+        </div>
       </div>
     );
   }
