@@ -4,7 +4,6 @@ import { useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import AccessDeniedState from "../components/AccessDeniedState";
-import AccountPanel from "../components/AccountPanel";
 import AdminShell from "../components/AdminShell";
 import AdminWorkspace from "../components/AdminWorkspace";
 import ChantiersWorkspace from "../components/ChantiersWorkspace";
@@ -237,6 +236,8 @@ export default function Home() {
 
   return (
     <AdminShell
+      email={user.email ?? ""}
+      entrepriseNom={entrepriseSettings.nom}
       vueAffichee={vueAffichee}
       displayName={profilUtilisateur.displayName}
       entrepriseId={profilUtilisateur.entrepriseId}
@@ -251,14 +252,6 @@ export default function Home() {
       onToggleFormulaireDevis={toggleFormulaireDevis}
       onDeconnexion={handleDeconnexion}
     >
-      <AccountPanel
-        displayName={profilUtilisateur.displayName}
-        email={user.email ?? ""}
-        role={profilUtilisateur.role}
-        entrepriseId={profilUtilisateur.entrepriseId}
-        entrepriseNom={entrepriseSettings.nom}
-        onDeconnexion={handleDeconnexion}
-      />
 
       {vueAffichee === "admin" ? (
         <AdminWorkspace

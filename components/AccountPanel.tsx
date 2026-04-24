@@ -11,6 +11,8 @@ type Props = {
   entrepriseId: string;
   entrepriseNom?: string;
   onDeconnexion: () => void;
+  mode?: "large" | "menu";
+  onCloseMenu?: () => void;
 };
 
 export default function AccountPanel({
@@ -20,11 +22,16 @@ export default function AccountPanel({
   entrepriseId,
   entrepriseNom,
   onDeconnexion,
+  mode = "large",
+  onCloseMenu,
 }: Props) {
   const [ouvert, setOuvert] = useState(false);
   const [chargementReset, setChargementReset] = useState(false);
   const [message, setMessage] = useState("");
   const [erreur, setErreur] = useState("");
+
+  const initiale =
+    displayName?.slice(0, 1) || email?.slice(0, 1) || role?.slice(0, 1) || "U";
 
   const handleResetPassword = async () => {
     setMessage("");
@@ -48,6 +55,100 @@ export default function AccountPanel({
     }
   };
 
+  const handleDeconnexion = () => {
+    onCloseMenu?.();
+    onDeconnexion();
+  };
+
+  if (mode === "menu") {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+        <button
+          type="button"
+          onClick={() => setOuvert((prev) => !prev)}
+          className="flex w-full items-center gap-3 text-left"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold uppercase text-white">
+            {initiale}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">
+              {displayName || "Utilisateur"}
+            </p>
+            <p className="truncate text-xs text-slate-500">{role}</p>
+          </div>
+
+          <span className="shrink-0 text-xs font-semibold text-slate-500">
+            {ouvert ? "−" : "+"}
+          </span>
+        </button>
+
+        {ouvert && (
+          <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+            <div className="space-y-2 text-xs">
+              <div>
+                <p className="font-semibold uppercase tracking-wide text-slate-400">
+                  Email
+                </p>
+                <p className="mt-1 break-all text-slate-700">
+                  {email || "Non renseigné"}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold uppercase tracking-wide text-slate-400">
+                  Entreprise
+                </p>
+                <p className="mt-1 break-words text-slate-700">
+                  {entrepriseNom || entrepriseId}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold uppercase tracking-wide text-slate-400">
+                  Identifiant
+                </p>
+                <p className="mt-1 break-words text-slate-700">
+                  {entrepriseId}
+                </p>
+              </div>
+            </div>
+
+            {message && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                {message}
+              </div>
+            )}
+
+            {erreur && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {erreur}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={chargementReset}
+              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {chargementReset ? "Envoi..." : "Changer mon mot de passe"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDeconnexion}
+              className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm sm:mb-6">
       <button
@@ -57,7 +158,7 @@ export default function AccountPanel({
       >
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-sm font-bold uppercase text-white">
-            {displayName?.slice(0, 1) || email?.slice(0, 1) || "U"}
+            {initiale}
           </div>
 
           <div className="min-w-0">
@@ -149,7 +250,7 @@ export default function AccountPanel({
 
             <button
               type="button"
-              onClick={onDeconnexion}
+              onClick={handleDeconnexion}
               className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
             >
               Se déconnecter

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import AccountPanel from "./AccountPanel";
 
 type VuePrincipale =
   | "devis"
@@ -12,7 +13,9 @@ type VuePrincipale =
 type Props = {
   vueAffichee: VuePrincipale;
   displayName: string;
+  email: string;
   entrepriseId: string;
+  entrepriseNom?: string;
   role: string;
   sauvegardeEnCours: boolean;
   afficherFormulaire: boolean;
@@ -44,7 +47,9 @@ function getNavButtonClasses(
 export default function AdminShell({
   vueAffichee,
   displayName,
+  email,
   entrepriseId,
+  entrepriseNom,
   role,
   sauvegardeEnCours,
   afficherFormulaire,
@@ -104,11 +109,6 @@ export default function AdminShell({
   const ouvrirVueAdminMobile = () => {
     setMenuMobileOuvert(false);
     onOuvrirVueAdmin();
-  };
-
-  const deconnexionMobile = () => {
-    setMenuMobileOuvert(false);
-    onDeconnexion();
   };
 
   const renderDesktopNav = () => (
@@ -218,11 +218,23 @@ export default function AdminShell({
           <div>
             <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
             <p className="mt-3 text-xs text-slate-400">
-              {displayName} · {entrepriseId}
+              {entrepriseNom || entrepriseId}
             </p>
           </div>
 
           {renderDesktopNav()}
+
+          <div className="mt-auto pt-6">
+            <AccountPanel
+              mode="menu"
+              displayName={displayName}
+              email={email}
+              role={role}
+              entrepriseId={entrepriseId}
+              entrepriseNom={entrepriseNom}
+              onDeconnexion={onDeconnexion}
+            />
+          </div>
         </aside>
 
         <section className="min-w-0 flex-1 p-4 pb-28 md:p-8 md:pb-8">
@@ -244,13 +256,6 @@ export default function AdminShell({
                     Synchronisation...
                   </div>
                 )}
-
-                <button
-                  onClick={onDeconnexion}
-                  className="hidden w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto md:inline-flex md:items-center md:justify-center"
-                >
-                  Déconnexion
-                </button>
 
                 {vueAffichee === "devis" && (
                   <button
@@ -288,7 +293,7 @@ export default function AdminShell({
               <div className="min-w-0">
                 <h2 className="text-2xl font-bold">Batiflow</h2>
                 <p className="mt-2 text-xs text-slate-400">
-                  {displayName} · {entrepriseId}
+                  {entrepriseNom || entrepriseId}
                 </p>
               </div>
 
@@ -303,12 +308,16 @@ export default function AdminShell({
             {renderMobileNav()}
 
             <div className="mt-auto pt-6">
-              <button
-                onClick={deconnexionMobile}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
-              >
-                Déconnexion
-              </button>
+              <AccountPanel
+                mode="menu"
+                displayName={displayName}
+                email={email}
+                role={role}
+                entrepriseId={entrepriseId}
+                entrepriseNom={entrepriseNom}
+                onDeconnexion={onDeconnexion}
+                onCloseMenu={() => setMenuMobileOuvert(false)}
+              />
             </div>
           </div>
         </div>
