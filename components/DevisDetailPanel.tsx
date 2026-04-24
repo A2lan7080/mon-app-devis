@@ -87,8 +87,12 @@ function getStatutClasses(statut: StatutDevis) {
   }
 }
 
+const champFormulaireClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 const actionPrincipaleMobile =
   "rounded-xl px-3 py-2.5 text-xs font-semibold transition";
+
 const actionDesktop =
   "w-full rounded-xl px-4 py-3 text-sm font-semibold transition";
 
@@ -119,6 +123,8 @@ export default function DevisDetailPanel({
   const [recherchePrestation, setRecherchePrestation] = useState("");
   const [afficherActionsMobile, setAfficherActionsMobile] = useState(false);
   const [afficherStatutsMobile, setAfficherStatutsMobile] = useState(false);
+  const [bibliothequeEditionOuverte, setBibliothequeEditionOuverte] =
+    useState(false);
 
   const { prestations } = useEntreprisePrestations({
     authChargee: true,
@@ -609,8 +615,8 @@ export default function DevisDetailPanel({
         </button>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <div>
+      <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
           </label>
@@ -623,11 +629,11 @@ export default function DevisDetailPanel({
                 client: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier
           </label>
@@ -640,11 +646,11 @@ export default function DevisDetailPanel({
                 chantierTitre: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
           </label>
@@ -657,11 +663,11 @@ export default function DevisDetailPanel({
                 date: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -673,7 +679,7 @@ export default function DevisDetailPanel({
                 statut: e.target.value as StatutDevis,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             {STATUTS_DEVIS.map((statut) => (
               <option key={statut} value={statut}>
@@ -683,7 +689,7 @@ export default function DevisDetailPanel({
           </select>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Adresse
           </label>
@@ -696,11 +702,11 @@ export default function DevisDetailPanel({
                 adresse: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Code postal
           </label>
@@ -713,11 +719,11 @@ export default function DevisDetailPanel({
                 codePostal: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Ville
           </label>
@@ -730,11 +736,11 @@ export default function DevisDetailPanel({
                 ville: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Email
           </label>
@@ -747,11 +753,11 @@ export default function DevisDetailPanel({
                 email: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Téléphone
           </label>
@@ -764,11 +770,11 @@ export default function DevisDetailPanel({
                 telephone: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Type client
           </label>
@@ -780,14 +786,14 @@ export default function DevisDetailPanel({
                 typeClient: e.target.value as "Particulier" | "Professionnel",
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="Particulier">Particulier</option>
             <option value="Professionnel">Professionnel</option>
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Société
           </label>
@@ -800,11 +806,11 @@ export default function DevisDetailPanel({
                 societe: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA client
           </label>
@@ -817,11 +823,11 @@ export default function DevisDetailPanel({
                 tvaClient: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -834,11 +840,11 @@ export default function DevisDetailPanel({
                 tvaTaux: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte (%)
           </label>
@@ -851,11 +857,11 @@ export default function DevisDetailPanel({
                 acomptePourcentage: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div className="md:col-span-2 lg:max-w-xs">
+        <div className="min-w-0 md:col-span-2 lg:max-w-xs">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Validité (jours)
           </label>
@@ -868,12 +874,12 @@ export default function DevisDetailPanel({
                 validiteJours: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 min-w-0">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Conditions
         </label>
@@ -886,7 +892,7 @@ export default function DevisDetailPanel({
             }))
           }
           rows={4}
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          className={champFormulaireClasses}
         />
       </div>
 
@@ -919,8 +925,8 @@ export default function DevisDetailPanel({
                 </button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="xl:col-span-2">
+              <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0 xl:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Désignation
                   </label>
@@ -934,11 +940,11 @@ export default function DevisDetailPanel({
                         e.target.value
                       )
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Quantité
                   </label>
@@ -948,11 +954,11 @@ export default function DevisDetailPanel({
                     onChange={(e) =>
                       mettreAJourLigneEdition(index, "quantite", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Unité
                   </label>
@@ -962,11 +968,11 @@ export default function DevisDetailPanel({
                     onChange={(e) =>
                       mettreAJourLigneEdition(index, "unite", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Prix unitaire
                   </label>
@@ -980,11 +986,11 @@ export default function DevisDetailPanel({
                         e.target.value
                       )
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div className="xl:col-span-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 xl:col-span-4">
                   Total ligne :{" "}
                   <span className="font-semibold text-slate-900">
                     {formatMontant(
@@ -999,76 +1005,90 @@ export default function DevisDetailPanel({
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h5 className="text-base font-semibold text-slate-900">
                 Bibliothèque de prestations
               </h5>
               <p className="mt-1 text-sm text-slate-500">
-                Ajoute une prestation enregistrée dans ce devis.
+                {prestationsActives.length} prestation
+                {prestationsActives.length > 1 ? "s" : ""} disponible
+                {prestationsActives.length > 1 ? "s" : ""}.
               </p>
             </div>
 
-            <div className="w-full lg:max-w-sm">
-              <label className="mb-2 block text-xs font-medium text-slate-500">
-                Rechercher une prestation
-              </label>
-              <input
-                type="search"
-                value={recherchePrestation}
-                onChange={(e) => setRecherchePrestation(e.target.value)}
-                placeholder="Ex. porte, pose, m², forfait..."
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setBibliothequeEditionOuverte((prev) => !prev)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            >
+              {bibliothequeEditionOuverte
+                ? "Masquer la bibliothèque"
+                : "Afficher la bibliothèque"}
+            </button>
           </div>
 
-          {prestationsActives.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              Aucune prestation n’est encore enregistrée dans la bibliothèque.
-            </div>
-          ) : prestationsFiltrees.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              Aucune prestation ne correspond à cette recherche.
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {prestationsFiltrees.map((prestation) => (
-                <div
-                  key={prestation.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {prestation.designation}
-                    </p>
+          {bibliothequeEditionOuverte && (
+            <>
+              <div className="mt-4 w-full">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Rechercher une prestation
+                </label>
+                <input
+                  type="search"
+                  value={recherchePrestation}
+                  onChange={(e) => setRecherchePrestation(e.target.value)}
+                  placeholder="Ex. porte, pose, m², forfait..."
+                  className={champFormulaireClasses}
+                />
+              </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                      <span className="rounded-full bg-white px-3 py-1 font-medium">
-                        {formatMontant(Number(prestation.prixUnitaire) || 0)} HT
-                      </span>
-                      <span className="rounded-full bg-white px-3 py-1 font-medium">
-                        {prestation.unite}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      ajouterPrestationEdition({
-                        designation: prestation.designation,
-                        unite: prestation.unite,
-                        prixUnitaire: prestation.prixUnitaire,
-                      })
-                    }
-                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                  >
-                    Ajouter au devis
-                  </button>
+              {prestationsActives.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Aucune prestation n’est encore enregistrée dans la
+                  bibliothèque.
                 </div>
-              ))}
-            </div>
+              ) : prestationsFiltrees.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Aucune prestation ne correspond à cette recherche.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {prestationsFiltrees.map((prestation) => (
+                    <div
+                      key={prestation.id}
+                      className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {prestation.designation}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatMontant(
+                            Number(prestation.prixUnitaire) || 0
+                          )}{" "}
+                          HT · {prestation.unite}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          ajouterPrestationEdition({
+                            designation: prestation.designation,
+                            unite: prestation.unite,
+                            prixUnitaire: prestation.prixUnitaire,
+                          })
+                        }
+                        className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
+                      >
+                        Ajouter
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
