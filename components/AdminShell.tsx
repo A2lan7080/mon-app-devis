@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import AccountPanel from "./AccountPanel";
 
 type VuePrincipale =
@@ -325,8 +326,15 @@ export default function AdminShell({
           <div className="flex h-full min-h-0 flex-col p-6">
             <div className="shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white">
-                  B
+                <div className="relative h-11 w-11 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+                  <Image
+                    src="/logo-batiflow.png"
+                    alt="Logo Batiflow"
+                    fill
+                    className="object-cover"
+                    sizes="44px"
+                    priority
+                  />
                 </div>
 
                 <div className="min-w-0">
@@ -360,8 +368,15 @@ export default function AdminShell({
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm md:hidden">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-black text-white">
-                  B
+                <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                  <Image
+                    src="/logo-batiflow.png"
+                    alt="Logo Batiflow"
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                    priority
+                  />
                 </div>
 
                 <div className="min-w-0">
@@ -440,8 +455,15 @@ export default function AdminShell({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-black text-white">
-                      B
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                      <Image
+                        src="/logo-batiflow.png"
+                        alt="Logo Batiflow"
+                        fill
+                        className="object-cover"
+                        sizes="40px"
+                        priority
+                      />
                     </div>
 
                     <div className="min-w-0">
