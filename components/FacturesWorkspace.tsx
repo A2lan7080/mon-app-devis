@@ -146,8 +146,7 @@ export default function FacturesWorkspace({
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
-  const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
-  useState(false);
+  const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] = useState(false);
   const [formulaire, setFormulaire] = useState<FactureFormState>(
     creerFormulaireVide()
   );
@@ -485,22 +484,26 @@ export default function FacturesWorkspace({
 
   const ouvrirCreation = () => {
     resetFormulaire();
+    setAfficherActionsFactureMobile(false);
     setAfficherFormulaire(true);
     setModeEdition(false);
   };
 
   const fermerFormulaire = () => {
+    setAfficherActionsFactureMobile(false);
     setAfficherFormulaire(false);
     setModeEdition(false);
     resetFormulaire();
   };
 
   const fermerDetailMobile = () => {
+    setAfficherActionsFactureMobile(false);
     setModeEdition(false);
     setFactureSelectionneeId(null);
   };
 
   const ouvrirEdition = () => {
+    setAfficherActionsFactureMobile(false);
     if (!factureSelectionnee) return;
 
     setFormulaire({
@@ -1414,6 +1417,7 @@ export default function FacturesWorkspace({
                 <button
                   key={facture.id}
                   onClick={() => {
+                    setAfficherActionsFactureMobile(false);
                     setFactureSelectionneeId(facture.id);
                     setModeEdition(false);
                     setAfficherFormulaire(false);
