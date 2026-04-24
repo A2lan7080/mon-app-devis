@@ -34,6 +34,7 @@ type NavItem = {
   label: string;
   icon: string;
   accent: string;
+  accentBar: string;
   onClick: () => void;
   variante?: "standard" | "admin";
 };
@@ -163,6 +164,7 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
+      accentBar: "bg-blue-500",
       onClick: onOuvrirVueDevis,
     },
     {
@@ -170,6 +172,7 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
+      accentBar: "bg-emerald-500",
       onClick: onOuvrirVueClients,
     },
     {
@@ -177,6 +180,7 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
+      accentBar: "bg-orange-500",
       onClick: onOuvrirVueChantiers,
     },
     {
@@ -184,6 +188,7 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
+      accentBar: "bg-violet-500",
       onClick: onOuvrirVueFactures,
     },
     {
@@ -191,6 +196,7 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
+      accentBar: "bg-amber-500",
       onClick: onOuvrirVueAdmin,
       variante: "admin",
     },
@@ -202,6 +208,7 @@ export default function AdminShell({
       label: "Devis",
       icon: "📄",
       accent: "bg-blue-50 text-blue-700",
+      accentBar: "bg-blue-500",
       onClick: ouvrirVueDevisMobile,
     },
     {
@@ -209,6 +216,7 @@ export default function AdminShell({
       label: "Clients",
       icon: "👤",
       accent: "bg-emerald-50 text-emerald-700",
+      accentBar: "bg-emerald-500",
       onClick: ouvrirVueClientsMobile,
     },
     {
@@ -216,6 +224,7 @@ export default function AdminShell({
       label: "Chantiers",
       icon: "🏗️",
       accent: "bg-orange-50 text-orange-700",
+      accentBar: "bg-orange-500",
       onClick: ouvrirVueChantiersMobile,
     },
     {
@@ -223,6 +232,7 @@ export default function AdminShell({
       label: "Factures",
       icon: "🧾",
       accent: "bg-violet-50 text-violet-700",
+      accentBar: "bg-violet-500",
       onClick: ouvrirVueFacturesMobile,
     },
     {
@@ -230,6 +240,7 @@ export default function AdminShell({
       label: "Admin",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
+      accentBar: "bg-amber-500",
       onClick: ouvrirVueAdminMobile,
       variante: "admin",
     },
@@ -244,14 +255,24 @@ export default function AdminShell({
           <button
             key={item.id}
             onClick={item.onClick}
-            className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
+            className={`relative flex w-full items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left text-sm font-medium transition ${getNavButtonClasses(
               estActif,
               item.variante ?? "standard"
             )}`}
           >
+            {estActif && (
+              <span
+                className={`absolute left-0 top-0 h-full w-1.5 ${item.accentBar}`}
+              />
+            )}
+
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ${
-                estActif ? "bg-white/15 text-white" : item.accent
+                estActif
+                  ? item.variante === "admin"
+                    ? "bg-white/70 text-amber-800"
+                    : "bg-white/15 text-white"
+                  : item.accent
               }`}
             >
               {item.icon}
@@ -260,7 +281,11 @@ export default function AdminShell({
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
 
             {estActif && (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-current opacity-80" />
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  item.variante === "admin" ? item.accentBar : item.accentBar
+                }`}
+              />
             )}
           </button>
         );
