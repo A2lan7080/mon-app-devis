@@ -40,76 +40,90 @@ function texteMultiligneOuDefaut(
 ) {
   const nettoyee = typeof valeur === "string" ? valeur.trim() : "";
 
-  if (!nettoyee) {
-    return defaut;
-  }
+  if (!nettoyee) return defaut;
 
   return echapperHtml(nettoyee).replaceAll("\n", "<br />");
 }
 
-function getCodePostalVille(entreprise: EntrepriseSettings) {
-  return [entreprise.codePostal, entreprise.ville].filter(Boolean).join(" · ");
+function codePostalVille(codePostal?: string, ville?: string) {
+  return [codePostal, ville].filter(Boolean).join(" · ");
 }
 
-function getBlocLogo(entreprise: EntrepriseSettings) {
-  if (!entreprise.logoUrl?.trim()) return "";
+function getLogoHtml(entreprise: EntrepriseSettings) {
+  const logoUrl = entreprise.logoUrl?.trim();
 
-  const logoUrl = entreprise.logoUrl.trim();
-
+  if (!logoUrl) return "";
   if (!logoUrl.startsWith("https://") && !logoUrl.startsWith("http://")) {
     return "";
   }
 
   return `
     <div class="logo-wrapper">
-      <img
-        src="${echapperHtml(logoUrl)}"
-        alt="Logo entreprise"
-        class="logo-entreprise"
-      />
+      <img src="${echapperHtml(logoUrl)}" alt="Logo entreprise" class="logo-entreprise" />
     </div>
   `;
 }
 
 function getBlocEntreprise(entreprise: EntrepriseSettings) {
-  const blocLogo = getBlocLogo(entreprise);
+  const logoHtml = getLogoHtml(entreprise);
   const afficherNom =
-    !blocLogo || entreprise.logoRemplaceNomEntreprise !== true;
+    !logoHtml || entreprise.logoRemplaceNomEntreprise !== true;
 
   return `
-    <div class="bloc entreprise-bloc">
-      ${blocLogo}
+    <div class="card card-compact entreprise-card">
+      ${logoHtml}
+
+      <div class="label">Entreprise</div>
 
       ${
         afficherNom
-          ? `<h1 class="title entreprise-title">${texteOuDefaut(
+          ? `<div class="main-name">${texteOuDefaut(
               entreprise.nom,
               "BatiFlow"
-            )}</h1>`
+            )}</div>`
           : ""
       }
 
-      <div class="entreprise-details">
-        <p><strong>Adresse :</strong> ${texteOuDefaut(
-          entreprise.adresse,
-          "Adresse non renseignée"
-        )}</p>
-        <p><strong>Code postal / Ville :</strong> ${texteOuDefaut(
-          getCodePostalVille(entreprise),
-          "Coordonnées non renseignées"
-        )}</p>
-        <p><strong>Email :</strong> ${texteOuDefaut(
-          entreprise.email,
-          "Email non renseigné"
-        )}</p>
-        <p><strong>Téléphone :</strong> ${texteOuDefaut(
-          entreprise.telephone,
-          "Téléphone non renseigné"
-        )}</p>
-        <p><strong>TVA :</strong> ${texteOuDefaut(
-          entreprise.tva,
-          "Non renseignée"
-        )}</p>
+      <div class="info-grid entreprise-info">
+        <div>
+          <div class="info-label">Adresse</div>
+          <div class="info-value">${texteOuDefaut(
+            entreprise.adresse,
+            "Adresse non renseignée"
+          )}</div>
+        </div>
+
+        <div>
+          <div class="info-label">Code postal / Ville</div>
+          <div class="info-value">${texteOuDefaut(
+            codePostalVille(entreprise.codePostal, entreprise.ville),
+            "Coordonnées non renseignées"
+          )}</div>
+        </div>
+
+        <div>
+          <div class="info-label">Email</div>
+          <div class="info-value">${texteOuDefaut(
+            entreprise.email,
+            "Email non renseigné"
+          )}</div>
+        </div>
+
+        <div>
+          <div class="info-label">Téléphone</div>
+          <div class="info-value">${texteOuDefaut(
+            entreprise.telephone,
+            "Téléphone non renseigné"
+          )}</div>
+        </div>
+
+        <div>
+          <div class="info-label">TVA</div>
+          <div class="info-value">${texteOuDefaut(
+            entreprise.tva,
+            "Non renseignée"
+          )}</div>
+        </div>
       </div>
     </div>
   `;
@@ -121,7 +135,7 @@ function getPrintScript() {
       function lancerImpression() {
         setTimeout(function () {
           window.print();
-        }, 350);
+        }, 250);
       }
 
       window.addEventListener("load", function () {
@@ -136,9 +150,7 @@ function getPrintScript() {
 
         function imageTerminee() {
           restantes = restantes - 1;
-          if (restantes <= 0) {
-            lancerImpression();
-          }
+          if (restantes <= 0) lancerImpression();
         }
 
         images.forEach(function (img) {
@@ -173,8 +185,6 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
     devisSelectionne.entrepriseId ?? null
   );
 
-  const blocEntreprise = getBlocEntreprise(entreprise);
-
   const lignesHtml = devisSelectionne.lignes
     .map((ligne) => {
       const sousTotal = ligne.quantite * ligne.prixUnitaire;
@@ -184,9 +194,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           <td class="designation-cell">${texteOuDefaut(ligne.designation)}</td>
           <td class="center-cell">${ligne.quantite}</td>
           <td class="center-cell">${texteOuDefaut(ligne.unite)}</td>
-          <td class="right-cell nowrap">${formatMontant(
-            ligne.prixUnitaire
-          )}</td>
+          <td class="right-cell nowrap">${formatMontant(ligne.prixUnitaire)}</td>
           <td class="right-cell nowrap strong">${formatMontant(sousTotal)}</td>
         </tr>
       `;
@@ -205,138 +213,143 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           }
 
           body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            color: #0f172a;
             background: #ffffff;
+            color: #0f172a;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
           }
 
           .page {
-            max-width: 980px;
+            max-width: 960px;
             margin: 0 auto;
-            padding: 36px;
+            padding: 22px 30px;
           }
 
           .topbar {
             display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
-            gap: 28px;
-            margin-bottom: 28px;
+            grid-template-columns: minmax(0, 1.08fr) minmax(245px, 0.92fr);
+            gap: 18px;
             align-items: start;
-          }
-
-          .bloc {
-            min-width: 0;
+            margin-bottom: 12px;
           }
 
           .document-header {
             text-align: right;
+            padding-top: 3px;
+          }
+
+          .doc-title {
+            margin: 0 0 7px;
+            font-size: 27px;
+            line-height: 1.1;
+            font-weight: 800;
+          }
+
+          .doc-line {
+            margin: 0 0 2px;
+            color: #334155;
+            font-size: 11px;
+            line-height: 1.3;
+          }
+
+          .card {
+            border: 1px solid #dbe4ef;
+            border-radius: 13px;
+            padding: 13px 15px;
+            margin-bottom: 10px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .card-compact {
+            padding: 12px 14px;
+          }
+
+          .prestations-card {
+            break-inside: auto;
+            page-break-inside: auto;
+          }
+
+          .after-table-block {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .label {
+            margin-bottom: 6px;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+          }
+
+          .main-name {
+            margin-bottom: 8px;
+            font-size: 20px;
+            line-height: 1.12;
+            font-weight: 800;
+            word-break: break-word;
           }
 
           .logo-wrapper {
-            margin-bottom: 14px;
+            margin-bottom: 8px;
           }
 
           .logo-entreprise {
             display: block;
-            max-width: 320px;
-            max-height: 125px;
+            max-width: 205px;
+            max-height: 72px;
             width: auto;
             height: auto;
             object-fit: contain;
           }
 
-          .title {
-            font-size: 30px;
-            line-height: 1.15;
-            font-weight: 700;
-            margin: 0 0 8px;
-            color: #0f172a;
-            word-break: break-word;
-          }
-
-          .entreprise-title {
-            font-size: 28px;
-          }
-
-          .doc-title {
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-size: 13px;
-            color: #64748b;
-            margin: 0 0 8px;
-            font-weight: 700;
-          }
-
-          .doc-number {
-            font-size: 30px;
-            line-height: 1.15;
-            margin: 0 0 12px;
-            font-weight: 700;
-            color: #0f172a;
-            word-break: break-word;
-          }
-
-          .subtitle,
-          .entreprise-details p {
-            font-size: 14px;
-            color: #475569;
-            margin: 0 0 5px;
-            line-height: 1.45;
-            word-break: break-word;
-          }
-
-          .card {
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-
-          .card.can-break {
-            break-inside: auto;
-            page-break-inside: auto;
-          }
-
-          .grid {
+          .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 8px 16px;
           }
 
-          .label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+          .entreprise-info {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .info-label {
+            margin-bottom: 2px;
             color: #64748b;
-            margin-bottom: 6px;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+          }
+
+          .info-value {
+            color: #0f172a;
+            font-size: 11px;
             font-weight: 700;
-          }
-
-          .value {
-            font-size: 16px;
-            font-weight: 600;
-            line-height: 1.5;
+            line-height: 1.3;
             word-break: break-word;
           }
 
-          .small-value {
-            font-size: 14px;
-            line-height: 1.6;
+          .info-value.light {
+            font-weight: 500;
             color: #334155;
-            word-break: break-word;
           }
 
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 2px;
           }
 
           thead {
             display: table-header-group;
+          }
+
+          tbody {
+            display: table-row-group;
           }
 
           tr {
@@ -345,21 +358,19 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           }
 
           th {
+            padding: 7px 7px;
+            border-bottom: 1px solid #dbe4ef;
+            color: #334155;
+            font-size: 9px;
             text-align: left;
-            font-size: 12px;
-            color: #64748b;
-            padding: 12px 10px;
-            border-bottom: 1px solid #e2e8f0;
-            font-weight: 700;
             white-space: nowrap;
           }
 
           td {
-            padding: 14px 10px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
+            padding: 8px 7px;
+            border-bottom: 1px solid #e5edf6;
+            font-size: 10px;
             vertical-align: top;
-            color: #0f172a;
           }
 
           .designation-cell {
@@ -380,17 +391,17 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           }
 
           .strong {
-            font-weight: 700;
+            font-weight: 800;
           }
 
           .total-box {
-            margin-top: 24px;
-            margin-left: auto;
-            width: 380px;
+            width: 300px;
             max-width: 100%;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 20px;
+            margin-top: 10px;
+            margin-left: auto;
+            border: 1px solid #dbe4ef;
+            border-radius: 13px;
+            padding: 12px;
             break-inside: avoid;
             page-break-inside: avoid;
           }
@@ -398,46 +409,52 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           .total-row {
             display: flex;
             justify-content: space-between;
-            gap: 18px;
-            margin-bottom: 10px;
-            font-size: 15px;
+            gap: 12px;
+            margin-bottom: 6px;
+            font-size: 11px;
           }
 
           .total-row span:last-child {
-            font-weight: 700;
-            text-align: right;
+            font-weight: 800;
             white-space: nowrap;
+            text-align: right;
           }
 
           .total-row.final {
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 22px;
-            font-weight: 700;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #dbe4ef;
+            font-size: 16px;
+            font-weight: 900;
+          }
+
+          .conditions-text {
+            color: #334155;
+            font-size: 11px;
+            line-height: 1.4;
           }
 
           .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 24px;
+            gap: 12px;
+            margin-top: 10px;
             break-inside: avoid;
             page-break-inside: avoid;
           }
 
           .signature-box {
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 20px;
-            min-height: 130px;
+            min-height: 72px;
+            border: 1px solid #dbe4ef;
+            border-radius: 13px;
+            padding: 12px;
           }
 
           .footer {
-            margin-top: 28px;
-            font-size: 12px;
-            line-height: 1.6;
+            margin-top: 10px;
             color: #64748b;
+            font-size: 9px;
+            line-height: 1.35;
           }
 
           @media print {
@@ -448,7 +465,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
 
             .page {
               max-width: none;
-              padding: 24mm 18mm;
+              padding: 10mm 12mm;
             }
 
             @page {
@@ -462,20 +479,20 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
       <body>
         <div class="page">
           <div class="topbar">
-            ${blocEntreprise}
+            ${getBlocEntreprise(entreprise)}
 
-            <div class="bloc document-header">
-              <p class="doc-title">Devis</p>
-              <h2 class="doc-number">N° ${echapperHtml(
+            <div class="document-header">
+              <h1 class="doc-title">Devis</h1>
+              <p class="doc-line"><strong>N°</strong> ${echapperHtml(
                 devisSelectionne.id
-              )}</h2>
-              <p class="subtitle"><strong>Date :</strong> ${texteOuDefaut(
+              )}</p>
+              <p class="doc-line"><strong>Date :</strong> ${texteOuDefaut(
                 devisSelectionne.date
               )}</p>
-              <p class="subtitle"><strong>Statut :</strong> ${texteOuDefaut(
+              <p class="doc-line"><strong>Statut :</strong> ${texteOuDefaut(
                 devisSelectionne.statut
               )}</p>
-              <p class="subtitle"><strong>Validité :</strong> ${
+              <p class="doc-line"><strong>Validité :</strong> ${
                 devisSelectionne.validiteJours
               } jours</p>
             </div>
@@ -483,57 +500,50 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
 
           <div class="card">
             <div class="label">Client</div>
-            <div class="value">${texteOuDefaut(devisSelectionne.client)}</div>
+            <div class="main-name">${texteOuDefaut(
+              devisSelectionne.client
+            )}</div>
 
-            <div style="height:14px;"></div>
-
-            <div class="grid">
+            <div class="info-grid">
               <div>
-                <div class="label">Adresse</div>
-                <div class="small-value">${texteOuDefaut(
+                <div class="info-label">Adresse</div>
+                <div class="info-value">${texteOuDefaut(
                   devisSelectionne.adresse,
                   "Adresse non renseignée"
                 )}</div>
-                <div class="small-value">
+                <div class="info-value light">
                   ${texteOuDefaut(
-                    [devisSelectionne.codePostal, devisSelectionne.ville]
-                      .filter(Boolean)
-                      .join(" · "),
+                    codePostalVille(
+                      devisSelectionne.codePostal,
+                      devisSelectionne.ville
+                    ),
                     "Coordonnées non renseignées"
                   )}
                 </div>
               </div>
 
               <div>
-                <div class="label">Contact</div>
-                <div class="small-value">${texteOuDefaut(
+                <div class="info-label">Contact</div>
+                <div class="info-value">${texteOuDefaut(
                   devisSelectionne.email,
                   "Email non renseigné"
                 )}</div>
-                <div class="small-value">${texteOuDefaut(
+                <div class="info-value">${texteOuDefaut(
                   devisSelectionne.telephone,
                   "Téléphone non renseigné"
                 )}</div>
-                <div class="small-value">TVA client : ${texteOuDefaut(
-                  devisSelectionne.tvaClient,
-                  "Non renseignée"
-                )}</div>
               </div>
-            </div>
 
-            <div style="height:14px;"></div>
-
-            <div class="grid">
               <div>
-                <div class="label">Type client</div>
-                <div class="small-value">${texteOuDefaut(
+                <div class="info-label">Type client</div>
+                <div class="info-value light">${texteOuDefaut(
                   devisSelectionne.typeClient
                 )}</div>
               </div>
 
               <div>
-                <div class="label">Chantier lié</div>
-                <div class="small-value">${texteOuDefaut(
+                <div class="info-label">Chantier lié</div>
+                <div class="info-value light">${texteOuDefaut(
                   devisSelectionne.chantierTitre,
                   "Aucun chantier lié"
                 )}</div>
@@ -541,7 +551,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
             </div>
           </div>
 
-          <div class="card can-break">
+          <div class="card prestations-card">
             <div class="label">Prestations</div>
 
             <table>
@@ -554,42 +564,45 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
                   <th class="right-cell">Total</th>
                 </tr>
               </thead>
+
               <tbody>
                 ${lignesHtml}
               </tbody>
             </table>
 
-            <div class="total-box">
-              <div class="total-row">
-                <span>Total HT</span>
-                <span>${formatMontant(totalHt)}</span>
-              </div>
+            <div class="after-table-block">
+              <div class="total-box">
+                <div class="total-row">
+                  <span>Total HT</span>
+                  <span>${formatMontant(totalHt)}</span>
+                </div>
 
-              <div class="total-row">
-                <span>TVA (${devisSelectionne.tvaTaux}%)</span>
-                <span>${formatMontant(montantTva)}</span>
-              </div>
+                <div class="total-row">
+                  <span>TVA (${devisSelectionne.tvaTaux}%)</span>
+                  <span>${formatMontant(montantTva)}</span>
+                </div>
 
-              <div class="total-row final">
-                <span>Total TVAC</span>
-                <span>${formatMontant(totalTvac)}</span>
-              </div>
+                <div class="total-row final">
+                  <span>Total TVAC</span>
+                  <span>${formatMontant(totalTvac)}</span>
+                </div>
 
-              <div class="total-row" style="margin-top:18px;">
-                <span>Acompte (${devisSelectionne.acomptePourcentage}%)</span>
-                <span>${formatMontant(montantAcompte)}</span>
-              </div>
+                <div class="total-row" style="margin-top:10px;">
+                  <span>Acompte (${devisSelectionne.acomptePourcentage}%)</span>
+                  <span>${formatMontant(montantAcompte)}</span>
+                </div>
 
-              <div class="total-row">
-                <span>Solde à la livraison</span>
-                <span>${formatMontant(soldeRestant)}</span>
+                <div class="total-row">
+                  <span>Solde à la livraison</span>
+                  <span>${formatMontant(soldeRestant)}</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="card">
             <div class="label">Conditions</div>
-            <div class="small-value">
+            <div class="conditions-text">
               ${texteMultiligneOuDefaut(devisSelectionne.conditions)}
             </div>
           </div>
@@ -597,14 +610,14 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           <div class="signature-grid">
             <div class="signature-box">
               <div class="label">Pour le client</div>
-              <div class="small-value">
+              <div class="conditions-text">
                 Bon pour accord, date, nom et signature.
               </div>
             </div>
 
             <div class="signature-box">
               <div class="label">Pour l’entreprise</div>
-              <div class="small-value">
+              <div class="conditions-text">
                 ${texteOuDefaut(entreprise.nom, "BatiFlow")}
               </div>
             </div>
