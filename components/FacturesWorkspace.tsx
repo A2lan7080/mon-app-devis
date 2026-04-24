@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
-import MobileFullscreenModal from "./MobileFullScreenModal";
+import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
