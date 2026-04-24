@@ -44,6 +44,9 @@ const creerFormulaireVide = (): ClientFormState => ({
 
 const TYPES_CLIENT: TypeClient[] = ["Particulier", "Professionnel"];
 
+const champFormulaireClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
     const match = client.reference?.match(/CLI-(\d+)/);
@@ -114,7 +117,9 @@ export default function ClientsWorkspace({
       return null;
     }
 
-    return clientsFiltres.find((client) => client.id === clientSelectionneId) ?? null;
+    return (
+      clientsFiltres.find((client) => client.id === clientSelectionneId) ?? null
+    );
   }, [clientsFiltres, clientSelectionneId]);
 
   const totalClients = useMemo(
@@ -362,8 +367,8 @@ export default function ClientsWorkspace({
             </button>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div>
+          <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Nom du client
               </label>
@@ -376,11 +381,11 @@ export default function ClientsWorkspace({
                     nom: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Type
               </label>
@@ -392,7 +397,7 @@ export default function ClientsWorkspace({
                     typeClient: e.target.value as TypeClient,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               >
                 {TYPES_CLIENT.map((type) => (
                   <option key={type} value={type}>
@@ -402,7 +407,7 @@ export default function ClientsWorkspace({
               </select>
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Société
               </label>
@@ -415,11 +420,11 @@ export default function ClientsWorkspace({
                     societe: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 TVA
               </label>
@@ -432,11 +437,11 @@ export default function ClientsWorkspace({
                     tva: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Email
               </label>
@@ -449,11 +454,11 @@ export default function ClientsWorkspace({
                     email: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Téléphone
               </label>
@@ -466,11 +471,11 @@ export default function ClientsWorkspace({
                     telephone: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div className="min-w-0 overflow-hidden md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Adresse
               </label>
@@ -483,11 +488,11 @@ export default function ClientsWorkspace({
                     adresse: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Code postal
               </label>
@@ -500,11 +505,11 @@ export default function ClientsWorkspace({
                     codePostal: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Ville
               </label>
@@ -517,11 +522,11 @@ export default function ClientsWorkspace({
                     ville: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div className="md:col-span-2 lg:max-w-xs">
+            <div className="min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Pays
               </label>
@@ -534,12 +539,12 @@ export default function ClientsWorkspace({
                     pays: e.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 min-w-0 overflow-hidden">
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Notes
             </label>
@@ -552,7 +557,7 @@ export default function ClientsWorkspace({
                 }))
               }
               rows={5}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
           </div>
 
@@ -588,7 +593,7 @@ export default function ClientsWorkspace({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className="text-sm text-slate-500">Fiche client</p>
-                <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+                <h3 className="mt-1 break-words text-xl font-bold sm:text-2xl">
                   {clientSelectionne.nom}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
@@ -653,14 +658,14 @@ export default function ClientsWorkspace({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Société</p>
-                <p className="mt-1 font-semibold">
+                <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.societe || "Non renseignée"}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">TVA</p>
-                <p className="mt-1 font-semibold">
+                <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.tva || "Non renseignée"}
                 </p>
               </div>
@@ -676,7 +681,7 @@ export default function ClientsWorkspace({
 
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Téléphone</p>
-                <p className="mt-1 font-semibold">
+                <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.telephone || "Non renseigné"}
                 </p>
               </div>
@@ -684,7 +689,7 @@ export default function ClientsWorkspace({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Adresse</p>
-              <p className="mt-1 font-semibold">
+              <p className="mt-1 break-words font-semibold">
                 {clientSelectionne.adresse || "Non renseignée"}
               </p>
               <p className="mt-2 text-sm text-slate-600">
@@ -700,7 +705,7 @@ export default function ClientsWorkspace({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Notes</p>
-              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+              <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700">
                 {clientSelectionne.notes || "Aucune note pour ce client."}
               </p>
             </div>
@@ -726,9 +731,9 @@ export default function ClientsWorkspace({
           <p className="mt-1 text-xs text-slate-400">
             {chargement
               ? "Chargement des clients..."
-              : `${clients.length} client${clients.length > 1 ? "s" : ""} chargé${
+              : `${clients.length} client${
                   clients.length > 1 ? "s" : ""
-                }`}
+                } chargé${clients.length > 1 ? "s" : ""}`}
           </p>
         </div>
 
@@ -741,27 +746,83 @@ export default function ClientsWorkspace({
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">Clients actifs</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalClients}</p>
-        </div>
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Clients actifs
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalClients}
+              </p>
+            </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">Professionnels</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalPros}</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">Particuliers</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalParticuliers}
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
+              👥
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Base client exploitable
           </p>
         </div>
 
-        <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
-          <p className="text-xs text-slate-500 sm:text-sm">Archivés</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalClientsArchives}
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Professionnels
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalPros}
+              </p>
+            </div>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
+              🏢
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Entreprises et indépendants
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Particuliers
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalParticuliers}
+              </p>
+            </div>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-lg">
+              🏠
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Clients résidentiels
+          </p>
+        </div>
+
+        <div className="col-span-2 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Archivés
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalClientsArchives}
+              </p>
+            </div>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-lg">
+              📦
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Clients conservés hors liste active
           </p>
         </div>
       </div>
@@ -774,7 +835,7 @@ export default function ClientsWorkspace({
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un client, email, société..."
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
 
             <select
@@ -782,7 +843,7 @@ export default function ClientsWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             >
               <option value="actifs">Clients actifs</option>
               <option value="archives">Clients archivés</option>
@@ -866,7 +927,7 @@ export default function ClientsWorkspace({
         title={titreMobile}
         onClose={fermerFormulaire}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {renderFormulaireOuDetail()}
         </div>
       </MobileFullscreenModal>
@@ -876,7 +937,7 @@ export default function ClientsWorkspace({
         title={titreMobile}
         onClose={fermerDetail}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           {renderFormulaireOuDetail()}
         </div>
       </MobileFullscreenModal>
