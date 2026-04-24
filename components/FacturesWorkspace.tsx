@@ -66,7 +66,7 @@ const creerFormulaireVide = (): FactureFormState => ({
 const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
 const champDateClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-[calc(100vw-4rem)] rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:max-w-full sm:px-4 sm:text-sm";
 
 function genererReferenceFacture(factures: Facture[]) {
   const plusGrandNumero = factures.reduce((max, facture) => {
