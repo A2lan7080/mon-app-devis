@@ -90,6 +90,18 @@ function getStatutClasses(statut: StatutDevis) {
 const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
 
+const champDateClasses =
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+
+const styleDateMobile = {
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  WebkitAppearance: "none",
+  appearance: "none",
+} as const;
+
 const actionPrincipaleMobile =
   "rounded-xl px-3 py-2.5 text-xs font-semibold transition";
 
@@ -598,7 +610,7 @@ export default function DevisDetailPanel({
   }
 
   return (
-    <>
+    <div className="max-w-full overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">Édition devis</p>
@@ -615,8 +627,8 @@ export default function DevisDetailPanel({
         </button>
       </div>
 
-      <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
-        <div className="min-w-0">
+      <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
           </label>
@@ -633,7 +645,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier
           </label>
@@ -650,7 +662,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
           </label>
@@ -663,11 +675,12 @@ export default function DevisDetailPanel({
                 date: e.target.value,
               }))
             }
-            className={champFormulaireClasses}
+            className={champDateClasses}
+            style={styleDateMobile}
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -689,7 +702,7 @@ export default function DevisDetailPanel({
           </select>
         </div>
 
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Adresse
           </label>
@@ -706,7 +719,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Code postal
           </label>
@@ -723,7 +736,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Ville
           </label>
@@ -740,7 +753,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Email
           </label>
@@ -757,7 +770,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Téléphone
           </label>
@@ -774,7 +787,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Type client
           </label>
@@ -793,7 +806,7 @@ export default function DevisDetailPanel({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Société
           </label>
@@ -810,7 +823,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA client
           </label>
@@ -827,7 +840,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -844,7 +857,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte (%)
           </label>
@@ -861,7 +874,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
-        <div className="min-w-0 md:col-span-2 lg:max-w-xs">
+        <div className="min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Validité (jours)
           </label>
@@ -879,7 +892,7 @@ export default function DevisDetailPanel({
         </div>
       </div>
 
-      <div className="mt-4 min-w-0">
+      <div className="mt-4 min-w-0 overflow-hidden">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Conditions
         </label>
@@ -934,7 +947,7 @@ export default function DevisDetailPanel({
               </div>
 
               <div className="grid min-w-0 gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <label className="mb-1.5 block text-xs font-medium text-slate-500">
                     Désignation
                   </label>
@@ -942,14 +955,18 @@ export default function DevisDetailPanel({
                     type="text"
                     value={ligne.designation}
                     onChange={(e) =>
-                      mettreAJourLigneEdition(index, "designation", e.target.value)
+                      mettreAJourLigneEdition(
+                        index,
+                        "designation",
+                        e.target.value
+                      )
                     }
                     className={champFormulaireClasses}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       Qté
                     </label>
@@ -957,13 +974,17 @@ export default function DevisDetailPanel({
                       type="number"
                       value={ligne.quantite}
                       onChange={(e) =>
-                        mettreAJourLigneEdition(index, "quantite", e.target.value)
+                        mettreAJourLigneEdition(
+                          index,
+                          "quantite",
+                          e.target.value
+                        )
                       }
                       className={champFormulaireClasses}
                     />
                   </div>
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       Unité
                     </label>
@@ -971,13 +992,17 @@ export default function DevisDetailPanel({
                       type="text"
                       value={ligne.unite}
                       onChange={(e) =>
-                        mettreAJourLigneEdition(index, "unite", e.target.value)
+                        mettreAJourLigneEdition(
+                          index,
+                          "unite",
+                          e.target.value
+                        )
                       }
                       className={champFormulaireClasses}
                     />
                   </div>
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       PU HT
                     </label>
@@ -985,13 +1010,17 @@ export default function DevisDetailPanel({
                       type="number"
                       value={ligne.prixUnitaire}
                       onChange={(e) =>
-                        mettreAJourLigneEdition(index, "prixUnitaire", e.target.value)
+                        mettreAJourLigneEdition(
+                          index,
+                          "prixUnitaire",
+                          e.target.value
+                        )
                       }
                       className={champFormulaireClasses}
                     />
                   </div>
 
-                  <div className="flex min-w-0 flex-col justify-end">
+                  <div className="flex min-w-0 flex-col justify-end overflow-hidden">
                     <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
                       Total
                       <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">
@@ -1034,7 +1063,7 @@ export default function DevisDetailPanel({
 
           {bibliothequeEditionOuverte && (
             <>
-              <div className="mt-4 w-full">
+              <div className="mt-4 w-full min-w-0 overflow-hidden">
                 <label className="mb-2 block text-xs font-medium text-slate-500">
                   Rechercher une prestation
                 </label>
@@ -1112,6 +1141,6 @@ export default function DevisDetailPanel({
           Annuler
         </button>
       </div>
-    </>
+    </div>
   );
 }
