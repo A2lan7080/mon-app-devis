@@ -65,7 +65,8 @@ function getPageAccent(vue: VuePrincipale) {
     case "admin":
       return {
         dot: "bg-amber-500",
-        subtitle: "Pilote les réglages, la bibliothèque et la valeur business.",
+        subtitle:
+          "Pilote les réglages, la bibliothèque et la valeur business.",
       };
     default:
       return {
@@ -75,7 +76,10 @@ function getPageAccent(vue: VuePrincipale) {
   }
 }
 
-function getActionPrincipale(vue: VuePrincipale, afficherFormulaire: boolean) {
+function getActionPrincipale(
+  vue: VuePrincipale,
+  afficherFormulaire: boolean
+) {
   switch (vue) {
     case "devis":
       return afficherFormulaire ? "Fermer" : "Nouveau devis";
@@ -92,19 +96,29 @@ function getActionPrincipale(vue: VuePrincipale, afficherFormulaire: boolean) {
   }
 }
 
-function LogoBatiflow({ mobile = false }: { mobile?: boolean }) {
+function LogoBatiflow({
+  mobile = false,
+  grand = false,
+}: {
+  mobile?: boolean;
+  grand?: boolean;
+}) {
+  const classes = grand
+    ? "h-20 w-20 rounded-3xl"
+    : mobile
+    ? "h-14 w-14 rounded-2xl"
+    : "h-16 w-16 rounded-2xl";
+
   return (
     <div
-      className={`relative shrink-0 overflow-hidden bg-white ring-1 ring-slate-200 ${
-        mobile ? "h-10 w-10 rounded-xl" : "h-11 w-11 rounded-2xl"
-      }`}
+      className={`relative shrink-0 overflow-hidden bg-white ring-1 ring-slate-200 ${classes}`}
     >
       <Image
         src="/logo-batiflow.png"
         alt="Logo BatiFlow"
         fill
-        className="object-contain p-1"
-        sizes={mobile ? "40px" : "44px"}
+        className="object-contain p-2"
+        sizes={grand ? "80px" : mobile ? "56px" : "64px"}
         priority
       />
     </div>
@@ -343,17 +357,8 @@ export default function AdminShell({
       <div className="flex min-h-screen md:h-screen">
         <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
           <div className="flex h-full min-h-0 flex-col p-6">
-            <div className="shrink-0">
-              <div className="flex items-center gap-3">
-                <LogoBatiflow />
-
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-bold leading-tight">Batiflow</h1>
-                  <p className="mt-0.5 truncate text-xs text-slate-400">
-                    {entrepriseNom || entrepriseId}
-                  </p>
-                </div>
-              </div>
+            <div className="shrink-0 flex justify-center">
+              <LogoBatiflow grand />
             </div>
 
             <div className="mt-8 min-h-0 flex-1 overflow-y-auto pr-1">
@@ -377,17 +382,8 @@ export default function AdminShell({
         <section className="min-w-0 flex-1 p-4 pb-28 md:h-screen md:overflow-y-auto md:p-8 md:pb-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm md:hidden">
-              <div className="flex items-center gap-3">
-                <LogoBatiflow mobile />
-
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-bold leading-tight">
-                    Batiflow
-                  </h1>
-                  <p className="truncate text-xs text-slate-400">
-                    {entrepriseNom || entrepriseId}
-                  </p>
-                </div>
+              <div className="flex justify-center">
+                <LogoBatiflow grand />
               </div>
             </div>
 
@@ -454,17 +450,8 @@ export default function AdminShell({
           <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl">
             <div className="shrink-0 border-b border-slate-100 p-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <LogoBatiflow mobile />
-
-                    <div className="min-w-0">
-                      <h2 className="text-xl font-bold">Batiflow</h2>
-                      <p className="mt-0.5 truncate text-xs text-slate-400">
-                        {entrepriseNom || entrepriseId}
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex-1 flex justify-center">
+                  <LogoBatiflow grand />
                 </div>
 
                 <button
