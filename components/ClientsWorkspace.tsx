@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
@@ -189,6 +189,18 @@ export default function ClientsWorkspace({
     setModeEdition(true);
     setAfficherFormulaire(false);
   };
+
+  useEffect(() => {
+    const handleNouveauClient = () => {
+      ouvrirCreation();
+    };
+
+    window.addEventListener("batiflow:nouveau-client", handleNouveauClient);
+
+    return () => {
+      window.removeEventListener("batiflow:nouveau-client", handleNouveauClient);
+    };
+  }, []);
 
   const enregistrerClient = async () => {
     if (!entrepriseId || !createdByUid) {
@@ -723,7 +735,7 @@ export default function ClientsWorkspace({
 
   return (
     <>
-      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
+      <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
             Gère ta base clients par entreprise.
@@ -736,13 +748,6 @@ export default function ClientsWorkspace({
                 } chargé${clients.length > 1 ? "s" : ""}`}
           </p>
         </div>
-
-        <button
-          onClick={afficherFormulaireClient ? fermerFormulaire : ouvrirCreation}
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
-        >
-          {afficherFormulaireClient ? "Fermer" : "Nouveau client"}
-        </button>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
