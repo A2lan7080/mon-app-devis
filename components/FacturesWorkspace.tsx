@@ -65,8 +65,18 @@ const creerFormulaireVide = (): FactureFormState => ({
 
 const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 const champDateClasses =
-  "block w-full min-w-0 max-w-[calc(100vw-4rem)] rounded-xl border border-slate-200 px-2.5 py-3 text-[13px] outline-none transition focus:border-slate-400 sm:max-w-full sm:px-4 sm:text-sm";
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+
+const styleDateMobile = {
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  WebkitAppearance: "none",
+  appearance: "none",
+} as const;
 
 function genererReferenceFacture(factures: Facture[]) {
   const plusGrandNumero = factures.reduce((max, facture) => {
@@ -148,7 +158,8 @@ export default function FacturesWorkspace({
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
-  const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] = useState(false);
+  const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
+    useState(false);
   const [formulaire, setFormulaire] = useState<FactureFormState>(
     creerFormulaireVide()
   );
@@ -804,7 +815,7 @@ export default function FacturesWorkspace({
     : 0;
 
   const contenuFormulaire = (
-    <>
+    <div className="max-w-full overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
@@ -825,8 +836,8 @@ export default function FacturesWorkspace({
         </button>
       </div>
 
-      <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
-        <div className="min-w-0 md:col-span-2">
+      <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Devis lié
           </label>
@@ -845,7 +856,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
           </label>
@@ -863,7 +874,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier lié
           </label>
@@ -882,7 +893,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0 md:col-span-2">
+        <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Objet
           </label>
@@ -899,7 +910,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date émission
           </label>
@@ -913,10 +924,11 @@ export default function FacturesWorkspace({
               }))
             }
             className={champDateClasses}
+            style={styleDateMobile}
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date échéance
           </label>
@@ -930,10 +942,11 @@ export default function FacturesWorkspace({
               }))
             }
             className={champDateClasses}
+            style={styleDateMobile}
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date paiement
           </label>
@@ -947,10 +960,11 @@ export default function FacturesWorkspace({
               }))
             }
             className={champDateClasses}
+            style={styleDateMobile}
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -972,7 +986,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Montant HT
           </label>
@@ -990,7 +1004,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -1008,7 +1022,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 md:col-span-2 lg:max-w-xs">
+        <div className="min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte déduit
           </label>
@@ -1027,7 +1041,7 @@ export default function FacturesWorkspace({
         </div>
       </div>
 
-      <div className="mt-4 min-w-0">
+      <div className="mt-4 min-w-0 overflow-hidden">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Notes
         </label>
@@ -1065,7 +1079,7 @@ export default function FacturesWorkspace({
           Annuler
         </button>
       </div>
-    </>
+    </div>
   );
 
   const contenuDetailFacture = factureSelectionnee ? (
