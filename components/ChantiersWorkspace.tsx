@@ -792,30 +792,92 @@ export default function ChantiersWorkspace({
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">Chantiers actifs</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalChantiers}
-          </p>
+        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="h-1 bg-orange-500" />
+          <div className="p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                  Chantiers actifs
+                </p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {totalChantiers}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
+                🏗️
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Chantiers non archivés
+            </p>
+          </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">Planifiés</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalPlanifies}
-          </p>
+        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="h-1 bg-blue-500" />
+          <div className="p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                  Planifiés
+                </p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {totalPlanifies}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
+                📅
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              À venir ou préparés
+            </p>
+          </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-xs text-slate-500 sm:text-sm">En cours</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalEnCours}</p>
+        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="h-1 bg-amber-500" />
+          <div className="p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                  En cours
+                </p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {totalEnCours}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-lg">
+                🔧
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Travaux actifs
+            </p>
+          </div>
         </div>
 
-        <div className="col-span-2 rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
-          <p className="text-xs text-slate-500 sm:text-sm">Archivés</p>
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalArchives}
-          </p>
+        <div className="group col-span-2 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md xl:col-span-1">
+          <div className="h-1 bg-slate-400" />
+          <div className="p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                  Archivés
+                </p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {totalArchives}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
+                🗂️
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Historique conservé
+            </p>
+          </div>
         </div>
       </div>
 
