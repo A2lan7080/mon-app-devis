@@ -735,21 +735,6 @@ export default function ClientsWorkspace({
 
   return (
     <>
-      <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
-        <div className="min-w-0">
-          <p className="text-sm text-slate-500">
-            Gère ta base clients par entreprise.
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {chargement
-              ? "Chargement des clients..."
-              : `${clients.length} client${
-                  clients.length > 1 ? "s" : ""
-                } chargé${clients.length > 1 ? "s" : ""}`}
-          </p>
-        </div>
-      </div>
-
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
         <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center justify-between gap-3">
