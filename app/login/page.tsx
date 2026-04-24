@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import {
   sendPasswordResetEmail,
@@ -7,6 +8,25 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
+
+function LogoBatiflow({ grand = false }: { grand?: boolean }) {
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 ${
+        grand ? "h-28 w-28" : "h-20 w-20"
+      }`}
+    >
+      <Image
+        src="/logo-batiflow.png"
+        alt="Logo BatiFlow"
+        fill
+        className="object-contain p-2"
+        sizes={grand ? "112px" : "80px"}
+        priority
+      />
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,7 +72,7 @@ export default function LoginPage() {
       setResetEnCours(true);
       await sendPasswordResetEmail(auth, emailNettoye);
       setMessageSucces(
-        "Un email de réinitialisation du mot de passe vient d’être envoyé."
+        "Un email de réinitialisation du mot de passe vient d’être envoyé. Pense aussi à vérifier les spams."
       );
     } catch {
       setErreur(
@@ -70,17 +90,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.35),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.22),_transparent_32%)]" />
 
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-black text-slate-950">
-                B
-              </div>
-              <div>
-                <p className="text-sm font-semibold">BatiFlow</p>
-                <p className="text-xs text-slate-300">
-                  Gestion simple pour artisans
-                </p>
-              </div>
-            </div>
+            <LogoBatiflow grand />
           </div>
 
           <div className="relative z-10 max-w-xl">
@@ -123,16 +133,8 @@ export default function LoginPage() {
 
         <section className="flex min-h-screen flex-1 items-center justify-center bg-slate-100 px-4 py-8 sm:px-6 lg:px-10">
           <div className="w-full max-w-md">
-            <div className="mb-6 text-center lg:hidden">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-xl font-black text-white shadow-sm">
-                B
-              </div>
-              <h1 className="mt-4 text-2xl font-bold text-slate-900">
-                BatiFlow
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                Devis · Factures · Clients · Chantiers
-              </p>
+            <div className="mb-6 flex justify-center lg:hidden">
+              <LogoBatiflow grand />
             </div>
 
             <div className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">
@@ -141,7 +143,7 @@ export default function LoginPage() {
                   Espace sécurisé
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  Connexion à BatiFlow
+                  Connexion
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   Accède à ton tableau de bord pour gérer ton activité.
@@ -225,7 +227,7 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-6 text-center text-xs text-slate-400">
-              BatiFlow · Version démo privée
+              Version démo privée
             </p>
           </div>
         </section>
