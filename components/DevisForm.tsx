@@ -54,6 +54,9 @@ const STATUTS_CHANTIER: StatutChantier[] = [
   "Suspendu",
 ];
 
+const champFormulaireClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
     const match = client.reference?.match(/CLI-(\d+)/);
@@ -94,6 +97,7 @@ export default function DevisForm({
   const [clientSelectionneId, setClientSelectionneId] = useState("");
   const [chantierSelectionneId, setChantierSelectionneId] = useState("");
   const [recherchePrestation, setRecherchePrestation] = useState("");
+  const [bibliothequeOuverte, setBibliothequeOuverte] = useState(false);
   const [nouveauChantierDateDebut, setNouveauChantierDateDebut] = useState("");
   const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
   const [nouveauChantierStatut, setNouveauChantierStatut] =
@@ -188,6 +192,7 @@ export default function DevisForm({
     setClientSelectionneId("");
     setChantierSelectionneId("");
     setRecherchePrestation("");
+    setBibliothequeOuverte(false);
     setNouveauChantierDateDebut("");
     setNouveauChantierDateFin("");
     setNouveauChantierStatut("À planifier");
@@ -508,15 +513,15 @@ export default function DevisForm({
     <div className="mb-6 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
       <h3 className="text-xl font-semibold sm:text-2xl">Créer un devis</h3>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
+      <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client existant
           </label>
           <select
             value={clientSelectionneId}
             onChange={(e) => handleSelectionClient(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="">Créer un nouveau client depuis ce devis</option>
             {clientsActifs.map((client) => (
@@ -528,14 +533,14 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier existant
           </label>
           <select
             value={chantierSelectionneId}
             onChange={(e) => handleSelectionChantier(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="">Créer un nouveau chantier depuis ce devis</option>
             {chantiersActifs.map((chantier) => (
@@ -547,7 +552,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Titre du chantier
           </label>
@@ -561,7 +566,7 @@ export default function DevisForm({
               }))
             }
             placeholder="Ex. Rénovation cuisine, pose châssis, dressing sur mesure..."
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
           <p className="mt-2 text-xs text-slate-400">
             Si aucun client ni chantier n’est sélectionné, ils pourront être
@@ -572,7 +577,7 @@ export default function DevisForm({
 
         {!chantierSelectionneId && nouveauDevis.chantierTitre.trim() && (
           <>
-            <div>
+            <div className="min-w-0">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Statut du chantier
               </label>
@@ -581,7 +586,7 @@ export default function DevisForm({
                 onChange={(e) =>
                   setNouveauChantierStatut(e.target.value as StatutChantier)
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                className={champFormulaireClasses}
               >
                 {STATUTS_CHANTIER.map((statut) => (
                   <option key={statut} value={statut}>
@@ -591,7 +596,7 @@ export default function DevisForm({
               </select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date début chantier
               </label>
@@ -599,11 +604,11 @@ export default function DevisForm({
                 type="date"
                 value={nouveauChantierDateDebut}
                 onChange={(e) => setNouveauChantierDateDebut(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Date fin chantier
               </label>
@@ -611,13 +616,13 @@ export default function DevisForm({
                 type="date"
                 value={nouveauChantierDateFin}
                 onChange={(e) => setNouveauChantierDateFin(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                className={champFormulaireClasses}
               />
             </div>
           </>
         )}
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Nom du client
           </label>
@@ -630,11 +635,11 @@ export default function DevisForm({
                 client: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Type de client
           </label>
@@ -646,14 +651,14 @@ export default function DevisForm({
                 typeClient: e.target.value as TypeClient,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="Particulier">Particulier</option>
             <option value="Professionnel">Professionnel</option>
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Société
           </label>
@@ -666,11 +671,11 @@ export default function DevisForm({
                 societe: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA client
           </label>
@@ -683,11 +688,11 @@ export default function DevisForm({
                 tvaClient: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
           </label>
@@ -700,11 +705,11 @@ export default function DevisForm({
                 date: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -716,7 +721,7 @@ export default function DevisForm({
                 statut: e.target.value as StatutDevis,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             {STATUTS_DEVIS.map((statut) => (
               <option key={statut} value={statut}>
@@ -726,7 +731,7 @@ export default function DevisForm({
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -739,11 +744,11 @@ export default function DevisForm({
                 tvaTaux: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Adresse
           </label>
@@ -756,11 +761,11 @@ export default function DevisForm({
                 adresse: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Code postal
           </label>
@@ -773,11 +778,11 @@ export default function DevisForm({
                 codePostal: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Ville / commune
           </label>
@@ -790,11 +795,11 @@ export default function DevisForm({
                 ville: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Email
           </label>
@@ -807,11 +812,11 @@ export default function DevisForm({
                 email: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Téléphone
           </label>
@@ -824,11 +829,11 @@ export default function DevisForm({
                 telephone: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte (%)
           </label>
@@ -841,11 +846,11 @@ export default function DevisForm({
                 acomptePourcentage: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Validité (jours)
           </label>
@@ -858,12 +863,12 @@ export default function DevisForm({
                 validiteJours: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 min-w-0">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Conditions
         </label>
@@ -876,7 +881,7 @@ export default function DevisForm({
             }))
           }
           rows={4}
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+          className={champFormulaireClasses}
         />
       </div>
 
@@ -885,7 +890,7 @@ export default function DevisForm({
           <div>
             <h4 className="text-lg font-semibold">Prestations du devis</h4>
             <p className="mt-1 text-sm text-slate-500">
-              Ajoute des lignes manuellement ou depuis la bibliothèque en bas.
+              Ajoute des lignes manuellement ou depuis la bibliothèque.
             </p>
           </div>
 
@@ -920,8 +925,8 @@ export default function DevisForm({
                 )}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="xl:col-span-1">
+              <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0 xl:col-span-1">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Désignation
                   </label>
@@ -932,11 +937,11 @@ export default function DevisForm({
                     onChange={(e) =>
                       mettreAJourLigne(index, "designation", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Quantité
                   </label>
@@ -947,11 +952,11 @@ export default function DevisForm({
                     onChange={(e) =>
                       mettreAJourLigne(index, "quantite", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Unité
                   </label>
@@ -960,7 +965,7 @@ export default function DevisForm({
                     onChange={(e) =>
                       mettreAJourLigne(index, "unite", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                    className={champFormulaireClasses}
                   >
                     {UNITES_PREDEFINIES.map((unite) => (
                       <option key={unite} value={unite}>
@@ -970,7 +975,7 @@ export default function DevisForm({
                   </select>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     Prix unitaire HT
                   </label>
@@ -981,7 +986,7 @@ export default function DevisForm({
                     onChange={(e) =>
                       mettreAJourLigne(index, "prixUnitaire", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
+                    className={champFormulaireClasses}
                   />
                 </div>
               </div>
@@ -1000,71 +1005,84 @@ export default function DevisForm({
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h5 className="text-base font-semibold text-slate-900">
                 Bibliothèque de prestations
               </h5>
               <p className="mt-1 text-sm text-slate-500">
-                Sélectionne rapidement une prestation enregistrée pour l’ajouter
-                au devis.
+                {prestationsActives.length} prestation
+                {prestationsActives.length > 1 ? "s" : ""} disponible
+                {prestationsActives.length > 1 ? "s" : ""}.
               </p>
             </div>
 
-            <div className="w-full lg:max-w-sm">
-              <label className="mb-2 block text-xs font-medium text-slate-500">
-                Rechercher une prestation
-              </label>
-              <input
-                type="search"
-                value={recherchePrestation}
-                onChange={(e) => setRecherchePrestation(e.target.value)}
-                placeholder="Ex. porte, pose, m², forfait..."
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setBibliothequeOuverte((prev) => !prev)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            >
+              {bibliothequeOuverte
+                ? "Masquer la bibliothèque"
+                : "Afficher la bibliothèque"}
+            </button>
           </div>
 
-          {prestationsActives.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              Aucune prestation n’est encore enregistrée dans la bibliothèque.
-            </div>
-          ) : prestationsFiltrees.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              Aucune prestation ne correspond à cette recherche.
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {prestationsFiltrees.map((prestation) => (
-                <div
-                  key={prestation.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {prestation.designation}
-                    </p>
+          {bibliothequeOuverte && (
+            <>
+              <div className="mt-4 w-full">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Rechercher une prestation
+                </label>
+                <input
+                  type="search"
+                  value={recherchePrestation}
+                  onChange={(e) => setRecherchePrestation(e.target.value)}
+                  placeholder="Ex. porte, pose, m², forfait..."
+                  className={champFormulaireClasses}
+                />
+              </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                      <span className="rounded-full bg-white px-3 py-1 font-medium">
-                        {formatMontant(prestation.prixUnitaire)} HT
-                      </span>
-                      <span className="rounded-full bg-white px-3 py-1 font-medium">
-                        {prestation.unite}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => ajouterPrestationDansLignes(prestation.id)}
-                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
-                  >
-                    Ajouter au devis
-                  </button>
+              {prestationsActives.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Aucune prestation n’est encore enregistrée dans la
+                  bibliothèque.
                 </div>
-              ))}
-            </div>
+              ) : prestationsFiltrees.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Aucune prestation ne correspond à cette recherche.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {prestationsFiltrees.map((prestation) => (
+                    <div
+                      key={prestation.id}
+                      className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {prestation.designation}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatMontant(prestation.prixUnitaire)} HT ·{" "}
+                          {prestation.unite}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          ajouterPrestationDansLignes(prestation.id)
+                        }
+                        className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 sm:w-auto"
+                      >
+                        Ajouter
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
