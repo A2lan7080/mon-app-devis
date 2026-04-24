@@ -89,6 +89,23 @@ function getPageAccent(vue: VuePrincipale) {
   }
 }
 
+function getActionPrincipale(vue: VuePrincipale, afficherFormulaire: boolean) {
+  switch (vue) {
+    case "devis":
+      return afficherFormulaire ? "Fermer" : "Nouveau devis";
+    case "clients":
+      return "Nouveau client";
+    case "chantiers":
+      return "Nouveau chantier";
+    case "factures":
+      return "Nouvelle facture";
+    case "admin":
+      return "";
+    default:
+      return "";
+  }
+}
+
 export default function AdminShell({
   vueAffichee,
   displayName,
@@ -121,6 +138,7 @@ export default function AdminShell({
       : "Admin";
 
   const accentPage = getPageAccent(vueAffichee);
+  const actionPrincipale = getActionPrincipale(vueAffichee, afficherFormulaire);
 
   useEffect(() => {
     if (!menuMobileOuvert) return;
@@ -156,6 +174,27 @@ export default function AdminShell({
   const ouvrirVueAdminMobile = () => {
     setMenuMobileOuvert(false);
     onOuvrirVueAdmin();
+  };
+
+  const handleActionPrincipale = () => {
+    if (vueAffichee === "devis") {
+      onToggleFormulaireDevis();
+      return;
+    }
+
+    if (vueAffichee === "clients") {
+      window.dispatchEvent(new CustomEvent("batiflow:nouveau-client"));
+      return;
+    }
+
+    if (vueAffichee === "chantiers") {
+      window.dispatchEvent(new CustomEvent("batiflow:nouveau-chantier"));
+      return;
+    }
+
+    if (vueAffichee === "factures") {
+      window.dispatchEvent(new CustomEvent("batiflow:nouvelle-facture"));
+    }
   };
 
   const navDesktop: NavItem[] = [
@@ -357,16 +396,16 @@ export default function AdminShell({
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                    {vueAffichee === "devis" && (
+                  {actionPrincipale && (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                       <button
-                        onClick={onToggleFormulaireDevis}
+                        onClick={handleActionPrincipale}
                         className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
                       >
-                        {afficherFormulaire ? "Fermer" : "Nouveau devis"}
+                        {actionPrincipale}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </header>
