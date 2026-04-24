@@ -1,6 +1,7 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import {
   calculerMontantTva,
@@ -8,6 +9,7 @@ import {
   calculerTotalTvac,
   formatMontant,
 } from "../lib/devis-helpers";
+import type { PrestationEdition } from "../hooks/useDevisActions";
 import type { Devis, NouvelleLigneState, StatutDevis } from "../types/devis";
 
 type DevisBusiness = Devis & {
@@ -46,10 +48,13 @@ type Props = {
   editForm: EditFormState;
   setEditForm: Dispatch<SetStateAction<EditFormState>>;
   editLignes: NouvelleLigneState[];
+  entrepriseId?: string;
+  createdByUid?: string;
   setModeEdition: Dispatch<SetStateAction<boolean>>;
   ouvrirEdition: () => void;
   annulerEdition: () => void;
   ajouterLigneEdition: () => void;
+  ajouterPrestationEdition: (prestation: PrestationEdition) => void;
   supprimerLigneEdition: (index: number) => void;
   mettreAJourLigneEdition: (
     index: number,
@@ -88,9 +93,12 @@ export default function DevisDetailPanel({
   editForm,
   setEditForm,
   editLignes,
+  entrepriseId,
+  createdByUid,
   ouvrirEdition,
   annulerEdition,
   ajouterLigneEdition,
+  ajouterPrestationEdition,
   supprimerLigneEdition,
   mettreAJourLigneEdition,
   enregistrerEdition,
@@ -103,6 +111,38 @@ export default function DevisDetailPanel({
   envoiEnCours,
   handleChangerStatut,
 }: Props) {
+  const [recherchePrestation, setRecherchePrestation] = useState("");
+
+  const { prestations } = useEntreprisePrestations({
+    authChargee: true,
+    userId: createdByUid ?? null,
+    entrepriseIdCourante: entrepriseId ?? null,
+    estAdmin: true,
+  });
+
+  const prestationsActives = useMemo(
+    () => prestations.filter((prestation) => !prestation.archive),
+    [prestations]
+  );
+
+  const prestationsFiltrees = useMemo(() => {
+    const recherche = recherchePrestation.trim().toLowerCase();
+
+    if (!recherche) return prestationsActives;
+
+    return prestationsActives.filter((prestation) => {
+      const designation = prestation.designation?.toLowerCase() ?? "";
+      const unite = prestation.unite?.toLowerCase() ?? "";
+      const prix = String(prestation.prixUnitaire ?? "").toLowerCase();
+
+      return (
+        designation.includes(recherche) ||
+        unite.includes(recherche) ||
+        prix.includes(recherche)
+      );
+    });
+  }, [prestationsActives, recherchePrestation]);
+
   if (!devisSelectionne) {
     return (
       <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
@@ -848,6 +888,80 @@ export default function DevisDetailPanel({
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h5 className="text-base font-semibold text-slate-900">
+                Bibliothèque de prestations
+              </h5>
+              <p className="mt-1 text-sm text-slate-500">
+                Ajoute une prestation enregistrée dans ce devis.
+              </p>
+            </div>
+
+            <div className="w-full lg:max-w-sm">
+              <label className="mb-2 block text-xs font-medium text-slate-500">
+                Rechercher une prestation
+              </label>
+              <input
+                type="search"
+                value={recherchePrestation}
+                onChange={(e) => setRecherchePrestation(e.target.value)}
+                placeholder="Ex. porte, pose, m², forfait..."
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              />
+            </div>
+          </div>
+
+          {prestationsActives.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              Aucune prestation n’est encore enregistrée dans la bibliothèque.
+            </div>
+          ) : prestationsFiltrees.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              Aucune prestation ne correspond à cette recherche.
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {prestationsFiltrees.map((prestation) => (
+                <div
+                  key={prestation.id}
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {prestation.designation}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                      <span className="rounded-full bg-white px-3 py-1 font-medium">
+                        {formatMontant(Number(prestation.prixUnitaire) || 0)} HT
+                      </span>
+                      <span className="rounded-full bg-white px-3 py-1 font-medium">
+                        {prestation.unite}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      ajouterPrestationEdition({
+                        designation: prestation.designation,
+                        unite: prestation.unite,
+                        prixUnitaire: prestation.prixUnitaire,
+                      })
+                    }
+                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                  >
+                    Ajouter au devis
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

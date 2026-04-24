@@ -9,7 +9,11 @@ import DevisList from "./DevisList";
 import DevisSearch from "./DevisSearch";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
-import type { DevisBusiness, EditFormState } from "../hooks/useDevisActions";
+import type {
+  DevisBusiness,
+  EditFormState,
+  PrestationEdition,
+} from "../hooks/useDevisActions";
 import type { NouvelleLigneState, StatutDevis } from "../types/devis";
 
 type FiltreStatut = "Tous" | StatutDevis;
@@ -42,6 +46,7 @@ type Props = {
   ouvrirEdition: () => void;
   annulerEdition: () => void;
   ajouterLigneEdition: () => void;
+  ajouterPrestationEdition: (prestation: PrestationEdition) => void;
   supprimerLigneEdition: (index: number) => void;
   mettreAJourLigneEdition: (
     index: number,
@@ -88,6 +93,7 @@ export default function DevisWorkspace({
   ouvrirEdition,
   annulerEdition,
   ajouterLigneEdition,
+  ajouterPrestationEdition,
   supprimerLigneEdition,
   mettreAJourLigneEdition,
   enregistrerEdition,
@@ -158,10 +164,13 @@ export default function DevisWorkspace({
               editForm={editForm}
               setEditForm={setEditForm}
               editLignes={editLignes}
+              entrepriseId={entrepriseId}
+              createdByUid={createdByUid}
               setModeEdition={setModeEdition}
               ouvrirEdition={ouvrirEdition}
               annulerEdition={annulerEdition}
               ajouterLigneEdition={ajouterLigneEdition}
+              ajouterPrestationEdition={ajouterPrestationEdition}
               supprimerLigneEdition={supprimerLigneEdition}
               mettreAJourLigneEdition={mettreAJourLigneEdition}
               enregistrerEdition={enregistrerEdition}
@@ -203,10 +212,13 @@ export default function DevisWorkspace({
           editForm={editForm}
           setEditForm={setEditForm}
           editLignes={editLignes}
+          entrepriseId={entrepriseId}
+          createdByUid={createdByUid}
           setModeEdition={setModeEdition}
           ouvrirEdition={ouvrirEdition}
           annulerEdition={annulerEdition}
           ajouterLigneEdition={ajouterLigneEdition}
+          ajouterPrestationEdition={ajouterPrestationEdition}
           supprimerLigneEdition={supprimerLigneEdition}
           mettreAJourLigneEdition={mettreAJourLigneEdition}
           enregistrerEdition={enregistrerEdition}

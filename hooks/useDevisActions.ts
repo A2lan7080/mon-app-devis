@@ -48,6 +48,12 @@ export type EditFormState = {
   conditions: string;
 };
 
+export type PrestationEdition = {
+  designation: string;
+  unite: string;
+  prixUnitaire: number | string;
+};
+
 type UseDevisActionsParams = {
   devis: DevisBusiness[];
   devisSelectionne: DevisBusiness | null;
@@ -170,6 +176,18 @@ export function useDevisActions({
         quantite: "1",
         unite: "forfait",
         prixUnitaire: "0",
+      },
+    ]);
+  };
+
+  const ajouterPrestationEdition = (prestation: PrestationEdition) => {
+    setEditLignes((prev) => [
+      ...prev,
+      {
+        designation: prestation.designation,
+        quantite: "1",
+        unite: prestation.unite,
+        prixUnitaire: String(prestation.prixUnitaire),
       },
     ]);
   };
@@ -380,6 +398,7 @@ export function useDevisActions({
     ouvrirEdition,
     annulerEdition,
     ajouterLigneEdition,
+    ajouterPrestationEdition,
     supprimerLigneEdition,
     mettreAJourLigneEdition,
     enregistrerEdition,

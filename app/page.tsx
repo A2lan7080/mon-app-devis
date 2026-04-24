@@ -101,6 +101,7 @@ export default function Home() {
     ouvrirEdition,
     annulerEdition,
     ajouterLigneEdition,
+    ajouterPrestationEdition,
     supprimerLigneEdition,
     mettreAJourLigneEdition,
     enregistrerEdition,
@@ -300,6 +301,7 @@ export default function Home() {
           ouvrirEdition={ouvrirEdition}
           annulerEdition={annulerEdition}
           ajouterLigneEdition={ajouterLigneEdition}
+          ajouterPrestationEdition={ajouterPrestationEdition}
           supprimerLigneEdition={supprimerLigneEdition}
           mettreAJourLigneEdition={mettreAJourLigneEdition}
           enregistrerEdition={() => enregistrerEdition(getDevisDocRef)}
