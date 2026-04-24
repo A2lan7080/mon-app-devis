@@ -65,6 +65,8 @@ const creerFormulaireVide = (): FactureFormState => ({
 
 const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+const champDateClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
 
 function genererReferenceFacture(factures: Facture[]) {
   const plusGrandNumero = factures.reduce((max, facture) => {
@@ -910,7 +912,7 @@ export default function FacturesWorkspace({
                 dateEmission: e.target.value,
               }))
             }
-            className={champFormulaireClasses}
+            className={champDateClasses}
           />
         </div>
 
@@ -927,7 +929,7 @@ export default function FacturesWorkspace({
                 dateEcheance: e.target.value,
               }))
             }
-            className={champFormulaireClasses}
+            className={champDateClasses}
           />
         </div>
 
@@ -944,7 +946,7 @@ export default function FacturesWorkspace({
                 datePaiement: e.target.value,
               }))
             }
-            className={champFormulaireClasses}
+            className={champDateClasses}
           />
         </div>
 
