@@ -365,6 +365,57 @@ export default function DevisDetailPanel({
               Supprimer
             </button>
           </div>
+
+          <div className="hidden rounded-2xl bg-slate-50 p-4 md:block">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Changer le statut
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Mets rapidement à jour l’état commercial du devis.
+                </p>
+              </div>
+
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                  devisSelectionne.statut
+                )}`}
+              >
+                {devisSelectionne.statut}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <button
+                onClick={() => handleChangerStatut("Brouillon")}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Mettre en brouillon
+              </button>
+
+              <button
+                onClick={() => handleChangerStatut("Envoyé")}
+                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
+              >
+                Marquer envoyé
+              </button>
+
+              <button
+                onClick={() => handleChangerStatut("Accepté")}
+                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
+              >
+                Marquer accepté
+              </button>
+
+              <button
+                onClick={() => handleChangerStatut("Refusé")}
+                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100"
+              >
+                Marquer refusé
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 space-y-4">
@@ -572,37 +623,6 @@ export default function DevisDetailPanel({
             <p className="mt-2 whitespace-pre-line wrap-break-word text-sm leading-6 text-slate-700">
               {devisSelectionne.conditions || "Aucune condition particulière."}
             </p>
-          </div>
-
-          <div className="hidden rounded-2xl bg-slate-50 p-4 md:block">
-            <p className="text-sm text-slate-500">Actions rapides</p>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <button
-                onClick={() => handleChangerStatut("Brouillon")}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-              >
-                Mettre en brouillon
-              </button>
-              <button
-                onClick={() => handleChangerStatut("Envoyé")}
-                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
-              >
-                Marquer envoyé
-              </button>
-              <button
-                onClick={() => handleChangerStatut("Accepté")}
-                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
-              >
-                Marquer accepté
-              </button>
-              <button
-                onClick={() => handleChangerStatut("Refusé")}
-                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100"
-              >
-                Marquer refusé
-              </button>
-            </div>
           </div>
         </div>
       </>
