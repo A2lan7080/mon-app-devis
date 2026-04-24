@@ -907,97 +907,101 @@ export default function DevisDetailPanel({
           </button>
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {editLignes.map((ligne, index) => (
             <div
               key={`edition-${index}`}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
+              className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4"
             >
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-semibold text-slate-700">
-                  Ligne {index + 1}
-                </p>
-                <button
-                  onClick={() => supprimerLigneEdition(index)}
-                  className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100 sm:w-auto"
-                >
-                  Supprimer
-                </button>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Ligne {index + 1}
+                  </p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+                    {ligne.designation || "Nouvelle prestation"}
+                  </p>
+                </div>
+
+                {editLignes.length > 1 && (
+                  <button
+                    onClick={() => supprimerLigneEdition(index)}
+                    className="shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                  >
+                    Supprimer
+                  </button>
+                )}
               </div>
 
-              <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="min-w-0 xl:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+              <div className="grid min-w-0 gap-3">
+                <div className="min-w-0">
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500">
                     Désignation
                   </label>
                   <input
                     type="text"
                     value={ligne.designation}
                     onChange={(e) =>
-                      mettreAJourLigneEdition(
-                        index,
-                        "designation",
-                        e.target.value
-                      )
+                      mettreAJourLigneEdition(index, "designation", e.target.value)
                     }
                     className={champFormulaireClasses}
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Quantité
-                  </label>
-                  <input
-                    type="number"
-                    value={ligne.quantite}
-                    onChange={(e) =>
-                      mettreAJourLigneEdition(index, "quantite", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="min-w-0">
+                    <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                      Qté
+                    </label>
+                    <input
+                      type="number"
+                      value={ligne.quantite}
+                      onChange={(e) =>
+                        mettreAJourLigneEdition(index, "quantite", e.target.value)
+                      }
+                      className={champFormulaireClasses}
+                    />
+                  </div>
 
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Unité
-                  </label>
-                  <input
-                    type="text"
-                    value={ligne.unite}
-                    onChange={(e) =>
-                      mettreAJourLigneEdition(index, "unite", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
+                  <div className="min-w-0">
+                    <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                      Unité
+                    </label>
+                    <input
+                      type="text"
+                      value={ligne.unite}
+                      onChange={(e) =>
+                        mettreAJourLigneEdition(index, "unite", e.target.value)
+                      }
+                      className={champFormulaireClasses}
+                    />
+                  </div>
 
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Prix unitaire
-                  </label>
-                  <input
-                    type="number"
-                    value={ligne.prixUnitaire}
-                    onChange={(e) =>
-                      mettreAJourLigneEdition(
-                        index,
-                        "prixUnitaire",
-                        e.target.value
-                      )
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
+                  <div className="min-w-0">
+                    <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                      PU HT
+                    </label>
+                    <input
+                      type="number"
+                      value={ligne.prixUnitaire}
+                      onChange={(e) =>
+                        mettreAJourLigneEdition(index, "prixUnitaire", e.target.value)
+                      }
+                      className={champFormulaireClasses}
+                    />
+                  </div>
 
-                <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 xl:col-span-4">
-                  Total ligne :{" "}
-                  <span className="font-semibold text-slate-900">
-                    {formatMontant(
-                      (Number(ligne.quantite) || 0) *
-                        (Number(ligne.prixUnitaire) || 0)
-                    )}
-                  </span>
+                  <div className="flex min-w-0 flex-col justify-end">
+                    <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+                      Total
+                      <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">
+                        {formatMontant(
+                          (Number(ligne.quantite) || 0) *
+                            (Number(ligne.prixUnitaire) || 0)
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
