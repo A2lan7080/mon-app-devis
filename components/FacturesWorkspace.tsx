@@ -493,6 +493,11 @@ export default function FacturesWorkspace({
     resetFormulaire();
   };
 
+  const fermerDetailMobile = () => {
+    setModeEdition(false);
+    setFactureSelectionneeId(null);
+  };
+
   const ouvrirEdition = () => {
     if (!factureSelectionnee) return;
 
@@ -1056,6 +1061,182 @@ export default function FacturesWorkspace({
     </>
   );
 
+  const contenuDetailFacture = factureSelectionnee ? (
+    <>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500">Fiche facture</p>
+            <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+              {factureSelectionnee.reference}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {factureSelectionnee.objet}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                factureSelectionnee.statut
+              )}`}
+            >
+              {factureSelectionnee.statut}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <button
+            onClick={ouvrirEdition}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Modifier
+          </button>
+
+          <button
+            onClick={handleExporterPdf}
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            Export PDF
+          </button>
+
+          <button
+            onClick={handleEnvoyerParMail}
+            disabled={envoiEnCours}
+            className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+          </button>
+
+          {!factureSelectionnee.archive ? (
+            <button
+              onClick={archiverFacture}
+              className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+            >
+              Archiver
+            </button>
+          ) : (
+            <button
+              onClick={restaurerFacture}
+              className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+            >
+              Restaurer
+            </button>
+          )}
+
+          <button
+            onClick={supprimerFacture}
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">Client</p>
+          <p className="mt-1 text-lg font-semibold">
+            {factureSelectionnee.clientNom}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {factureSelectionnee.clientAdresse || "Adresse non renseignée"}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {[
+              factureSelectionnee.clientCodePostal,
+              factureSelectionnee.clientVille,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Coordonnées non renseignées"}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {factureSelectionnee.clientEmail || "Email non renseigné"}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {factureSelectionnee.clientTelephone || "Téléphone non renseigné"}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {factureSelectionnee.chantierTitre || "Sans chantier lié"}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            Devis : {factureSelectionnee.devisReference || "Aucun devis lié"}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Émission</p>
+            <p className="mt-1 font-semibold">
+              {factureSelectionnee.dateEmission || "Non renseignée"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Échéance</p>
+            <p className="mt-1 font-semibold">
+              {factureSelectionnee.dateEcheance || "Non renseignée"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
+            <p className="text-sm text-slate-500">Paiement</p>
+            <p className="mt-1 font-semibold">
+              {factureSelectionnee.datePaiement || "Non renseignée"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Montant HT</p>
+            <p className="mt-1 break-words font-semibold">
+              {formatMontant(factureSelectionnee.montantHt)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">
+              TVA ({factureSelectionnee.tvaTaux}%)
+            </p>
+            <p className="mt-1 break-words font-semibold">
+              {formatMontant(totalTvaSelectionnee)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Total TTC</p>
+            <p className="mt-1 break-words font-semibold">
+              {formatMontant(totalTtcSelectionnee)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Net à payer</p>
+            <p className="mt-1 break-words font-semibold">
+              {formatMontant(netAPayerSelectionnee)}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">Acompte déduit</p>
+          <p className="mt-1 font-semibold">
+            {formatMontant(factureSelectionnee.acompteDeduit)}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">Notes</p>
+          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+            {factureSelectionnee.notes || "Aucune note pour cette facture."}
+          </p>
+        </div>
+      </div>
+    </>
+  ) : null;
+
   return (
     <>
       <MobileFullscreenModal
@@ -1064,6 +1245,18 @@ export default function FacturesWorkspace({
         onClose={fermerFormulaire}
       >
         {contenuFormulaire}
+      </MobileFullscreenModal>
+
+      <MobileFullscreenModal
+        open={!afficherFormulaireFacture && factureSelectionnee !== null}
+        title={
+          factureSelectionnee
+            ? `Facture ${factureSelectionnee.reference}`
+            : "Détail facture"
+        }
+        onClose={fermerDetailMobile}
+      >
+        {contenuDetailFacture}
       </MobileFullscreenModal>
 
       <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
@@ -1225,191 +1418,15 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:block md:p-6">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des factures...
             </div>
           ) : afficherFormulaireFacture ? (
-            <div className="hidden md:block">{contenuFormulaire}</div>
+            contenuFormulaire
           ) : factureSelectionnee ? (
-            <>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-500">Fiche facture</p>
-                    <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                      {factureSelectionnee.reference}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {factureSelectionnee.objet}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                        factureSelectionnee.statut
-                      )}`}
-                    >
-                      {factureSelectionnee.statut}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  <button
-                    onClick={ouvrirEdition}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    Modifier
-                  </button>
-
-                  <button
-                    onClick={handleExporterPdf}
-                    className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                  >
-                    Export PDF
-                  </button>
-
-                  <button
-                    onClick={handleEnvoyerParMail}
-                    disabled={envoiEnCours}
-                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
-                  </button>
-
-                  {!factureSelectionnee.archive ? (
-                    <button
-                      onClick={archiverFacture}
-                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
-                    >
-                      Archiver
-                    </button>
-                  ) : (
-                    <button
-                      onClick={restaurerFacture}
-                      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                    >
-                      Restaurer
-                    </button>
-                  )}
-
-                  <button
-                    onClick={supprimerFacture}
-                    className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Client</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {factureSelectionnee.clientNom}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {factureSelectionnee.clientAdresse ||
-                      "Adresse non renseignée"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {[
-                      factureSelectionnee.clientCodePostal,
-                      factureSelectionnee.clientVille,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "Coordonnées non renseignées"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {factureSelectionnee.clientEmail || "Email non renseigné"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {factureSelectionnee.clientTelephone ||
-                      "Téléphone non renseigné"}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {factureSelectionnee.chantierTitre || "Sans chantier lié"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Devis :{" "}
-                    {factureSelectionnee.devisReference || "Aucun devis lié"}
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Émission</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.dateEmission || "Non renseignée"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Échéance</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.dateEcheance || "Non renseignée"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
-                    <p className="text-sm text-slate-500">Paiement</p>
-                    <p className="mt-1 font-semibold">
-                      {factureSelectionnee.datePaiement || "Non renseignée"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Montant HT</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(factureSelectionnee.montantHt)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">
-                      TVA ({factureSelectionnee.tvaTaux}%)
-                    </p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(totalTvaSelectionnee)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Total TTC</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(totalTtcSelectionnee)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Net à payer</p>
-                    <p className="mt-1 break-words font-semibold">
-                      {formatMontant(netAPayerSelectionnee)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Acompte déduit</p>
-                  <p className="mt-1 font-semibold">
-                    {formatMontant(factureSelectionnee.acompteDeduit)}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Notes</p>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
-                    {factureSelectionnee.notes ||
-                      "Aucune note pour cette facture."}
-                  </p>
-                </div>
-              </div>
-            </>
+            contenuDetailFacture
           ) : (
             <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
               Sélectionne une facture pour afficher le détail.

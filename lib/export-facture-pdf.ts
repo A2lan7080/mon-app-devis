@@ -192,80 +192,80 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
             background: #ffffff;
             color: #0f172a;
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
           }
 
           .page {
             max-width: 960px;
             margin: 0 auto;
-            padding: 28px 34px;
+            padding: 22px 30px;
           }
 
           .topbar {
             display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(250px, 0.9fr);
-            gap: 22px;
+            grid-template-columns: minmax(0, 1.08fr) minmax(245px, 0.92fr);
+            gap: 18px;
             align-items: start;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
           }
 
           .document-header {
             text-align: right;
-            padding-top: 4px;
+            padding-top: 3px;
           }
 
           .doc-title {
-            margin: 0 0 8px;
-            font-size: 28px;
+            margin: 0 0 7px;
+            font-size: 27px;
             line-height: 1.1;
             font-weight: 800;
           }
 
           .doc-line {
-            margin: 0 0 3px;
+            margin: 0 0 2px;
             color: #334155;
-            font-size: 12px;
-            line-height: 1.35;
+            font-size: 11px;
+            line-height: 1.3;
           }
 
           .card {
             border: 1px solid #dbe4ef;
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 14px;
+            border-radius: 13px;
+            padding: 13px 15px;
+            margin-bottom: 10px;
             break-inside: avoid;
             page-break-inside: avoid;
           }
 
           .card-compact {
-            padding: 14px 16px;
+            padding: 12px 14px;
           }
 
           .label {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: #64748b;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.08em;
             text-transform: uppercase;
           }
 
           .main-name {
-            margin-bottom: 10px;
-            font-size: 22px;
-            line-height: 1.15;
+            margin-bottom: 8px;
+            font-size: 20px;
+            line-height: 1.12;
             font-weight: 800;
             word-break: break-word;
           }
 
           .logo-wrapper {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
           }
 
           .logo-entreprise {
             display: block;
-            max-width: 230px;
-            max-height: 86px;
+            max-width: 205px;
+            max-height: 72px;
             width: auto;
             height: auto;
             object-fit: contain;
@@ -274,7 +274,7 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
           .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px 18px;
+            gap: 8px 16px;
           }
 
           .entreprise-info {
@@ -282,9 +282,9 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
           }
 
           .info-label {
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: #64748b;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -292,9 +292,9 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
 
           .info-value {
             color: #0f172a;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
-            line-height: 1.35;
+            line-height: 1.3;
             word-break: break-word;
           }
 
@@ -304,13 +304,13 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
           }
 
           .total-box {
-            width: 320px;
+            width: 300px;
             max-width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
             margin-left: auto;
             border: 1px solid #dbe4ef;
-            border-radius: 14px;
-            padding: 14px;
+            border-radius: 13px;
+            padding: 12px;
             break-inside: avoid;
             page-break-inside: avoid;
           }
@@ -319,8 +319,8 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 7px;
-            font-size: 12px;
+            margin-bottom: 6px;
+            font-size: 11px;
           }
 
           .total-row span:last-child {
@@ -330,40 +330,40 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
           }
 
           .total-row.final {
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px solid #dbe4ef;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 900;
           }
 
           .conditions-text {
             color: #334155;
-            font-size: 12px;
-            line-height: 1.45;
+            font-size: 11px;
+            line-height: 1.4;
           }
 
           .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-top: 14px;
+            gap: 12px;
+            margin-top: 10px;
             break-inside: avoid;
             page-break-inside: avoid;
           }
 
           .signature-box {
-            min-height: 92px;
+            min-height: 72px;
             border: 1px solid #dbe4ef;
-            border-radius: 14px;
-            padding: 14px;
+            border-radius: 13px;
+            padding: 12px;
           }
 
           .footer {
-            margin-top: 14px;
+            margin-top: 10px;
             color: #64748b;
-            font-size: 10px;
-            line-height: 1.4;
+            font-size: 9px;
+            line-height: 1.35;
           }
 
           @media print {
@@ -374,7 +374,7 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
 
             .page {
               max-width: none;
-              padding: 14mm 14mm;
+              padding: 10mm 12mm;
             }
 
             @page {
