@@ -846,7 +846,7 @@ export default function ChantiersWorkspace({
           </p>
         </div>
 
-        <div className="col-span-2 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 sm:text-sm">
