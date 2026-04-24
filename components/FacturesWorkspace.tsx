@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
@@ -38,16 +38,6 @@ type FactureFormState = {
   tvaTaux: string;
   acompteDeduit: string;
   notes: string;
-};
-
-type KpiCardProps = {
-  titre: string;
-  valeur: string | number;
-  icone: string;
-  accentClasses: string;
-  badgeClasses: string;
-  description: string;
-  large?: boolean;
 };
 
 const STATUTS_FACTURE: StatutFacture[] = [
@@ -151,48 +141,6 @@ function getStatutClasses(statut: StatutFacture) {
     default:
       return "bg-slate-100 text-slate-700";
   }
-}
-
-function KpiCard({
-  titre,
-  valeur,
-  icone,
-  accentClasses,
-  badgeClasses,
-  description,
-  large = false,
-}: KpiCardProps) {
-  return (
-    <div
-      className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${
-        large ? "col-span-2 xl:col-span-1" : ""
-      }`}
-    >
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${accentClasses}`}
-      />
-
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-500 sm:text-sm">
-            {titre}
-          </p>
-
-          <p className="mt-2 break-words text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            {valeur}
-          </p>
-        </div>
-
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg ${badgeClasses}`}
-        >
-          {icone}
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs text-slate-500 sm:text-sm">{description}</p>
-    </div>
-  );
 }
 
 export default function FacturesWorkspace({
@@ -589,6 +537,21 @@ export default function FacturesWorkspace({
     setModeEdition(true);
     setAfficherFormulaire(false);
   };
+
+  useEffect(() => {
+    const handleNouvelleFacture = () => {
+      ouvrirCreation();
+    };
+
+    window.addEventListener("batiflow:nouvelle-facture", handleNouvelleFacture);
+
+    return () => {
+      window.removeEventListener(
+        "batiflow:nouvelle-facture",
+        handleNouvelleFacture
+      );
+    };
+  }, []);
 
   const enregistrerFacture = async () => {
     if (!entrepriseId || !createdByUid) {
@@ -1390,65 +1353,86 @@ export default function FacturesWorkspace({
         {contenuDetailFacture}
       </MobileFullscreenModal>
 
-      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm text-slate-500">
-            Gère les factures de ton entreprise.
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {chargement
-              ? "Chargement des factures..."
-              : `${factures.length} facture${
-                  factures.length > 1 ? "s" : ""
-                } chargée${factures.length > 1 ? "s" : ""}`}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Factures actives
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalFactures}
+              </p>
+            </div>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-lg">
+              🧾
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Factures en suivi
           </p>
         </div>
 
-        <button
-          onClick={afficherFormulaireFacture ? fermerFormulaire : ouvrirCreation}
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
-        >
-          {afficherFormulaireFacture ? "Fermer" : "Nouvelle facture"}
-        </button>
-      </div>
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Payées
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalPayees}
+              </p>
+            </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <KpiCard
-          titre="Factures actives"
-          valeur={totalFactures}
-          icone="🧾"
-          accentClasses="bg-violet-500"
-          badgeClasses="bg-violet-50 text-violet-700"
-          description="Factures visibles et non archivées."
-        />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
+              ✅
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Paiements confirmés
+          </p>
+        </div>
 
-        <KpiCard
-          titre="Payées"
-          valeur={totalPayees}
-          icone="✅"
-          accentClasses="bg-emerald-500"
-          badgeClasses="bg-emerald-50 text-emerald-700"
-          description="Factures réglées par les clients."
-        />
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                En retard
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalRetard}
+              </p>
+            </div>
 
-        <KpiCard
-          titre="En retard"
-          valeur={totalRetard}
-          icone="⏰"
-          accentClasses="bg-red-500"
-          badgeClasses="bg-red-50 text-red-700"
-          description="Factures à surveiller ou relancer."
-        />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-lg">
+              ⚠️
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            À surveiller ou relancer
+          </p>
+        </div>
 
-        <KpiCard
-          titre="Net facturé"
-          valeur={formatMontant(totalNetFacture)}
-          icone="💶"
-          accentClasses="bg-blue-500"
-          badgeClasses="bg-blue-50 text-blue-700"
-          description="Montant net à payer hors factures annulées."
-          large
-        />
+        <div className="col-span-2 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Net facturé
+              </p>
+              <p className="mt-2 break-words text-2xl font-bold sm:text-3xl">
+                {formatMontant(totalNetFacture)}
+              </p>
+            </div>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
+              💶
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Montant total hors factures annulées
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
