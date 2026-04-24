@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import MobileFullscreenModal from "./MobileFullScreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
+import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { db } from "../lib/firebase";
 import {
@@ -13,7 +15,6 @@ import {
   calculerTotalTvac,
   formatMontant,
 } from "../lib/devis-helpers";
-import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import type { Facture, StatutFacture } from "../types/factures";
 
 type FiltreArchivage = "actifs" | "archives" | "tous";
@@ -180,6 +181,229 @@ export default function FacturesWorkspace({
     authChargee: true,
   });
 
+  const clientsActifs = useMemo(
+    () => clients.filter((client) => !client.archive),
+    [clients]
+  );
+
+  const chantiersActifs = useMemo(
+    () => chantiers.filter((chantier) => !chantier.archive),
+    [chantiers]
+  );
+
+  const devisActifs = useMemo(
+    () => devis.filter((item) => !item.archive),
+    [devis]
+  );
+
+  const trouverClientDuDevis = (devisId: string) => {
+    const devisSelectionne = devisActifs.find((item) => item.id === devisId);
+    if (!devisSelectionne) return null;
+
+    return (
+      clientsActifs.find((client) => {
+        const memeNom = client.nom === devisSelectionne.client;
+        const memeEmail =
+          devisSelectionne.email &&
+          client.email &&
+          client.email === devisSelectionne.email;
+
+        return memeNom || memeEmail;
+      }) ?? null
+    );
+  };
+
+  const devisCorrespondAuClient = (devisId: string, clientId: string) => {
+    const client = clientsActifs.find((item) => item.id === clientId);
+    const devisSelectionne = devisActifs.find((item) => item.id === devisId);
+
+    if (!client || !devisSelectionne) return false;
+
+    const memeNom = devisSelectionne.client === client.nom;
+    const memeEmail =
+      devisSelectionne.email &&
+      client.email &&
+      devisSelectionne.email === client.email;
+
+    return Boolean(memeNom || memeEmail);
+  };
+
+  const chantiersDisponibles = useMemo(() => {
+    if (!formulaire.clientId) return chantiersActifs;
+
+    return chantiersActifs.filter(
+      (chantier) => chantier.clientId === formulaire.clientId
+    );
+  }, [chantiersActifs, formulaire.clientId]);
+
+  const devisDisponibles = useMemo(() => {
+    if (formulaire.chantierId) {
+      return devisActifs.filter(
+        (item) => item.chantierId === formulaire.chantierId
+      );
+    }
+
+    if (formulaire.clientId) {
+      return devisActifs.filter((item) =>
+        devisCorrespondAuClient(item.id, formulaire.clientId)
+      );
+    }
+
+    return devisActifs;
+  }, [devisActifs, formulaire.chantierId, formulaire.clientId]);
+
+  const appliquerDevisAuFormulaire = (
+    devisId: string,
+    options?: { forcerObjet?: boolean }
+  ) => {
+    const devisSelectionne =
+      devisActifs.find((item) => item.id === devisId) ?? null;
+
+    if (!devisSelectionne) {
+      setFormulaire((prev) => ({
+        ...prev,
+        devisId: "",
+      }));
+      return;
+    }
+
+    const clientAssocie = trouverClientDuDevis(devisSelectionne.id);
+
+    const chantierAssocie =
+      devisSelectionne.chantierId
+        ? chantiersActifs.find(
+            (chantier) => chantier.id === devisSelectionne.chantierId
+          ) ?? null
+        : null;
+
+    const acompte = arrondirMontant(
+      calculerTotalTvac(devisSelectionne) *
+        ((devisSelectionne.acomptePourcentage ?? 0) / 100)
+    );
+
+    setFormulaire((prev) => ({
+      ...prev,
+      devisId: devisSelectionne.id,
+      objet:
+        options?.forcerObjet || !prev.objet.trim()
+          ? `Facture - ${devisSelectionne.id}`
+          : prev.objet,
+      clientId: clientAssocie?.id ?? prev.clientId,
+      chantierId: chantierAssocie?.id ?? devisSelectionne.chantierId ?? "",
+      montantHt: String(arrondirMontant(calculerTotalHt(devisSelectionne))),
+      tvaTaux: String(devisSelectionne.tvaTaux),
+      acompteDeduit: String(acompte),
+      notes: devisSelectionne.conditions ?? prev.notes,
+    }));
+  };
+
+  const handleSelectionClient = (clientId: string) => {
+    if (!clientId) {
+      setFormulaire((prev) => ({
+        ...prev,
+        clientId: "",
+        chantierId: "",
+        devisId: "",
+      }));
+      return;
+    }
+
+    const chantiersDuClient = chantiersActifs.filter(
+      (chantier) => chantier.clientId === clientId
+    );
+
+    const devisDuClient = devisActifs.filter((item) =>
+      devisCorrespondAuClient(item.id, clientId)
+    );
+
+    const chantierUnique =
+      chantiersDuClient.length === 1 ? chantiersDuClient[0] : null;
+
+    const devisCompatibles = chantierUnique
+      ? devisDuClient.filter((item) => item.chantierId === chantierUnique.id)
+      : devisDuClient;
+
+    const devisUnique =
+      devisCompatibles.length === 1 ? devisCompatibles[0] : null;
+
+    setFormulaire((prev) => ({
+      ...prev,
+      clientId,
+      chantierId: chantierUnique?.id ?? "",
+      devisId: devisUnique?.id ?? "",
+      objet:
+        devisUnique && !prev.objet.trim()
+          ? `Facture - ${devisUnique.id}`
+          : prev.objet,
+      montantHt: devisUnique
+        ? String(arrondirMontant(calculerTotalHt(devisUnique)))
+        : prev.montantHt,
+      tvaTaux: devisUnique ? String(devisUnique.tvaTaux) : prev.tvaTaux,
+      acompteDeduit: devisUnique
+        ? String(
+            arrondirMontant(
+              calculerTotalTvac(devisUnique) *
+                ((devisUnique.acomptePourcentage ?? 0) / 100)
+            )
+          )
+        : prev.acompteDeduit,
+      notes: devisUnique?.conditions ?? prev.notes,
+    }));
+  };
+
+  const handleSelectionDevis = (devisId: string) => {
+    appliquerDevisAuFormulaire(devisId, { forcerObjet: true });
+  };
+
+  const handleSelectionChantier = (chantierId: string) => {
+    const chantier =
+      chantiersActifs.find((item) => item.id === chantierId) ?? null;
+
+    if (!chantier) {
+      setFormulaire((prev) => ({
+        ...prev,
+        chantierId: "",
+        devisId: "",
+      }));
+      return;
+    }
+
+    const devisDuChantier = devisActifs
+      .filter((item) => item.chantierId === chantier.id)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+
+    const devisAssocie = devisDuChantier[0] ?? null;
+
+    if (devisAssocie) {
+      const acompte = arrondirMontant(
+        calculerTotalTvac(devisAssocie) *
+          ((devisAssocie.acomptePourcentage ?? 0) / 100)
+      );
+
+      setFormulaire((prev) => ({
+        ...prev,
+        chantierId: chantier.id,
+        clientId: chantier.clientId ?? prev.clientId,
+        devisId: devisAssocie.id,
+        objet: `Facture - ${devisAssocie.id}`,
+        montantHt: String(arrondirMontant(calculerTotalHt(devisAssocie))),
+        tvaTaux: String(devisAssocie.tvaTaux),
+        acompteDeduit: String(acompte),
+        notes: devisAssocie.conditions ?? prev.notes,
+      }));
+
+      return;
+    }
+
+    setFormulaire((prev) => ({
+      ...prev,
+      chantierId: chantier.id,
+      clientId: chantier.clientId ?? prev.clientId,
+      devisId: "",
+      objet: prev.objet.trim() ? prev.objet : `Facture - ${chantier.titre}`,
+    }));
+  };
+
   const facturesFiltrees = useMemo(() => {
     const valeur = recherche.trim().toLowerCase();
 
@@ -213,10 +437,7 @@ export default function FacturesWorkspace({
 
   const factureSelectionnee = useMemo(() => {
     if (facturesFiltrees.length === 0) return null;
-
-    if (!factureSelectionneeId) {
-      return null;
-    }
+    if (!factureSelectionneeId) return null;
 
     return (
       facturesFiltrees.find(
@@ -292,92 +513,6 @@ export default function FacturesWorkspace({
     setAfficherFormulaire(false);
   };
 
-  const handleSelectionDevis = (devisId: string) => {
-    const devisSelectionne =
-      devis.find((item) => item.id === devisId) ?? null;
-
-    if (!devisSelectionne) {
-      setFormulaire((prev) => ({
-        ...prev,
-        devisId: "",
-      }));
-      return;
-    }
-
-    const clientAssocie =
-      clients.find((client) => {
-        const memeNom = client.nom === devisSelectionne.client;
-        const memeEmail =
-          devisSelectionne.email &&
-          client.email &&
-          client.email === devisSelectionne.email;
-        return memeNom || memeEmail;
-      }) ?? null;
-
-    const acompte = arrondirMontant(
-      calculerTotalTvac(devisSelectionne) *
-        ((devisSelectionne.acomptePourcentage ?? 0) / 100)
-    );
-
-    setFormulaire((prev) => ({
-      ...prev,
-      devisId,
-      objet: `Facture - ${devisSelectionne.id}`,
-      clientId: clientAssocie?.id ?? prev.clientId,
-      chantierId: devisSelectionne.chantierId ?? "",
-      montantHt: String(arrondirMontant(calculerTotalHt(devisSelectionne))),
-      tvaTaux: String(devisSelectionne.tvaTaux),
-      acompteDeduit: String(acompte),
-      notes: devisSelectionne.conditions ?? prev.notes,
-    }));
-  };
-
-  const handleSelectionChantier = (chantierId: string) => {
-    const chantier =
-      chantiers.find((item) => item.id === chantierId && !item.archive) ?? null;
-
-    if (!chantier) {
-      setFormulaire((prev) => ({
-        ...prev,
-        chantierId: "",
-      }));
-      return;
-    }
-
-    const clientAssocie =
-      clients.find((client) => client.id === chantier.clientId) ?? null;
-
-    const devisDuChantier = devis
-      .filter((item) => item.chantierId === chantier.id && !item.archive)
-      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-
-    const devisAssocie = devisDuChantier[0] ?? null;
-
-    const acompte = devisAssocie
-      ? arrondirMontant(
-          calculerTotalTvac(devisAssocie) *
-            ((devisAssocie.acomptePourcentage ?? 0) / 100)
-        )
-      : null;
-
-    setFormulaire((prev) => ({
-      ...prev,
-      chantierId: chantier.id,
-      clientId: clientAssocie?.id ?? prev.clientId,
-      devisId: devisAssocie?.id ?? "",
-      objet: devisAssocie
-        ? `Facture - ${devisAssocie.id}`
-        : `Facture - ${chantier.titre}`,
-      montantHt: devisAssocie
-        ? String(arrondirMontant(calculerTotalHt(devisAssocie)))
-        : prev.montantHt,
-      tvaTaux: devisAssocie ? String(devisAssocie.tvaTaux) : prev.tvaTaux,
-      acompteDeduit:
-        acompte !== null ? String(acompte) : prev.acompteDeduit,
-      notes: devisAssocie?.conditions ?? prev.notes,
-    }));
-  };
-
   const enregistrerFacture = async () => {
     if (!entrepriseId || !createdByUid) {
       alert("Impossible d’identifier l’entreprise ou l’utilisateur.");
@@ -400,7 +535,8 @@ export default function FacturesWorkspace({
     }
 
     const clientAssocie =
-      clients.find((client) => client.id === formulaire.clientId) ?? null;
+      clientsActifs.find((client) => client.id === formulaire.clientId) ??
+      null;
 
     if (!clientAssocie) {
       alert("Le client sélectionné est introuvable.");
@@ -408,17 +544,18 @@ export default function FacturesWorkspace({
     }
 
     const chantierAssocie =
-      chantiers.find((chantier) => chantier.id === formulaire.chantierId) ??
+      chantiersActifs.find((chantier) => chantier.id === formulaire.chantierId) ??
       null;
 
     const devisAssocie =
-      devis.find((item) => item.id === formulaire.devisId) ?? null;
+      devisActifs.find((item) => item.id === formulaire.devisId) ?? null;
 
     const chantierAssocieFinal =
       chantierAssocie ??
       (devisAssocie?.chantierId
-        ? chantiers.find((chantier) => chantier.id === devisAssocie.chantierId) ??
-          null
+        ? chantiersActifs.find(
+            (chantier) => chantier.id === devisAssocie.chantierId
+          ) ?? null
         : null);
 
     const montantHt = arrondirMontant(convertirNombre(formulaire.montantHt));
@@ -465,6 +602,7 @@ export default function FacturesWorkspace({
         });
 
         setModeEdition(false);
+        setAfficherFormulaire(false);
         resetFormulaire();
         return;
       }
@@ -651,8 +789,281 @@ export default function FacturesWorkspace({
     ? calculerNetAPayer(factureSelectionnee)
     : 0;
 
+  const contenuFormulaire = (
+    <>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm text-slate-500">
+            {modeEdition ? "Édition facture" : "Nouvelle facture"}
+          </p>
+          <h3 className="mt-1 text-xl font-bold sm:text-2xl">
+            {modeEdition && factureSelectionnee
+              ? factureSelectionnee.reference
+              : "Créer une facture"}
+          </h3>
+        </div>
+
+        <button
+          onClick={fermerFormulaire}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+        >
+          Fermer
+        </button>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Devis lié
+          </label>
+          <select
+            value={formulaire.devisId}
+            onChange={(e) => handleSelectionDevis(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">Aucun devis lié</option>
+            {devisDisponibles.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.id} — {item.client}
+                {item.chantierTitre ? ` — ${item.chantierTitre}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Client
+          </label>
+          <select
+            value={formulaire.clientId}
+            onChange={(e) => handleSelectionClient(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">Sélectionner un client</option>
+            {clientsActifs.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Chantier lié
+          </label>
+          <select
+            value={formulaire.chantierId}
+            onChange={(e) => handleSelectionChantier(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">Aucun chantier lié</option>
+            {chantiersDisponibles.map((chantier) => (
+              <option key={chantier.id} value={chantier.id}>
+                {chantier.titre}
+                {chantier.clientNom ? ` — ${chantier.clientNom}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Objet
+          </label>
+          <input
+            type="text"
+            value={formulaire.objet}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                objet: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Date émission
+          </label>
+          <input
+            type="date"
+            value={formulaire.dateEmission}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                dateEmission: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Date échéance
+          </label>
+          <input
+            type="date"
+            value={formulaire.dateEcheance}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                dateEcheance: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Date paiement
+          </label>
+          <input
+            type="date"
+            value={formulaire.datePaiement}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                datePaiement: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Statut
+          </label>
+          <select
+            value={formulaire.statut}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                statut: e.target.value as StatutFacture,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          >
+            {STATUTS_FACTURE.map((statut) => (
+              <option key={statut} value={statut}>
+                {statut}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Montant HT
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formulaire.montantHt}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                montantHt: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            TVA (%)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formulaire.tvaTaux}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                tvaTaux: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+
+        <div className="md:col-span-2 lg:max-w-xs">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Acompte déduit
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formulaire.acompteDeduit}
+            onChange={(e) =>
+              setFormulaire((prev) => ({
+                ...prev,
+                acompteDeduit: e.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Notes
+        </label>
+        <textarea
+          value={formulaire.notes}
+          onChange={(e) =>
+            setFormulaire((prev) => ({
+              ...prev,
+              notes: e.target.value,
+            }))
+          }
+          rows={5}
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+        />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          onClick={enregistrerFacture}
+          disabled={sauvegardeEnCours}
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        >
+          {sauvegardeEnCours
+            ? "Enregistrement..."
+            : modeEdition
+            ? "Enregistrer les modifications"
+            : "Créer la facture"}
+        </button>
+
+        <button
+          onClick={fermerFormulaire}
+          disabled={sauvegardeEnCours}
+          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        >
+          Annuler
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
+      <MobileFullscreenModal
+        open={afficherFormulaireFacture}
+        title={modeEdition ? "Modifier la facture" : "Nouvelle facture"}
+        onClose={fermerFormulaire}
+      >
+        {contenuFormulaire}
+      </MobileFullscreenModal>
+
       <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
@@ -661,9 +1072,9 @@ export default function FacturesWorkspace({
           <p className="mt-1 text-xs text-slate-400">
             {chargement
               ? "Chargement des factures..."
-              : `${factures.length} facture${factures.length > 1 ? "s" : ""} chargée${
+              : `${factures.length} facture${
                   factures.length > 1 ? "s" : ""
-                }`}
+                } chargée${factures.length > 1 ? "s" : ""}`}
           </p>
         </div>
 
@@ -820,275 +1231,7 @@ export default function FacturesWorkspace({
               Chargement des factures...
             </div>
           ) : afficherFormulaireFacture ? (
-            <>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-500">
-                    {modeEdition ? "Édition facture" : "Nouvelle facture"}
-                  </p>
-                  <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                    {modeEdition && factureSelectionnee
-                      ? factureSelectionnee.reference
-                      : "Créer une facture"}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={fermerFormulaire}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
-                >
-                  Fermer
-                </button>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Devis lié
-                  </label>
-                  <select
-                    value={formulaire.devisId}
-                    onChange={(e) => handleSelectionDevis(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Aucun devis lié</option>
-                    {devis.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.id} — {item.client}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Client
-                  </label>
-                  <select
-                    value={formulaire.clientId}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        clientId: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Sélectionner un client</option>
-                    {clients
-                      .filter((client) => !client.archive)
-                      .map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.nom}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Chantier lié
-                  </label>
-                  <select
-                    value={formulaire.chantierId}
-                    onChange={(e) => handleSelectionChantier(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    <option value="">Aucun chantier lié</option>
-                    {chantiers
-                      .filter((chantier) => !chantier.archive)
-                      .map((chantier) => (
-                        <option key={chantier.id} value={chantier.id}>
-                          {chantier.titre}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Objet
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaire.objet}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        objet: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date émission
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.dateEmission}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        dateEmission: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date échéance
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.dateEcheance}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        dateEcheance: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date paiement
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaire.datePaiement}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        datePaiement: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Statut
-                  </label>
-                  <select
-                    value={formulaire.statut}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        statut: e.target.value as StatutFacture,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  >
-                    {STATUTS_FACTURE.map((statut) => (
-                      <option key={statut} value={statut}>
-                        {statut}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Montant HT
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formulaire.montantHt}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        montantHt: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    TVA (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formulaire.tvaTaux}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        tvaTaux: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-
-                <div className="md:col-span-2 lg:max-w-xs">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Acompte déduit
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formulaire.acompteDeduit}
-                    onChange={(e) =>
-                      setFormulaire((prev) => ({
-                        ...prev,
-                        acompteDeduit: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Notes
-                </label>
-                <textarea
-                  value={formulaire.notes}
-                  onChange={(e) =>
-                    setFormulaire((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
-                  rows={5}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                />
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={enregistrerFacture}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  {sauvegardeEnCours
-                    ? "Enregistrement..."
-                    : modeEdition
-                    ? "Enregistrer les modifications"
-                    : "Créer la facture"}
-                </button>
-
-                <button
-                  onClick={fermerFormulaire}
-                  disabled={sauvegardeEnCours}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  Annuler
-                </button>
-              </div>
-            </>
+            <div className="hidden md:block">{contenuFormulaire}</div>
           ) : factureSelectionnee ? (
             <>
               <div className="flex flex-col gap-4">
@@ -1169,10 +1312,14 @@ export default function FacturesWorkspace({
                     {factureSelectionnee.clientNom}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    {factureSelectionnee.clientAdresse || "Adresse non renseignée"}
+                    {factureSelectionnee.clientAdresse ||
+                      "Adresse non renseignée"}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {[factureSelectionnee.clientCodePostal, factureSelectionnee.clientVille]
+                    {[
+                      factureSelectionnee.clientCodePostal,
+                      factureSelectionnee.clientVille,
+                    ]
                       .filter(Boolean)
                       .join(" · ") || "Coordonnées non renseignées"}
                   </p>
@@ -1187,7 +1334,8 @@ export default function FacturesWorkspace({
                     {factureSelectionnee.chantierTitre || "Sans chantier lié"}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    Devis : {factureSelectionnee.devisReference || "Aucun devis lié"}
+                    Devis :{" "}
+                    {factureSelectionnee.devisReference || "Aucun devis lié"}
                   </p>
                 </div>
 
