@@ -63,6 +63,9 @@ const creerFormulaireVide = (): FactureFormState => ({
   notes: "",
 });
 
+const champFormulaireClasses =
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+
 function genererReferenceFacture(factures: Facture[]) {
   const plusGrandNumero = factures.reduce((max, facture) => {
     const match = facture.reference?.match(/FA-(\d+)/);
@@ -269,12 +272,11 @@ export default function FacturesWorkspace({
 
     const clientAssocie = trouverClientDuDevis(devisSelectionne.id);
 
-    const chantierAssocie =
-      devisSelectionne.chantierId
-        ? chantiersActifs.find(
-            (chantier) => chantier.id === devisSelectionne.chantierId
-          ) ?? null
-        : null;
+    const chantierAssocie = devisSelectionne.chantierId
+      ? chantiersActifs.find(
+          (chantier) => chantier.id === devisSelectionne.chantierId
+        ) ?? null
+      : null;
 
     const acompte = arrondirMontant(
       calculerTotalTvac(devisSelectionne) *
@@ -811,15 +813,15 @@ export default function FacturesWorkspace({
         </button>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
+      <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Devis lié
           </label>
           <select
             value={formulaire.devisId}
             onChange={(e) => handleSelectionDevis(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="">Aucun devis lié</option>
             {devisDisponibles.map((item) => (
@@ -831,14 +833,14 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
           </label>
           <select
             value={formulaire.clientId}
             onChange={(e) => handleSelectionClient(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="">Sélectionner un client</option>
             {clientsActifs.map((client) => (
@@ -849,14 +851,14 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier lié
           </label>
           <select
             value={formulaire.chantierId}
             onChange={(e) => handleSelectionChantier(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             <option value="">Aucun chantier lié</option>
             {chantiersDisponibles.map((chantier) => (
@@ -868,7 +870,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Objet
           </label>
@@ -881,11 +883,11 @@ export default function FacturesWorkspace({
                 objet: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date émission
           </label>
@@ -898,11 +900,11 @@ export default function FacturesWorkspace({
                 dateEmission: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date échéance
           </label>
@@ -915,11 +917,11 @@ export default function FacturesWorkspace({
                 dateEcheance: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date paiement
           </label>
@@ -932,11 +934,11 @@ export default function FacturesWorkspace({
                 datePaiement: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -948,7 +950,7 @@ export default function FacturesWorkspace({
                 statut: e.target.value as StatutFacture,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           >
             {STATUTS_FACTURE.map((statut) => (
               <option key={statut} value={statut}>
@@ -958,7 +960,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Montant HT
           </label>
@@ -972,11 +974,11 @@ export default function FacturesWorkspace({
                 montantHt: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
@@ -990,11 +992,11 @@ export default function FacturesWorkspace({
                 tvaTaux: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
 
-        <div className="md:col-span-2 lg:max-w-xs">
+        <div className="min-w-0 md:col-span-2 lg:max-w-xs">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte déduit
           </label>
@@ -1008,12 +1010,12 @@ export default function FacturesWorkspace({
                 acompteDeduit: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            className={champFormulaireClasses}
           />
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 min-w-0">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Notes
         </label>
@@ -1026,7 +1028,7 @@ export default function FacturesWorkspace({
             }))
           }
           rows={5}
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+          className={champFormulaireClasses}
         />
       </div>
 
@@ -1120,13 +1122,13 @@ export default function FacturesWorkspace({
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher une facture, client, chantier..."
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             />
 
             <select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value as FiltreStatut)}
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             >
               <option value="Tous">Tous les statuts</option>
               {STATUTS_FACTURE.map((statut) => (
@@ -1141,7 +1143,7 @@ export default function FacturesWorkspace({
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className="block w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+              className={champFormulaireClasses}
             >
               <option value="actifs">Factures actives</option>
               <option value="archives">Factures archivées</option>
@@ -1149,7 +1151,7 @@ export default function FacturesWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-3 overflow-hidden">
+          <div className="mt-4 space-y-2 overflow-hidden sm:mt-6 sm:space-y-3">
             {facturesFiltrees.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                 Aucune facture trouvée.
@@ -1163,60 +1165,58 @@ export default function FacturesWorkspace({
                     setModeEdition(false);
                     setAfficherFormulaire(false);
                   }}
-                  className={`block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition ${
+                  className={`block w-full min-w-0 overflow-hidden rounded-xl border p-3 text-left transition sm:rounded-2xl sm:p-4 ${
                     factureSelectionnee?.id === facture.id
                       ? "border-slate-900 bg-slate-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex min-w-0 flex-col gap-3">
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm text-slate-500">
+                        <p className="text-xs text-slate-500 sm:text-sm">
                           {facture.reference}
                         </p>
-                        <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        <h3 className="mt-0.5 truncate text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base">
                           {facture.objet}
                         </h3>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-0.5 truncate text-xs text-slate-500 sm:mt-1 sm:text-sm">
                           {facture.clientNom}
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-2">
+                      <div className="flex shrink-0 flex-col items-end gap-1 sm:gap-2">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:text-xs ${getStatutClasses(
                             facture.statut
                           )}`}
                         >
                           {facture.statut}
                         </span>
 
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            facture.archive
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {facture.archive ? "Archivée" : "Active"}
-                        </span>
+                        {facture.archive && (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800 sm:px-3 sm:text-xs">
+                            Archivée
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
-                      <p className="text-sm text-slate-600">
+                    <div className="grid gap-1 rounded-xl bg-slate-50 p-2 sm:gap-2 sm:p-3">
+                      <p className="truncate text-xs text-slate-600 sm:text-sm">
                         {facture.chantierTitre || "Sans chantier associé"}
                       </p>
-                      <p className="text-sm text-slate-600">
+                      <p className="truncate text-xs text-slate-600 sm:text-sm">
                         Devis : {facture.devisReference || "Aucun devis lié"}
                       </p>
-                      <p className="text-sm text-slate-600">
-                        Émission : {facture.dateEmission || "Non renseignée"}
-                      </p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {formatMontant(calculerNetAPayer(facture))}
-                      </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500 sm:text-sm">
+                          {facture.dateEmission || "Sans date"}
+                        </p>
+                        <p className="shrink-0 text-sm font-semibold text-slate-900">
+                          {formatMontant(calculerNetAPayer(facture))}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </button>
