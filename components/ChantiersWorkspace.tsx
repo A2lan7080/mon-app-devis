@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
@@ -239,6 +239,24 @@ export default function ChantiersWorkspace({
     setModeEdition(true);
     setAfficherFormulaire(false);
   };
+
+  useEffect(() => {
+    const handleNouveauChantier = () => {
+      ouvrirCreation();
+    };
+
+    window.addEventListener(
+      "batiflow:nouveau-chantier",
+      handleNouveauChantier
+    );
+
+    return () => {
+      window.removeEventListener(
+        "batiflow:nouveau-chantier",
+        handleNouveauChantier
+      );
+    };
+  }, []);
 
   const handleSelectionClient = (clientId: string) => {
     const clientAssocie =
@@ -767,117 +785,85 @@ export default function ChantiersWorkspace({
 
   return (
     <>
-      <div className="mb-4 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm text-slate-500">
-            Gère les chantiers de ton entreprise.
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {chargement
-              ? "Chargement des chantiers..."
-              : `${chantiers.length} chantier${
-                  chantiers.length > 1 ? "s" : ""
-                } chargé${chantiers.length > 1 ? "s" : ""}`}
-          </p>
-        </div>
-
-        <button
-          onClick={
-            afficherFormulaireChantier ? fermerFormulaire : ouvrirCreation
-          }
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 md:w-auto"
-        >
-          {afficherFormulaireChantier ? "Fermer" : "Nouveau chantier"}
-        </button>
-      </div>
-
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
-          <div className="h-1 bg-orange-500" />
-          <div className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                  Chantiers actifs
-                </p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  {totalChantiers}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
-                🏗️
-              </div>
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Chantiers actifs
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalChantiers}
+              </p>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
-              Chantiers non archivés
-            </p>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
+              🏗️
+            </div>
           </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Chantiers actuellement suivis
+          </p>
         </div>
 
-        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
-          <div className="h-1 bg-blue-500" />
-          <div className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                  Planifiés
-                </p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  {totalPlanifies}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
-                📅
-              </div>
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Planifiés
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalPlanifies}
+              </p>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
-              À venir ou préparés
-            </p>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
+              📅
+            </div>
           </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Chantiers prêts à démarrer
+          </p>
         </div>
 
-        <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md">
-          <div className="h-1 bg-amber-500" />
-          <div className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                  En cours
-                </p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  {totalEnCours}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-lg">
-                🔧
-              </div>
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                En cours
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalEnCours}
+              </p>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
-              Travaux actifs
-            </p>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-lg">
+              🔨
+            </div>
           </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Travaux actuellement actifs
+          </p>
         </div>
 
-        <div className="group col-span-2 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md xl:col-span-1">
-          <div className="h-1 bg-slate-400" />
-          <div className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                  Archivés
-                </p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  {totalArchives}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
-                🗂️
-              </div>
+        <div className="col-span-2 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 xl:col-span-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                Archivés
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {totalArchives}
+              </p>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
-              Historique conservé
-            </p>
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
+              📦
+            </div>
           </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Chantiers conservés hors actif
+          </p>
         </div>
       </div>
 
