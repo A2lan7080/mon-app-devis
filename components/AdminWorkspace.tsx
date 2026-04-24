@@ -119,9 +119,16 @@ export default function AdminWorkspace({
   const [sauvegardePrestationEnCours, setSauvegardePrestationEnCours] =
     useState(false);
   const [uploadLogoEnCours, setUploadLogoEnCours] = useState(false);
+  const [infosEntrepriseOuvertes, setInfosEntrepriseOuvertes] = useState(false);
+  const [bibliothequeOuverte, setBibliothequeOuverte] = useState(false);
 
   const prestationsActives = useMemo(
     () => prestations.filter((prestation) => !prestation.archive),
+    [prestations]
+  );
+
+  const prestationsArchivees = useMemo(
+    () => prestations.filter((prestation) => prestation.archive),
     [prestations]
   );
 
@@ -311,6 +318,7 @@ export default function AdminWorkspace({
       prixUnitaire: String(prestation.prixUnitaire),
       description: prestation.description,
     });
+    setBibliothequeOuverte(true);
   };
 
   const archiverPrestation = async (prestation: PrestationBibliotheque) => {
@@ -393,422 +401,476 @@ export default function AdminWorkspace({
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-lg font-semibold sm:text-xl">
+          <button
+            type="button"
+            onClick={() => setInfosEntrepriseOuvertes((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-4 text-left"
+          >
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
                 Informations entreprise
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                Ces informations servent pour les PDF et emails.
+                {entrepriseSettings.nom || "Entreprise non renseignée"}
+                {entrepriseSettings.logoUrl ? " · Logo chargé" : " · Aucun logo"}
               </p>
             </div>
 
-            <button
-              onClick={handleSauvegardeEntreprise}
-              disabled={
-                chargementEntreprise ||
-                sauvegardeEntrepriseEnCours ||
-                uploadLogoEnCours
-              }
-              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {sauvegardeEntrepriseEnCours
-                ? "Enregistrement..."
-                : "Enregistrer"}
-            </button>
-          </div>
+            <span className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+              {infosEntrepriseOuvertes ? "Masquer ↑" : "Afficher ↓"}
+            </span>
+          </button>
 
-          {chargementEntreprise ? (
-            <div className="mt-6 flex min-h-40 items-center justify-center text-sm text-slate-500">
-              Chargement des informations entreprise...
-            </div>
-          ) : (
+          {infosEntrepriseOuvertes && (
             <>
-              <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
-                <div className="min-w-0 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Nom de l’entreprise
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.nom}
-                    onChange={(e) =>
-                      handleEntrepriseChange("nom", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Profil entreprise
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Ces informations servent pour les PDF et emails.
+                  </p>
                 </div>
 
-                <div className="min-w-0 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Adresse
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.adresse}
-                    onChange={(e) =>
-                      handleEntrepriseChange("adresse", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Code postal
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.codePostal ?? ""}
-                    onChange={(e) =>
-                      handleEntrepriseChange("codePostal", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Ville / commune
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.ville ?? ""}
-                    onChange={(e) =>
-                      handleEntrepriseChange("ville", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={entrepriseSettings.email}
-                    onChange={(e) =>
-                      handleEntrepriseChange("email", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Téléphone
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.telephone}
-                    onChange={(e) =>
-                      handleEntrepriseChange("telephone", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-
-                <div className="min-w-0 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    TVA
-                  </label>
-                  <input
-                    type="text"
-                    value={entrepriseSettings.tva}
-                    onChange={(e) =>
-                      handleEntrepriseChange("tva", e.target.value)
-                    }
-                    className={champFormulaireClasses}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Logo entreprise
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadLogoEnCours}
-                  onChange={(e) =>
-                    handleLogoChange(e.target.files?.[0] ?? null)
+                <button
+                  onClick={handleSauvegardeEntreprise}
+                  disabled={
+                    chargementEntreprise ||
+                    sauvegardeEntrepriseEnCours ||
+                    uploadLogoEnCours
                   }
-                  className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <p className="mt-2 text-xs text-slate-400">
-                  {uploadLogoEnCours
-                    ? "Upload du logo en cours..."
-                    : "Le logo est envoyé dans Firebase Storage pour être visible dans les emails."}
-                </p>
+                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {sauvegardeEntrepriseEnCours
+                    ? "Enregistrement..."
+                    : "Enregistrer"}
+                </button>
               </div>
 
-              {entrepriseSettings.logoUrl && (
-                <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-                  <input
-                    type="checkbox"
-                    checked={entrepriseSettings.logoRemplaceNomEntreprise === true}
-                    onChange={(e) =>
-                      handleEntrepriseBooleanChange(
-                        "logoRemplaceNomEntreprise",
-                        e.target.checked
-                      )
-                    }
-                    className="mt-1 h-4 w-4 rounded border-slate-300"
-                  />
-                  <span>
-                    <span className="block text-sm font-semibold text-slate-800">
-                      Utiliser le logo à la place du nom de l’entreprise dans les emails
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">
-                      Si cette option est cochée, le logo remplacera le gros nom
-                      de l’entreprise dans les emails devis et factures. Les
-                      coordonnées resteront affichées en dessous.
-                    </span>
-                  </span>
-                </label>
-              )}
-
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
-                {entrepriseSettings.logoUrl ? (
-                  <div className="space-y-4">
-                    <div className="flex min-h-40 items-center justify-center rounded-xl bg-white p-4">
-                      <img
-                        src={entrepriseSettings.logoUrl}
-                        alt="Logo entreprise"
-                        className="max-h-36 w-auto object-contain"
+              {chargementEntreprise ? (
+                <div className="mt-6 flex min-h-40 items-center justify-center text-sm text-slate-500">
+                  Chargement des informations entreprise...
+                </div>
+              ) : (
+                <>
+                  <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+                    <div className="min-w-0 md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Nom de l’entreprise
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.nom}
+                        onChange={(e) =>
+                          handleEntrepriseChange("nom", e.target.value)
+                        }
+                        className={champFormulaireClasses}
                       />
                     </div>
 
-                    <div className="rounded-xl bg-white p-3 text-xs text-slate-500">
-                      <p className="font-semibold text-slate-700">
-                        URL logo utilisée dans les emails :
-                      </p>
-                      <p className="mt-1 break-all">
-                        {entrepriseSettings.logoUrl}
-                      </p>
+                    <div className="min-w-0 md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Adresse
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.adresse}
+                        onChange={(e) =>
+                          handleEntrepriseChange("adresse", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
                     </div>
 
-                    <button
-                      onClick={() => void supprimerLogo()}
+                    <div className="min-w-0">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Code postal
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.codePostal ?? ""}
+                        onChange={(e) =>
+                          handleEntrepriseChange("codePostal", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Ville / commune
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.ville ?? ""}
+                        onChange={(e) =>
+                          handleEntrepriseChange("ville", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={entrepriseSettings.email}
+                        onChange={(e) =>
+                          handleEntrepriseChange("email", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Téléphone
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.telephone}
+                        onChange={(e) =>
+                          handleEntrepriseChange("telephone", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                    </div>
+
+                    <div className="min-w-0 md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        TVA
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.tva}
+                        onChange={(e) =>
+                          handleEntrepriseChange("tva", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Logo entreprise
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
                       disabled={uploadLogoEnCours}
-                      className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Supprimer le logo
-                    </button>
+                      onChange={(e) =>
+                        handleLogoChange(e.target.files?.[0] ?? null)
+                      }
+                      className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <p className="mt-2 text-xs text-slate-400">
+                      {uploadLogoEnCours
+                        ? "Upload du logo en cours..."
+                        : "Le logo est envoyé dans Firebase Storage pour être visible dans les emails."}
+                    </p>
                   </div>
-                ) : (
-                  <div className="flex min-h-40 items-center justify-center text-center text-sm text-slate-500">
-                    Aucun logo chargé pour le moment.
+
+                  {entrepriseSettings.logoUrl && (
+                    <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                      <input
+                        type="checkbox"
+                        checked={
+                          entrepriseSettings.logoRemplaceNomEntreprise === true
+                        }
+                        onChange={(e) =>
+                          handleEntrepriseBooleanChange(
+                            "logoRemplaceNomEntreprise",
+                            e.target.checked
+                          )
+                        }
+                        className="mt-1 h-4 w-4 rounded border-slate-300"
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-slate-800">
+                          Utiliser le logo à la place du nom de l’entreprise
+                          dans les emails
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500">
+                          Si cette option est cochée, le logo remplacera le gros
+                          nom de l’entreprise dans les emails devis et factures.
+                          Les coordonnées resteront affichées en dessous.
+                        </span>
+                      </span>
+                    </label>
+                  )}
+
+                  <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                    {entrepriseSettings.logoUrl ? (
+                      <div className="space-y-4">
+                        <div className="flex min-h-40 items-center justify-center rounded-xl bg-white p-4">
+                          <img
+                            src={entrepriseSettings.logoUrl}
+                            alt="Logo entreprise"
+                            className="max-h-36 w-auto object-contain"
+                          />
+                        </div>
+
+                        <div className="rounded-xl bg-white p-3 text-xs text-slate-500">
+                          <p className="font-semibold text-slate-700">
+                            URL logo utilisée dans les emails :
+                          </p>
+                          <p className="mt-1 break-all">
+                            {entrepriseSettings.logoUrl}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => void supprimerLogo()}
+                          disabled={uploadLogoEnCours}
+                          className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Supprimer le logo
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex min-h-40 items-center justify-center text-center text-sm text-slate-500">
+                        Aucun logo chargé pour le moment.
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </>
           )}
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-lg font-semibold sm:text-xl">
+          <button
+            type="button"
+            onClick={() => setBibliothequeOuverte((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-4 text-left"
+          >
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
                 Bibliothèque de prestations
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                Prépare tes prestations réutilisables pour les devis.
+                {prestationsActives.length} active
+                {prestationsActives.length > 1 ? "s" : ""} ·{" "}
+                {prestationsArchivees.length} archivée
+                {prestationsArchivees.length > 1 ? "s" : ""}
+                {prestationEditionId ? " · Édition en cours" : ""}
               </p>
             </div>
 
-            {prestationEditionId && (
-              <button
-                onClick={resetPrestationFormulaire}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Annuler l’édition
-              </button>
-            )}
-          </div>
+            <span className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+              {bibliothequeOuverte ? "Masquer ↑" : "Afficher ↓"}
+            </span>
+          </button>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Désignation
-              </label>
-              <input
-                type="text"
-                value={formulairePrestation.designation}
-                onChange={(e) =>
-                  setFormulairePrestation((prev) => ({
-                    ...prev,
-                    designation: e.target.value,
-                  }))
-                }
-                className={champFormulaireClasses}
-              />
-            </div>
+          {bibliothequeOuverte && (
+            <>
+              <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Gestion des prestations
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Prépare tes prestations réutilisables pour les devis.
+                  </p>
+                </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Unité
-              </label>
-              <select
-                value={formulairePrestation.unite}
-                onChange={(e) =>
-                  setFormulairePrestation((prev) => ({
-                    ...prev,
-                    unite: e.target.value as UnitePrestation,
-                  }))
-                }
-                className={champFormulaireClasses}
-              >
-                {UNITES_PREDEFINIES.map((unite) => (
-                  <option key={unite} value={unite}>
-                    {unite}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Prix unitaire
-              </label>
-              <input
-                type="number"
-                value={formulairePrestation.prixUnitaire}
-                onChange={(e) =>
-                  setFormulairePrestation((prev) => ({
-                    ...prev,
-                    prixUnitaire: e.target.value,
-                  }))
-                }
-                className={champFormulaireClasses}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Description
-              </label>
-              <textarea
-                value={formulairePrestation.description}
-                onChange={(e) =>
-                  setFormulairePrestation((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                rows={3}
-                className={champFormulaireClasses}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <button
-              onClick={enregistrerPrestation}
-              disabled={sauvegardePrestationEnCours}
-              className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {sauvegardePrestationEnCours
-                ? "Enregistrement..."
-                : prestationEditionId
-                ? "Enregistrer les modifications"
-                : "Ajouter la prestation"}
-            </button>
-
-            <button
-              onClick={resetPrestationFormulaire}
-              disabled={sauvegardePrestationEnCours}
-              className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              Réinitialiser
-            </button>
-          </div>
-
-          <div className="mt-6">
-            {chargementPrestations ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Chargement des prestations...
-              </div>
-            ) : prestations.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Aucune prestation enregistrée pour le moment.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {prestations.map((prestation) => (
-                  <div
-                    key={prestation.id}
-                    className={`rounded-2xl border p-4 ${
-                      prestation.archive
-                        ? "border-amber-200 bg-amber-50/60"
-                        : "border-slate-200 bg-slate-50"
-                    }`}
+                {prestationEditionId && (
+                  <button
+                    onClick={resetPrestationFormulaire}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-xs text-slate-500">
-                          {prestation.reference}
-                        </p>
-                        <h4 className="mt-1 text-base font-semibold text-slate-900">
-                          {prestation.designation}
-                        </h4>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {formatMontant(prestation.prixUnitaire)} ·{" "}
-                          {prestation.unite}
-                        </p>
-                        <p className="mt-2 text-sm text-slate-500">
-                          {prestation.description || "Aucune description"}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => modifierPrestation(prestation)}
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                        >
-                          Modifier
-                        </button>
-
-                        {!prestation.archive ? (
-                          <button
-                            onClick={() => archiverPrestation(prestation)}
-                            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
-                          >
-                            Archiver
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => restaurerPrestation(prestation)}
-                            className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                          >
-                            Restaurer
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => supprimerPrestation(prestation)}
-                          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    Annuler l’édition
+                  </button>
+                )}
               </div>
-            )}
 
-            {prestationsActives.length > 0 && (
-              <p className="mt-4 text-xs text-slate-400">
-                {prestationsActives.length} prestation
-                {prestationsActives.length > 1 ? "s" : ""} active
-                {prestationsActives.length > 1 ? "s" : ""} disponible
-                {prestationsActives.length > 1 ? "s" : ""} pour les devis.
-              </p>
-            )}
-          </div>
+              <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
+                <div className="min-w-0 md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Désignation
+                  </label>
+                  <input
+                    type="text"
+                    value={formulairePrestation.designation}
+                    onChange={(e) =>
+                      setFormulairePrestation((prev) => ({
+                        ...prev,
+                        designation: e.target.value,
+                      }))
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Unité
+                  </label>
+                  <select
+                    value={formulairePrestation.unite}
+                    onChange={(e) =>
+                      setFormulairePrestation((prev) => ({
+                        ...prev,
+                        unite: e.target.value as UnitePrestation,
+                      }))
+                    }
+                    className={champFormulaireClasses}
+                  >
+                    {UNITES_PREDEFINIES.map((unite) => (
+                      <option key={unite} value={unite}>
+                        {unite}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Prix unitaire
+                  </label>
+                  <input
+                    type="number"
+                    value={formulairePrestation.prixUnitaire}
+                    onChange={(e) =>
+                      setFormulairePrestation((prev) => ({
+                        ...prev,
+                        prixUnitaire: e.target.value,
+                      }))
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+
+                <div className="min-w-0 md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Description
+                  </label>
+                  <textarea
+                    value={formulairePrestation.description}
+                    onChange={(e) =>
+                      setFormulairePrestation((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className={champFormulaireClasses}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={enregistrerPrestation}
+                  disabled={sauvegardePrestationEnCours}
+                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {sauvegardePrestationEnCours
+                    ? "Enregistrement..."
+                    : prestationEditionId
+                    ? "Enregistrer les modifications"
+                    : "Ajouter la prestation"}
+                </button>
+
+                <button
+                  onClick={resetPrestationFormulaire}
+                  disabled={sauvegardePrestationEnCours}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+
+              <div className="mt-6">
+                {chargementPrestations ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                    Chargement des prestations...
+                  </div>
+                ) : prestations.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                    Aucune prestation enregistrée pour le moment.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {prestations.map((prestation) => (
+                      <div
+                        key={prestation.id}
+                        className={`rounded-2xl border p-4 ${
+                          prestation.archive
+                            ? "border-amber-200 bg-amber-50/60"
+                            : "border-slate-200 bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-xs text-slate-500">
+                              {prestation.reference}
+                            </p>
+                            <h4 className="mt-1 break-words text-base font-semibold text-slate-900">
+                              {prestation.designation}
+                            </h4>
+                            <p className="mt-1 text-sm text-slate-600">
+                              {formatMontant(prestation.prixUnitaire)} ·{" "}
+                              {prestation.unite}
+                            </p>
+                            <p className="mt-2 break-words text-sm text-slate-500">
+                              {prestation.description || "Aucune description"}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                            <button
+                              onClick={() => modifierPrestation(prestation)}
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                            >
+                              Modifier
+                            </button>
+
+                            {!prestation.archive ? (
+                              <button
+                                onClick={() => archiverPrestation(prestation)}
+                                className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                              >
+                                Archiver
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => restaurerPrestation(prestation)}
+                                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                              >
+                                Restaurer
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => supprimerPrestation(prestation)}
+                              className="col-span-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-1"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {prestationsActives.length > 0 && (
+                  <p className="mt-4 text-xs text-slate-400">
+                    {prestationsActives.length} prestation
+                    {prestationsActives.length > 1 ? "s" : ""} active
+                    {prestationsActives.length > 1 ? "s" : ""} disponible
+                    {prestationsActives.length > 1 ? "s" : ""} pour les devis.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
