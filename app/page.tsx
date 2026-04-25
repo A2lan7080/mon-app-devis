@@ -161,7 +161,7 @@ export default function Home() {
       const entreprisePourMail = await getEntrepriseSettings(
         entrepriseIdCourante
       );
-      const idToken = await user?.getIdToken();
+      const idToken = await user?.getIdToken(true);
 
       if (!idToken) {
         throw new Error("Authentification requise.");

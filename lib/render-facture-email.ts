@@ -114,29 +114,11 @@ function renderEntrepriseBloc(
   `;
 }
 
-function renderFooterEntreprise(entreprise: EntrepriseSettings) {
-  const infosEntreprise = [
-    entreprise.nom?.trim(),
-    entreprise.email?.trim(),
-    entreprise.telephone?.trim(),
-    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
-  ].filter(Boolean);
-
+function renderFooterEntreprise() {
   return `
     <tr>
       <td style="padding-top:4px; font-size:14px; line-height:24px; color:#475569;">
         Merci pour votre confiance.
-        ${
-          infosEntreprise.length > 0
-            ? `
-              <div style="margin-top:10px; font-size:12px; line-height:20px; color:#64748b; word-break:break-word;">
-                ${infosEntreprise
-                  .map((info) => echapperHtml(info))
-                  .join(" &middot; ")}
-              </div>
-            `
-            : ""
-        }
       </td>
     </tr>
   `;
@@ -149,6 +131,8 @@ export function renderFactureEmailHtml(
   const montantTva = calculerMontantTva(facture);
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
+  const ibanEntreprise = entreprise.iban.trim();
+  const mentionsLegalesFacture = entreprise.mentionsLegalesFacture.trim();
 
   const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
   const blocEntreprise = renderEntrepriseBloc(
@@ -301,7 +285,51 @@ export function renderFactureEmailHtml(
                     </td>
                   </tr>
 
-                  ${renderFooterEntreprise(entreprise)}
+                  <tr>
+                    <td style="padding-bottom:16px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
+                        <tr>
+                          <td style="padding:18px;">
+                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:10px;">
+                              Informations de paiement
+                            </div>
+                            <div style="font-size:15px; line-height:24px; color:#334155; word-break:break-word;">
+                              <strong>IBAN :</strong> ${
+                                ibanEntreprise
+                                  ? echapperHtml(ibanEntreprise)
+                                  : "IBAN non renseigné."
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom:16px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
+                        <tr>
+                          <td style="padding:18px;">
+                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:10px;">
+                              Mentions légales / CGV
+                            </div>
+                            <div style="font-size:12px; line-height:20px; color:#475569; word-break:break-word;">
+                              ${
+                                mentionsLegalesFacture
+                                  ? echapperHtml(
+                                      mentionsLegalesFacture
+                                    ).replaceAll("\n", "<br />")
+                                  : "Aucune mention légale facture renseignée."
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  ${renderFooterEntreprise()}
                 </table>
               </td>
             </tr>
@@ -321,18 +349,12 @@ export function renderFactureEmailText(
   const montantTva = calculerMontantTva(facture);
   const totalTtc = calculerTotalTtc(facture);
   const netAPayer = calculerNetAPayer(facture);
+  const ibanEntreprise = entreprise.iban.trim();
+  const mentionsLegalesFacture = entreprise.mentionsLegalesFacture.trim();
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
     .filter(Boolean)
     .join(" · ");
   const nomEntreprise = entreprise.nom?.trim() || "Entreprise";
-  const infosFooter = [
-    entreprise.nom?.trim(),
-    entreprise.email?.trim(),
-    entreprise.telephone?.trim(),
-    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
-  ]
-    .filter(Boolean)
-    .join(" - ");
 
   return `
 ENTREPRISE
@@ -365,10 +387,15 @@ Total TTC : ${formatMontant(totalTtc)}
 Acompte déduit : ${formatMontant(facture.acompteDeduit)}
 Net à payer : ${formatMontant(netAPayer)}
 
+Informations de paiement :
+IBAN : ${ibanEntreprise || "IBAN non renseigné."}
+
 Notes :
 ${facture.notes || "Aucune note pour cette facture."}
 
+Mentions légales / CGV :
+${mentionsLegalesFacture || "Aucune mention légale facture renseignée."}
+
 Merci pour votre confiance.
-${infosFooter || ""}
 `.trim();
 }

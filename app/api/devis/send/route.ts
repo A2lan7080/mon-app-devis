@@ -30,7 +30,7 @@ type Payload = {
 };
 
 type ProfilUtilisateurEmail = {
-  actif?: boolean;
+  active?: boolean;
   role?: string;
   entrepriseId?: string;
 };
@@ -86,7 +86,7 @@ async function verifierAdminEmail(
     const profil = profilSnap.data() as ProfilUtilisateurEmail;
     const entrepriseId = profil.entrepriseId?.trim();
 
-    if (profil.actif !== true || profil.role !== "admin" || !entrepriseId) {
+    if (profil.active !== true || profil.role !== "admin" || !entrepriseId) {
       return {
         response: NextResponse.json(
           { error: "Accès refusé." },

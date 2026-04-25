@@ -772,7 +772,7 @@ export default function FacturesWorkspace({
     try {
       setEnvoiEnCours(true);
 
-      const idToken = await auth.currentUser?.getIdToken();
+      const idToken = await auth.currentUser?.getIdToken(true);
 
       if (!idToken) {
         throw new Error("Authentification requise.");
