@@ -9,7 +9,7 @@ import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
   calculerTotalHt,
   calculerTotalTvac,
@@ -772,9 +772,16 @@ export default function FacturesWorkspace({
     try {
       setEnvoiEnCours(true);
 
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("Authentification requise.");
+      }
+
       const response = await fetch("/api/factures/send", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

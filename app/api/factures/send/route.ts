@@ -4,6 +4,7 @@ import {
   renderFactureEmailHtml,
   renderFactureEmailText,
 } from "../../../../lib/render-facture-email";
+import { adminAuth, adminDb } from "../../../../lib/firebase-admin";
 import type { Facture } from "../../../../types/factures";
 import type { Entreprise } from "../../../../types/devis";
 
@@ -19,8 +20,94 @@ type Payload = {
   entreprise?: EntrepriseSettings;
 };
 
+type ProfilUtilisateurEmail = {
+  actif?: boolean;
+  role?: string;
+  entrepriseId?: string;
+};
+
+type VerificationSecuriteEmail =
+  | {
+      uid: string;
+      entrepriseId: string;
+    }
+  | {
+      response: NextResponse;
+    };
+
+function getBearerToken(request: Request) {
+  const authorization = request.headers.get("authorization");
+
+  if (!authorization?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authorization.slice("Bearer ".length).trim();
+
+  return token || null;
+}
+
+async function verifierAdminEmail(
+  request: Request
+): Promise<VerificationSecuriteEmail> {
+  const token = getBearerToken(request);
+
+  if (!token) {
+    return {
+      response: NextResponse.json(
+        { error: "Authentification requise." },
+        { status: 401 }
+      ),
+    };
+  }
+
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const profilSnap = await adminDb.collection("users").doc(decodedToken.uid).get();
+
+    if (!profilSnap.exists) {
+      return {
+        response: NextResponse.json(
+          { error: "Accès refusé." },
+          { status: 403 }
+        ),
+      };
+    }
+
+    const profil = profilSnap.data() as ProfilUtilisateurEmail;
+    const entrepriseId = profil.entrepriseId?.trim();
+
+    if (profil.actif !== true || profil.role !== "admin" || !entrepriseId) {
+      return {
+        response: NextResponse.json(
+          { error: "Accès refusé." },
+          { status: 403 }
+        ),
+      };
+    }
+
+    return {
+      uid: decodedToken.uid,
+      entrepriseId,
+    };
+  } catch {
+    return {
+      response: NextResponse.json(
+        { error: "Authentification requise." },
+        { status: 401 }
+      ),
+    };
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    const securiteEmail = await verifierAdminEmail(request);
+
+    if ("response" in securiteEmail) {
+      return securiteEmail.response;
+    }
+
     const body = (await request.json()) as Payload;
 
     if (!process.env.RESEND_API_KEY) {
@@ -48,6 +135,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!facture.id) {
+      return NextResponse.json(
+        { error: "Identifiant facture manquant." },
+        { status: 400 }
+      );
+    }
+
     if (!toEmail) {
       return NextResponse.json(
         { error: "Email destinataire manquant." },
@@ -60,6 +154,18 @@ export async function POST(request: Request) {
         { error: "Informations entreprise manquantes." },
         { status: 400 }
       );
+    }
+
+    const factureSnap = await adminDb.collection("factures").doc(facture.id).get();
+    const factureFirestore = factureSnap.data() as
+      | { entrepriseId?: string }
+      | undefined;
+
+    if (
+      !factureSnap.exists ||
+      factureFirestore?.entrepriseId !== securiteEmail.entrepriseId
+    ) {
+      return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);

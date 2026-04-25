@@ -161,10 +161,16 @@ export default function Home() {
       const entreprisePourMail = await getEntrepriseSettings(
         entrepriseIdCourante
       );
+      const idToken = await user?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("Authentification requise.");
+      }
 
       const response = await fetch("/api/devis/send", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
