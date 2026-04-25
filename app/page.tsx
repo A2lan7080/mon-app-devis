@@ -189,7 +189,10 @@ export default function Home() {
         throw new Error(data.error || "Impossible d’envoyer le devis.");
       }
 
-      if (devisSelectionne.statut !== "Envoyé") {
+      if (
+        devisSelectionne.statut !== "Envoyé" &&
+        devisSelectionne.statut !== "Accepté"
+      ) {
         await updateDoc(getDevisDocRef(devisSelectionne.id), {
           ...devisSelectionne,
           statut: "Envoyé",

@@ -108,6 +108,8 @@ const actionPrincipaleMobile =
 const actionDesktop =
   "w-full rounded-xl px-4 py-3 text-sm font-semibold transition";
 
+const actionVerrouilleClasses = "disabled:cursor-not-allowed disabled:opacity-50";
+
 export default function DevisDetailPanel({
   devisSelectionne,
   modeEdition,
@@ -181,6 +183,7 @@ export default function DevisDetailPanel({
   const totalTvacSelectionne = calculerTotalTvac(devisSelectionne);
   const acompteSelectionne =
     totalTvacSelectionne * (devisSelectionne.acomptePourcentage / 100);
+  const devisEstAccepte = devisSelectionne.statut === "Accepté";
 
   if (!modeEdition) {
     return (
@@ -214,7 +217,13 @@ export default function DevisDetailPanel({
           <div className="grid grid-cols-3 gap-2 md:hidden">
             <button
               onClick={ouvrirEdition}
-              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              disabled={devisEstAccepte}
+              title={
+                devisEstAccepte
+                  ? "Ce devis est accepté et ne peut plus être modifié."
+                  : undefined
+              }
+              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
             >
               Modifier
             </button>
@@ -254,14 +263,26 @@ export default function DevisDetailPanel({
               {!devisSelectionne.archive ? (
                 <button
                   onClick={archiverDevis}
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800"
+                  disabled={devisEstAccepte}
+                  title={
+                    devisEstAccepte
+                      ? "Ce devis est accepté et ne peut plus être modifié."
+                      : undefined
+                  }
+                  className={`w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ${actionVerrouilleClasses}`}
                 >
                   Archiver
                 </button>
               ) : (
                 <button
                   onClick={restaurerDevis}
-                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800"
+                  disabled={devisEstAccepte}
+                  title={
+                    devisEstAccepte
+                      ? "Ce devis est accepté et ne peut plus être modifié."
+                      : undefined
+                  }
+                  className={`w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 ${actionVerrouilleClasses}`}
                 >
                   Restaurer
                 </button>
@@ -269,7 +290,13 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={() => setAfficherStatutsMobile((prev) => !prev)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+                disabled={devisEstAccepte}
+                title={
+                  devisEstAccepte
+                    ? "Ce devis est accepté et ne peut plus changer de statut."
+                    : undefined
+                }
+                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 ${actionVerrouilleClasses}`}
               >
                 Changer le statut
               </button>
@@ -278,25 +305,29 @@ export default function DevisDetailPanel({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleChangerStatut("Brouillon")}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                    disabled={devisEstAccepte}
+                    className={`rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 ${actionVerrouilleClasses}`}
                   >
                     Brouillon
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Envoyé")}
-                    className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700"
+                    disabled={devisEstAccepte}
+                    className={`rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 ${actionVerrouilleClasses}`}
                   >
                     Envoyé
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Accepté")}
-                    className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
+                    disabled={devisEstAccepte}
+                    className={`rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ${actionVerrouilleClasses}`}
                   >
                     Accepté
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Refusé")}
-                    className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+                    disabled={devisEstAccepte}
+                    className={`rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ${actionVerrouilleClasses}`}
                   >
                     Refusé
                   </button>
@@ -305,7 +336,13 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={supprimerDevis}
-                className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"
+                disabled={devisEstAccepte}
+                title={
+                  devisEstAccepte
+                    ? "Ce devis est accepté et ne peut plus être supprimé."
+                    : undefined
+                }
+                className={`w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 ${actionVerrouilleClasses}`}
               >
                 Supprimer
               </button>
@@ -315,7 +352,13 @@ export default function DevisDetailPanel({
           <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
             <button
               onClick={ouvrirEdition}
-              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              disabled={devisEstAccepte}
+              title={
+                devisEstAccepte
+                  ? "Ce devis est accepté et ne peut plus être modifié."
+                  : undefined
+              }
+              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
             >
               Modifier
             </button>
@@ -345,14 +388,26 @@ export default function DevisDetailPanel({
             {!devisSelectionne.archive ? (
               <button
                 onClick={archiverDevis}
-                className={`${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100`}
+                disabled={devisEstAccepte}
+                title={
+                  devisEstAccepte
+                    ? "Ce devis est accepté et ne peut plus être modifié."
+                    : undefined
+                }
+                className={`${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 ${actionVerrouilleClasses}`}
               >
                 Archiver
               </button>
             ) : (
               <button
                 onClick={restaurerDevis}
-                className={`${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100`}
+                disabled={devisEstAccepte}
+                title={
+                  devisEstAccepte
+                    ? "Ce devis est accepté et ne peut plus être modifié."
+                    : undefined
+                }
+                className={`${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ${actionVerrouilleClasses}`}
               >
                 Restaurer
               </button>
@@ -360,7 +415,13 @@ export default function DevisDetailPanel({
 
             <button
               onClick={supprimerDevis}
-              className={`${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1`}
+              disabled={devisEstAccepte}
+              title={
+                devisEstAccepte
+                  ? "Ce devis est accepté et ne peut plus être supprimé."
+                  : undefined
+              }
+              className={`${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1 ${actionVerrouilleClasses}`}
             >
               Supprimer
             </button>
@@ -373,7 +434,9 @@ export default function DevisDetailPanel({
                   Changer le statut
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Mets rapidement à jour l’état commercial du devis.
+                  {devisEstAccepte
+                    ? "Ce devis est accepté et son statut est verrouillé."
+                    : "Mets rapidement à jour l’état commercial du devis."}
                 </p>
               </div>
 
@@ -389,28 +452,32 @@ export default function DevisDetailPanel({
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <button
                 onClick={() => handleChangerStatut("Brouillon")}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                disabled={devisEstAccepte}
+                className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 ${actionVerrouilleClasses}`}
               >
                 Mettre en brouillon
               </button>
 
               <button
                 onClick={() => handleChangerStatut("Envoyé")}
-                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
+                disabled={devisEstAccepte}
+                className={`w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-100 ${actionVerrouilleClasses}`}
               >
                 Marquer envoyé
               </button>
 
               <button
                 onClick={() => handleChangerStatut("Accepté")}
-                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
+                disabled={devisEstAccepte}
+                className={`w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 ${actionVerrouilleClasses}`}
               >
                 Marquer accepté
               </button>
 
               <button
                 onClick={() => handleChangerStatut("Refusé")}
-                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                disabled={devisEstAccepte}
+                className={`w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100 ${actionVerrouilleClasses}`}
               >
                 Marquer refusé
               </button>

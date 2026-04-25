@@ -108,11 +108,22 @@ export function useDevisActions({
     resolver: (devisId: string) => DocumentReference
   ) => resolver(devisId);
 
+  const afficherMessageDevisVerrouille = () => {
+    alert("Ce devis est accepté et ne peut plus être modifié.");
+  };
+
+  const devisEstVerrouille = () => devisSelectionne?.statut === "Accepté";
+
   const handleChangerStatut = async (
     nouveauStatut: StatutDevis,
     resolver: (devisId: string) => DocumentReference
   ) => {
     if (!devisSelectionne || !estAdmin) return;
+
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
 
     try {
       setSauvegardeEnCours(true);
@@ -130,6 +141,11 @@ export function useDevisActions({
 
   const ouvrirEdition = () => {
     if (!devisSelectionne || !estAdmin) return;
+
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
 
     setEditForm({
       client: devisSelectionne.client,
@@ -215,6 +231,11 @@ export function useDevisActions({
     resolver: (devisId: string) => DocumentReference
   ) => {
     if (!devisSelectionne || !estAdmin) return;
+
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
 
     if (!editForm.client.trim() || !editForm.date) {
       alert("Le client et la date sont obligatoires.");
@@ -322,6 +343,11 @@ export function useDevisActions({
   ) => {
     if (!devisSelectionne || !estAdmin) return;
 
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
+
     const confirmation = window.confirm(
       `Supprimer définitivement le devis ${devisSelectionne.id} ?`
     );
@@ -346,6 +372,11 @@ export function useDevisActions({
   ) => {
     if (!devisSelectionne || !estAdmin) return;
 
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
+
     try {
       setSauvegardeEnCours(true);
       await updateDoc(withRef(devisSelectionne.id, resolver), {
@@ -366,6 +397,11 @@ export function useDevisActions({
     resolver: (devisId: string) => DocumentReference
   ) => {
     if (!devisSelectionne || !estAdmin) return;
+
+    if (devisEstVerrouille()) {
+      afficherMessageDevisVerrouille();
+      return;
+    }
 
     try {
       setSauvegardeEnCours(true);
