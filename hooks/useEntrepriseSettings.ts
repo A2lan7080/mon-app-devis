@@ -27,6 +27,8 @@ function creerEntrepriseDefaut(): EntrepriseSettings {
     ...entrepriseParDefaut,
     codePostal: "",
     ville: "",
+    iban: "",
+    mentionsLegalesFacture: "",
     logoUrl: "",
     logoStoragePath: "",
     logoRemplaceNomEntreprise: false,
@@ -94,6 +96,11 @@ export function useEntrepriseSettings({
               : entrepriseParDefaut.telephone,
           tva:
             typeof data.tva === "string" ? data.tva : entrepriseParDefaut.tva,
+          iban: typeof data.iban === "string" ? data.iban : "",
+          mentionsLegalesFacture:
+            typeof data.mentionsLegalesFacture === "string"
+              ? data.mentionsLegalesFacture
+              : "",
           logoUrl: typeof data.logoUrl === "string" ? data.logoUrl : "",
           logoStoragePath:
             typeof data.logoStoragePath === "string"
@@ -146,6 +153,9 @@ export function useEntrepriseSettings({
           email: entrepriseSettings.email.trim(),
           telephone: entrepriseSettings.telephone.trim(),
           tva: entrepriseSettings.tva.trim(),
+          iban: entrepriseSettings.iban.trim(),
+          mentionsLegalesFacture:
+            entrepriseSettings.mentionsLegalesFacture.trim(),
           logoUrl: entrepriseSettings.logoUrl ?? "",
           logoStoragePath: entrepriseSettings.logoStoragePath ?? "",
           logoRemplaceNomEntreprise:

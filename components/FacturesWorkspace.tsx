@@ -835,6 +835,9 @@ export default function FacturesWorkspace({
   const netAPayerSelectionnee = factureSelectionnee
     ? calculerNetAPayer(factureSelectionnee)
     : 0;
+  const ibanEntreprise = entrepriseSettings.iban.trim();
+  const mentionsLegalesFacture =
+    entrepriseSettings.mentionsLegalesFacture.trim();
 
   const contenuFormulaire = (
     <div className="max-w-full overflow-hidden">
@@ -1326,6 +1329,31 @@ export default function FacturesWorkspace({
           <p className="mt-1 font-semibold">
             {formatMontant(factureSelectionnee.acompteDeduit)}
           </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">Informations facture</p>
+          {ibanEntreprise ? (
+            <p className="mt-2 break-words text-sm font-semibold text-slate-800">
+              IBAN : {ibanEntreprise}
+            </p>
+          ) : (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+              IBAN entreprise manquant : la facture reste consultable et
+              exportable, mais un IBAN est attendu pour une facture crédible.
+            </p>
+          )}
+
+          {mentionsLegalesFacture && (
+            <div className="mt-4">
+              <p className="text-sm text-slate-500">
+                Mentions légales facture
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+                {mentionsLegalesFacture}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-4">

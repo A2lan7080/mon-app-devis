@@ -17,6 +17,8 @@ export const entreprise: Entreprise = {
   email: "",
   telephone: "",
   tva: "",
+  iban: "",
+  mentionsLegalesFacture: "",
 };
 
 export const creerLigneVide = (): NouvelleLigneState => ({

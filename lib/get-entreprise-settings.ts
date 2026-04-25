@@ -22,6 +22,8 @@ export async function getEntrepriseSettings(
       ...entrepriseParDefaut,
       codePostal: "",
       ville: "",
+      iban: "",
+      mentionsLegalesFacture: "",
       logoUrl: "",
       logoStoragePath: "",
       logoRemplaceNomEntreprise: false,
@@ -37,6 +39,8 @@ export async function getEntrepriseSettings(
         ...entrepriseParDefaut,
         codePostal: "",
         ville: "",
+        iban: "",
+        mentionsLegalesFacture: "",
         logoUrl: "",
         logoStoragePath: "",
         logoRemplaceNomEntreprise: false,
@@ -60,6 +64,11 @@ export async function getEntrepriseSettings(
           ? data.telephone
           : entrepriseParDefaut.telephone,
       tva: typeof data.tva === "string" ? data.tva : entrepriseParDefaut.tva,
+      iban: typeof data.iban === "string" ? data.iban : "",
+      mentionsLegalesFacture:
+        typeof data.mentionsLegalesFacture === "string"
+          ? data.mentionsLegalesFacture
+          : "",
       entrepriseId:
         typeof data.entrepriseId === "string" ? data.entrepriseId : entrepriseId,
       createdByUid:
@@ -83,6 +92,8 @@ export async function getEntrepriseSettings(
       ...entrepriseParDefaut,
       codePostal: "",
       ville: "",
+      iban: "",
+      mentionsLegalesFacture: "",
       logoUrl: "",
       logoStoragePath: "",
       logoRemplaceNomEntreprise: false,

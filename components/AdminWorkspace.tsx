@@ -552,6 +552,43 @@ export default function AdminWorkspace({
                         className={champFormulaireClasses}
                       />
                     </div>
+
+                    <div className="min-w-0 md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        IBAN
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepriseSettings.iban}
+                        onChange={(e) =>
+                          handleEntrepriseChange("iban", e.target.value)
+                        }
+                        className={champFormulaireClasses}
+                      />
+                      {!entrepriseSettings.iban.trim() && (
+                        <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                          IBAN manquant : une facture reste exportable, mais
+                          un IBAN est attendu pour une facture crédible.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Mentions légales facture
+                      </label>
+                      <textarea
+                        value={entrepriseSettings.mentionsLegalesFacture}
+                        onChange={(e) =>
+                          handleEntrepriseChange(
+                            "mentionsLegalesFacture",
+                            e.target.value
+                          )
+                        }
+                        rows={4}
+                        className={champFormulaireClasses}
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-6">

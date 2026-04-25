@@ -59,4 +59,6 @@ export type Entreprise = {
   email: string;
   telephone: string;
   tva: string;
+  iban: string;
+  mentionsLegalesFacture: string;
 };

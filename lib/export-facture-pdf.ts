@@ -111,6 +111,14 @@ function getBlocEntreprise(entreprise: EntrepriseSettings) {
           )}</div>
         </div>
 
+        <div class="iban-info">
+          <div class="info-label">IBAN</div>
+          <div class="info-value iban-value">${texteOuDefaut(
+            entreprise.iban,
+            "IBAN non renseigné"
+          )}</div>
+        </div>
+
         <div>
           <div class="info-label">TVA</div>
           <div class="info-value">${texteOuDefaut(
@@ -175,6 +183,7 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
   const entreprise = await getEntrepriseSettings(
     factureSelectionnee.entrepriseId ?? null
   );
+  const mentionsLegalesFacture = entreprise.mentionsLegalesFacture.trim();
 
   fenetre.document.write(`
     <!DOCTYPE html>
@@ -303,6 +312,15 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
             color: #334155;
           }
 
+          .iban-info {
+            grid-column: 1 / -1;
+          }
+
+          .iban-value {
+            font-size: 13px;
+            letter-spacing: 0.02em;
+          }
+
           .total-box {
             width: 300px;
             max-width: 100%;
@@ -363,6 +381,15 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
             margin-top: 10px;
             color: #64748b;
             font-size: 9px;
+            line-height: 1.35;
+          }
+
+          .legal-footer {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #dbe4ef;
+            color: #64748b;
+            font-size: 8.5px;
             line-height: 1.35;
           }
 
@@ -533,6 +560,14 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
 
           <div class="footer">
             Merci pour votre confiance.
+            ${
+              mentionsLegalesFacture
+                ? `<div class="legal-footer">${texteMultiligneOuDefaut(
+                    entreprise.mentionsLegalesFacture,
+                    ""
+                  )}</div>`
+                : ""
+            }
           </div>
         </div>
 
