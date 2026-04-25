@@ -46,6 +46,7 @@ export default function DevisList({
           return (
             <button
               key={item.id}
+              data-testid="devis-list-item"
               onClick={() => {
                 setModeEdition(false);
                 setDevisSelectionneId(estSelectionne ? null : item.id);

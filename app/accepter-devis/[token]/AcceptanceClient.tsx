@@ -204,6 +204,7 @@ export default function AcceptanceClient({ token }: Props) {
                         Nom
                       </label>
                       <input
+                        data-testid="acceptance-name"
                         type="text"
                         value={nom}
                         onChange={(event) => setNom(event.target.value)}
@@ -217,6 +218,7 @@ export default function AcceptanceClient({ token }: Props) {
                         Email
                       </label>
                       <input
+                        data-testid="acceptance-email"
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
@@ -239,6 +241,7 @@ export default function AcceptanceClient({ token }: Props) {
                   )}
 
                   <button
+                    data-testid="acceptance-submit"
                     type="submit"
                     disabled={envoiEnCours}
                     className="w-full rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
@@ -254,4 +257,3 @@ export default function AcceptanceClient({ token }: Props) {
     </main>
   );
 }
-

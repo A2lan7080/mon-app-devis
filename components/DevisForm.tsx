@@ -522,7 +522,10 @@ export default function DevisForm({
   };
 
   return (
-    <div className="mb-6 max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+    <div
+      data-testid="devis-form"
+      className="mb-6 max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-6"
+    >
       <h3 className="text-xl font-semibold sm:text-2xl">Créer un devis</h3>
 
       <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
@@ -569,6 +572,7 @@ export default function DevisForm({
             Titre du chantier
           </label>
           <input
+            data-testid="devis-chantier-titre"
             type="text"
             value={nouveauDevis.chantierTitre}
             onChange={(e) =>
@@ -641,6 +645,7 @@ export default function DevisForm({
             Nom du client
           </label>
           <input
+            data-testid="devis-client"
             type="text"
             value={nouveauDevis.client}
             onChange={(e) =>
@@ -711,6 +716,7 @@ export default function DevisForm({
             Date
           </label>
           <input
+            data-testid="devis-date"
             type="date"
             value={nouveauDevis.date}
             onChange={(e) =>
@@ -751,6 +757,7 @@ export default function DevisForm({
             TVA (%)
           </label>
           <input
+            data-testid="devis-tva-taux"
             type="number"
             value={nouveauDevis.tvaTaux}
             onChange={(e) =>
@@ -768,6 +775,7 @@ export default function DevisForm({
             Adresse
           </label>
           <input
+            data-testid="devis-adresse"
             type="text"
             value={nouveauDevis.adresse}
             onChange={(e) =>
@@ -785,6 +793,7 @@ export default function DevisForm({
             Code postal
           </label>
           <input
+            data-testid="devis-code-postal"
             type="text"
             value={nouveauDevis.codePostal}
             onChange={(e) =>
@@ -802,6 +811,7 @@ export default function DevisForm({
             Ville / commune
           </label>
           <input
+            data-testid="devis-ville"
             type="text"
             value={nouveauDevis.ville}
             onChange={(e) =>
@@ -819,6 +829,7 @@ export default function DevisForm({
             Email
           </label>
           <input
+            data-testid="devis-email"
             type="email"
             value={nouveauDevis.email}
             onChange={(e) =>
@@ -836,6 +847,7 @@ export default function DevisForm({
             Téléphone
           </label>
           <input
+            data-testid="devis-telephone"
             type="text"
             value={nouveauDevis.telephone}
             onChange={(e) =>
@@ -911,6 +923,7 @@ export default function DevisForm({
 
           <button
             type="button"
+            data-testid="devis-add-line"
             onClick={ajouterLigne}
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
           >
@@ -946,6 +959,7 @@ export default function DevisForm({
                     Désignation
                   </label>
                   <input
+                    data-testid={`devis-line-${index}-designation`}
                     type="text"
                     placeholder="Ex. Pose porte intérieure"
                     value={ligne.designation}
@@ -961,6 +975,7 @@ export default function DevisForm({
                     Quantité
                   </label>
                   <input
+                    data-testid={`devis-line-${index}-quantite`}
                     type="number"
                     placeholder="1"
                     value={ligne.quantite}
@@ -976,6 +991,7 @@ export default function DevisForm({
                     Unité
                   </label>
                   <select
+                    data-testid={`devis-line-${index}-unite`}
                     value={ligne.unite}
                     onChange={(e) =>
                       mettreAJourLigne(index, "unite", e.target.value)
@@ -995,6 +1011,7 @@ export default function DevisForm({
                     Prix unitaire HT
                   </label>
                   <input
+                    data-testid={`devis-line-${index}-prix-unitaire`}
                     type="number"
                     placeholder="0"
                     value={ligne.prixUnitaire}
@@ -1077,6 +1094,7 @@ export default function DevisForm({
 
                   <button
                     type="button"
+                    data-testid={`devis-add-prestation-${prestation.id}`}
                     onClick={() => ajouterPrestationDansLignes(prestation.id)}
                     className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
                   >
@@ -1092,6 +1110,7 @@ export default function DevisForm({
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
+          data-testid="devis-save"
           onClick={handleCreerDevis}
           disabled={sauvegardeEnCours}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"

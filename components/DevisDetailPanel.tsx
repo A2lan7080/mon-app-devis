@@ -199,6 +199,7 @@ export default function DevisDetailPanel({
 
             <div className="flex flex-wrap gap-2">
               <span
+                data-testid="devis-detail-status"
                 className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
                   devisSelectionne.statut
                 )}`}
@@ -229,6 +230,7 @@ export default function DevisDetailPanel({
             </button>
 
             <button
+              data-testid="devis-export-pdf"
               onClick={handleExporterPdf}
               className={`${actionPrincipaleMobile} bg-slate-900 text-white hover:opacity-90`}
             >
@@ -378,6 +380,7 @@ export default function DevisDetailPanel({
             </button>
 
             <button
+              data-testid="devis-send-email"
               onClick={handleEnvoyerParMail}
               disabled={envoiEnCours}
               className={`${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
@@ -656,7 +659,10 @@ export default function DevisDetailPanel({
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Total HT</p>
-              <p className="mt-1 wrap-break-word font-semibold">
+              <p
+                data-testid="devis-total-ht"
+                className="mt-1 wrap-break-word font-semibold"
+              >
                 {formatMontant(totalHtSelectionne)}
               </p>
             </div>
@@ -665,14 +671,20 @@ export default function DevisDetailPanel({
               <p className="text-sm text-slate-500">
                 TVA ({devisSelectionne.tvaTaux}%)
               </p>
-              <p className="mt-1 wrap-break-word font-semibold">
+              <p
+                data-testid="devis-total-tva"
+                className="mt-1 wrap-break-word font-semibold"
+              >
                 {formatMontant(totalTvaSelectionne)}
               </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Total TVAC</p>
-              <p className="mt-1 wrap-break-word font-semibold">
+              <p
+                data-testid="devis-total-tvac"
+                className="mt-1 wrap-break-word font-semibold"
+              >
                 {formatMontant(totalTvacSelectionne)}
               </p>
             </div>

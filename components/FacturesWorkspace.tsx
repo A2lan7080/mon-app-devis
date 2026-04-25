@@ -840,7 +840,7 @@ export default function FacturesWorkspace({
     entrepriseSettings.mentionsLegalesFacture.trim();
 
   const contenuFormulaire = (
-    <div className="max-w-full overflow-hidden">
+    <div data-testid="facture-form" className="max-w-full overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
@@ -867,6 +867,7 @@ export default function FacturesWorkspace({
             Devis lié
           </label>
           <select
+            data-testid="facture-devis-select"
             value={formulaire.devisId}
             onChange={(e) => handleSelectionDevis(e.target.value)}
             className={champFormulaireClasses}
@@ -886,6 +887,7 @@ export default function FacturesWorkspace({
             Client
           </label>
           <select
+            data-testid="facture-client-select"
             value={formulaire.clientId}
             onChange={(e) => handleSelectionClient(e.target.value)}
             className={champFormulaireClasses}
@@ -904,6 +906,7 @@ export default function FacturesWorkspace({
             Chantier lié
           </label>
           <select
+            data-testid="facture-chantier-select"
             value={formulaire.chantierId}
             onChange={(e) => handleSelectionChantier(e.target.value)}
             className={champFormulaireClasses}
@@ -923,6 +926,7 @@ export default function FacturesWorkspace({
             Objet
           </label>
           <input
+            data-testid="facture-objet"
             type="text"
             value={formulaire.objet}
             onChange={(e) =>
@@ -940,6 +944,7 @@ export default function FacturesWorkspace({
             Date émission
           </label>
           <input
+            data-testid="facture-date-emission"
             type="date"
             value={formulaire.dateEmission}
             onChange={(e) =>
@@ -958,6 +963,7 @@ export default function FacturesWorkspace({
             Date échéance
           </label>
           <input
+            data-testid="facture-date-echeance"
             type="date"
             value={formulaire.dateEcheance}
             onChange={(e) =>
@@ -1016,6 +1022,7 @@ export default function FacturesWorkspace({
             Montant HT
           </label>
           <input
+            data-testid="facture-montant-ht"
             type="number"
             step="0.01"
             value={formulaire.montantHt}
@@ -1034,6 +1041,7 @@ export default function FacturesWorkspace({
             TVA (%)
           </label>
           <input
+            data-testid="facture-tva-taux"
             type="number"
             step="0.01"
             value={formulaire.tvaTaux}
@@ -1052,6 +1060,7 @@ export default function FacturesWorkspace({
             Acompte déduit
           </label>
           <input
+            data-testid="facture-acompte-deduit"
             type="number"
             step="0.01"
             value={formulaire.acompteDeduit}
@@ -1085,6 +1094,7 @@ export default function FacturesWorkspace({
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button
+          data-testid="facture-save"
           onClick={enregistrerFacture}
           disabled={sauvegardeEnCours}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
@@ -1141,6 +1151,7 @@ export default function FacturesWorkspace({
           </button>
 
           <button
+            data-testid="facture-export-pdf"
             onClick={handleExporterPdf}
             className="rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
           >
@@ -1199,6 +1210,7 @@ export default function FacturesWorkspace({
           </button>
 
           <button
+            data-testid="facture-export-pdf"
             onClick={handleExporterPdf}
             className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
           >
@@ -1516,6 +1528,7 @@ export default function FacturesWorkspace({
               facturesFiltrees.map((facture) => (
                 <button
                   key={facture.id}
+                  data-testid="facture-list-item"
                   onClick={() => {
                     setAfficherActionsFactureMobile(false);
                     setFactureSelectionneeId(facture.id);

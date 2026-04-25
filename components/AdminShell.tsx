@@ -322,6 +322,7 @@ export default function AdminShell({
         return (
           <button
             key={item.id}
+            data-testid={`nav-${item.id}`}
             onClick={item.onClick}
             className={`flex w-full items-center gap-3 rounded-xl border text-left font-medium transition ${
               compact ? "px-3 py-2.5 text-sm" : "px-3 py-3 text-sm"
@@ -416,6 +417,7 @@ export default function AdminShell({
                   {actionPrincipale && (
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                       <button
+                        data-testid="primary-action"
                         onClick={handleActionPrincipale}
                         className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
                       >

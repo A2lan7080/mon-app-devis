@@ -156,6 +156,7 @@ export default function LoginPage() {
                     Adresse email
                   </label>
                   <input
+                    data-testid="login-email"
                     type="email"
                     required
                     value={email}
@@ -183,6 +184,7 @@ export default function LoginPage() {
                   </div>
 
                   <input
+                    data-testid="login-password"
                     type="password"
                     required
                     value={password}
@@ -206,6 +208,7 @@ export default function LoginPage() {
                 )}
 
                 <button
+                  data-testid="login-submit"
                   type="submit"
                   disabled={chargement || resetEnCours}
                   className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
