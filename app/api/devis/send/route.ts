@@ -4,6 +4,12 @@ import {
   renderDevisEmailHtml,
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
+import {
+  buildAcceptanceUrl,
+  generateAcceptanceToken,
+  getAcceptanceBaseUrl,
+  hashAcceptanceToken,
+} from "../../../../lib/devis-acceptance";
 import { adminAuth, adminDb } from "../../../../lib/firebase-admin";
 import type { Devis, Entreprise } from "../../../../types/devis";
 
@@ -162,9 +168,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const devisSnap = await adminDb.collection("devis").doc(devis.id).get();
+    const devisRef = adminDb.collection("devis").doc(devis.id);
+    const devisSnap = await devisRef.get();
     const devisFirestore = devisSnap.data() as
-      | { entrepriseId?: string }
+      | {
+          entrepriseId?: string;
+          acceptanceTokenHash?: string;
+          acceptanceTokenCreatedAt?: number;
+        }
       | undefined;
 
     if (
@@ -174,6 +185,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
     }
 
+    const acceptanceToken = generateAcceptanceToken();
+    const acceptanceTokenHash = hashAcceptanceToken(acceptanceToken);
+    const acceptanceUrl = buildAcceptanceUrl(
+      getAcceptanceBaseUrl(request),
+      acceptanceToken
+    );
+    const maintenant = Date.now();
+    const acceptanceLinkRef = adminDb
+      .collection("devisAcceptanceLinks")
+      .doc(acceptanceTokenHash);
+    const batch = adminDb.batch();
+
+    if (
+      devisFirestore?.acceptanceTokenHash &&
+      devisFirestore.acceptanceTokenHash !== acceptanceTokenHash
+    ) {
+      batch.delete(
+        adminDb
+          .collection("devisAcceptanceLinks")
+          .doc(devisFirestore.acceptanceTokenHash)
+      );
+    }
+
+    batch.set(acceptanceLinkRef, {
+      devisId: devis.id,
+      entrepriseId: securiteEmail.entrepriseId,
+      createdAt: maintenant,
+      sentToEmail: toEmail,
+    });
+
+    batch.update(devisRef, {
+      acceptanceTokenHash,
+      acceptanceTokenCreatedAt:
+        devisFirestore?.acceptanceTokenCreatedAt ?? maintenant,
+      acceptanceTokenLastSentAt: maintenant,
+    });
+
+    await batch.commit();
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Devis ${devis.id} - ${entreprise.nom}`;
 
@@ -181,8 +231,8 @@ export async function POST(request: Request) {
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
       to: [toEmail],
       subject,
-      html: renderDevisEmailHtml(devis, entreprise),
-      text: renderDevisEmailText(devis, entreprise),
+      html: renderDevisEmailHtml(devis, entreprise, acceptanceUrl),
+      text: renderDevisEmailText(devis, entreprise, acceptanceUrl),
     });
 
     if (error) {

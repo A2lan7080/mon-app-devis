@@ -25,6 +25,12 @@ export type Devis = {
   chantierTitre: string;
   tvaTaux: number;
   lignes: LigneDevis[];
+  acceptedAt?: number;
+  acceptedByName?: string;
+  acceptedByEmail?: string;
+  acceptanceTokenHash?: string;
+  acceptanceTokenCreatedAt?: number;
+  acceptanceTokenLastSentAt?: number;
 };
 
 export type NouveauDevisState = {

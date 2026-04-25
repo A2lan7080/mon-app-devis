@@ -169,9 +169,48 @@ function renderFooterEntreprise(entreprise: EntrepriseSettings) {
   `;
 }
 
+function renderAcceptanceBlock(acceptanceUrl?: string) {
+  const url = acceptanceUrl?.trim();
+
+  if (!url) return "";
+
+  const urlHtml = echapperHtml(url);
+
+  return `
+    <tr>
+      <td style="padding-bottom:16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ecfdf5; border:1px solid #bbf7d0; border-radius:16px;">
+          <tr>
+            <td style="padding:18px;">
+              <div style="font-size:18px; line-height:26px; font-weight:700; color:#064e3b;">
+                Accepter ce devis en ligne
+              </div>
+
+              <div style="margin-top:8px; font-size:14px; line-height:22px; color:#166534;">
+                Confirmez votre accord avec votre nom et votre adresse email.
+              </div>
+
+              <div style="margin-top:16px;">
+                <a href="${urlHtml}" style="display:inline-block; background:#047857; color:#ffffff; text-decoration:none; font-size:14px; line-height:20px; font-weight:700; padding:12px 18px; border-radius:12px;">
+                  Accepter le devis
+                </a>
+              </div>
+
+              <div style="margin-top:12px; font-size:12px; line-height:18px; color:#166534; word-break:break-all;">
+                ${urlHtml}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
 export function renderDevisEmailHtml(
   devis: DevisBusiness,
-  entreprise: EntrepriseSettings = entrepriseParDefaut
+  entreprise: EntrepriseSettings = entrepriseParDefaut,
+  acceptanceUrl?: string
 ) {
   const totalHt = calculerTotalHt(devis);
   const montantTva = calculerMontantTva(devis);
@@ -255,6 +294,8 @@ export function renderDevisEmailHtml(
                       </div>
                     </td>
                   </tr>
+
+                  ${renderAcceptanceBlock(acceptanceUrl)}
 
                   <tr>
                     <td style="padding-bottom:16px;">
@@ -429,7 +470,8 @@ export function renderDevisEmailHtml(
 
 export function renderDevisEmailText(
   devis: DevisBusiness,
-  entreprise: EntrepriseSettings = entrepriseParDefaut
+  entreprise: EntrepriseSettings = entrepriseParDefaut,
+  acceptanceUrl?: string
 ) {
   const totalHt = calculerTotalHt(devis);
   const montantTva = calculerMontantTva(devis);
@@ -480,6 +522,14 @@ TVA (${devis.tvaTaux}%) : ${formatMontant(montantTva)}
 Total TVAC : ${formatMontant(totalTvac)}
 Acompte (${devis.acomptePourcentage}%) : ${formatMontant(montantAcompte)}
 Solde à la livraison : ${formatMontant(soldeRestant)}
+
+${
+    acceptanceUrl?.trim()
+      ? `ACCEPTATION EN LIGNE
+Lien pour accepter le devis : ${acceptanceUrl.trim()}
+`
+      : ""
+  }
 
 Conditions :
 ${devis.conditions || "Aucune condition particulière."}
