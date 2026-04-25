@@ -50,14 +50,9 @@ function texteMultiligneOuDefaut(
 }
 
 function getLogoState(logoUrl?: string) {
-  if (!logoUrl) {
-    return { afficherLogo: false, blocLogo: "" };
-  }
+  const logoUrlNettoyee = logoUrl?.trim();
 
-  const estUrlPublique =
-    logoUrl.startsWith("https://") || logoUrl.startsWith("http://");
-
-  if (!estUrlPublique) {
+  if (!logoUrlNettoyee) {
     return { afficherLogo: false, blocLogo: "" };
   }
 
@@ -66,7 +61,7 @@ function getLogoState(logoUrl?: string) {
     blocLogo: `
       <div style="margin-bottom:14px;">
         <img
-          src="${echapperHtml(logoUrl)}"
+          src="${echapperHtml(logoUrlNettoyee)}"
           alt="Logo entreprise"
           style="max-height:130px; max-width:360px; width:auto; object-fit:contain; display:block;"
         />
@@ -84,8 +79,7 @@ function renderEntrepriseBloc(
     .filter(Boolean)
     .join(" · ");
 
-  const afficherNom =
-    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
+  const afficherNom = !afficherLogo;
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">
@@ -101,7 +95,7 @@ function renderEntrepriseBloc(
             afficherNom
               ? `
                 <div style="margin-top:6px; font-size:22px; line-height:30px; font-weight:700; color:#0f172a; word-break:break-word;">
-                  ${texteOuDefaut(entreprise.nom, "BatiFlow")}
+                  ${texteOuDefaut(entreprise.nom, "Entreprise")}
                 </div>
               `
               : ""
@@ -144,6 +138,34 @@ function renderEntrepriseBloc(
         </td>
       </tr>
     </table>
+  `;
+}
+
+function renderFooterEntreprise(entreprise: EntrepriseSettings) {
+  const infosEntreprise = [
+    entreprise.nom?.trim(),
+    entreprise.email?.trim(),
+    entreprise.telephone?.trim(),
+    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
+  ].filter(Boolean);
+
+  return `
+    <tr>
+      <td style="padding-top:4px; font-size:14px; line-height:24px; color:#475569;">
+        Merci pour votre confiance.
+        ${
+          infosEntreprise.length > 0
+            ? `
+              <div style="margin-top:10px; font-size:12px; line-height:20px; color:#64748b; word-break:break-word;">
+                ${infosEntreprise
+                  .map((info) => echapperHtml(info))
+                  .join(" &middot; ")}
+              </div>
+            `
+            : ""
+        }
+      </td>
+    </tr>
   `;
 }
 
@@ -392,12 +414,7 @@ export function renderDevisEmailHtml(
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-top:4px; font-size:14px; line-height:24px; color:#475569;">
-                      Merci pour votre confiance.<br />
-                      Cet email a été envoyé automatiquement depuis Batiflow.
-                    </td>
-                  </tr>
+                  ${renderFooterEntreprise(entreprise)}
                 </table>
               </td>
             </tr>
@@ -423,10 +440,19 @@ export function renderDevisEmailText(
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
     .filter(Boolean)
     .join(" · ");
+  const nomEntreprise = entreprise.nom?.trim() || "Entreprise";
+  const infosFooter = [
+    entreprise.nom?.trim(),
+    entreprise.email?.trim(),
+    entreprise.telephone?.trim(),
+    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join(" - ");
 
   return `
 ENTREPRISE
-${entreprise.nom}
+${nomEntreprise}
 Adresse : ${entreprise.adresse || "-"}
 Code postal / Ville : ${codePostalVille || "-"}
 Email : ${entreprise.email || "-"}
@@ -459,5 +485,6 @@ Conditions :
 ${devis.conditions || "Aucune condition particulière."}
 
 Merci pour votre confiance.
+${infosFooter || ""}
 `.trim();
 }
