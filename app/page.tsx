@@ -143,6 +143,11 @@ export default function Home() {
   const handleEnvoyerDevisParMail = async () => {
     if (!devisSelectionne) return;
 
+    if (devisSelectionne.statut === "Refusé") {
+      alert("Ce devis est refusé et ne peut plus être renvoyé.");
+      return;
+    }
+
     const emailClient = devisSelectionne.email?.trim();
 
     if (!emailClient) {
@@ -194,7 +199,6 @@ export default function Home() {
         devisSelectionne.statut !== "Accepté"
       ) {
         await updateDoc(getDevisDocRef(devisSelectionne.id), {
-          ...devisSelectionne,
           statut: "Envoyé",
         });
       }

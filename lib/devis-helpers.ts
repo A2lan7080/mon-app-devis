@@ -44,6 +44,77 @@ export const calculerMontantTva = (devis: Devis) => {
 export const calculerTotalTvac = (devis: Devis) =>
   calculerTotalHt(devis) + calculerMontantTva(devis);
 
+const MS_PAR_JOUR = 24 * 60 * 60 * 1000;
+
+const parserDateFr = (dateFr: string) => {
+  if (!dateFr) return null;
+
+  const [jour, mois, annee] = dateFr.split("/").map(Number);
+
+  if (!jour || !mois || !annee) return null;
+
+  const date = new Date(annee, mois - 1, jour);
+
+  if (
+    date.getFullYear() !== annee ||
+    date.getMonth() !== mois - 1 ||
+    date.getDate() !== jour
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const formatterDateFr = (date: Date) =>
+  new Intl.DateTimeFormat("fr-BE").format(date);
+
+const debutJour = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+export const calculerValiditeDevis = (
+  dateFr: string,
+  validiteJours: number,
+  maintenant = new Date()
+) => {
+  const dateEmission = parserDateFr(dateFr);
+  const duree = Math.floor(Number(validiteJours));
+
+  if (!dateEmission || !Number.isFinite(duree) || duree <= 0) {
+    return {
+      dateValidite: "",
+      expire: false,
+      joursRestants: null,
+      statutLabel: "Validité non renseignée",
+      label: "Validité non renseignée",
+    };
+  }
+
+  const dateValidite = new Date(dateEmission);
+  dateValidite.setDate(dateValidite.getDate() + duree);
+
+  const joursRestantsBruts = Math.ceil(
+    (debutJour(dateValidite).getTime() - debutJour(maintenant).getTime()) /
+      MS_PAR_JOUR
+  );
+  const expire = joursRestantsBruts < 0;
+  const joursRestants = expire ? null : joursRestantsBruts;
+  const statutLabel = expire
+    ? "Expiré"
+    : `${joursRestants} jour${joursRestants === 1 ? "" : "s"} restant${
+        joursRestants === 1 ? "" : "s"
+      }`;
+  const dateValiditeLabel = formatterDateFr(dateValidite);
+
+  return {
+    dateValidite: dateValiditeLabel,
+    expire,
+    joursRestants,
+    statutLabel,
+    label: `Jusqu'au ${dateValiditeLabel} - ${statutLabel}`,
+  };
+};
+
 export const formaterDate = (dateIso: string) => {
   if (!dateIso) return "";
   const [annee, mois, jour] = dateIso.split("-");

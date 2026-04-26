@@ -109,10 +109,16 @@ export function useDevisActions({
   ) => resolver(devisId);
 
   const afficherMessageDevisVerrouille = () => {
-    alert("Ce devis est accepté et ne peut plus être modifié.");
+    const statut = devisSelectionne?.statut;
+    alert(
+      statut === "Refusé"
+        ? "Ce devis est refusé et ne peut plus être modifié."
+        : "Ce devis est accepté et ne peut plus être modifié."
+    );
   };
 
-  const devisEstVerrouille = () => devisSelectionne?.statut === "Accepté";
+  const devisEstVerrouille = () =>
+    devisSelectionne?.statut === "Accepté" || devisSelectionne?.statut === "Refusé";
 
   const handleChangerStatut = async (
     nouveauStatut: StatutDevis,
@@ -309,9 +315,17 @@ export function useDevisActions({
 
     const numeroBase = genererNumeroDevis(devis);
     const nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
+    const devisSansAcceptation = Object.fromEntries(
+      Object.entries(devisSelectionne).filter(
+        ([champ]) =>
+          !champ.startsWith("accepted") &&
+          !champ.startsWith("acceptance") &&
+          !champ.startsWith("refused")
+      )
+    ) as DevisBusiness;
 
     const copie: DevisBusiness = {
-      ...devisSelectionne,
+      ...devisSansAcceptation,
       id: nouveauId,
       statut: "Brouillon",
       archive: false,

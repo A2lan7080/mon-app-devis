@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "../../../../../lib/firebase-admin";
 import { hashAcceptanceToken } from "../../../../../lib/devis-acceptance";
 import {
+  calculerValiditeDevis,
   calculerTotalHt,
   calculerTotalTvac,
   formatMontant,
@@ -37,6 +38,7 @@ type AcceptanceLink = {
 type AcceptanceBody = {
   name?: string;
   email?: string;
+  action?: "accept" | "refuse";
 };
 
 class AcceptanceError extends Error {
@@ -96,9 +98,20 @@ function normaliserIdentite(body: AcceptanceBody) {
   };
 }
 
+function normaliserAction(action?: string) {
+  if (!action) return "accept" as const;
+
+  if (action !== "accept" && action !== "refuse") {
+    throw new AcceptanceError("Action invalide.", 400);
+  }
+
+  return action;
+}
+
 function toPublicDevis(devis: DevisBusiness) {
   const totalHt = calculerTotalHt(devis);
   const totalTvac = calculerTotalTvac(devis);
+  const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
 
   return {
     id: devis.id,
@@ -111,9 +124,16 @@ function toPublicDevis(devis: DevisBusiness) {
     totalTvac,
     totalHtLabel: formatMontant(totalHt),
     totalTvacLabel: formatMontant(totalTvac),
+    dateValidite: validite.dateValidite,
+    validiteLabel: validite.label,
+    validiteExpiree: validite.expire,
+    joursRestants: validite.joursRestants,
     acceptedAt: devis.acceptedAt ?? null,
     acceptedByName: devis.acceptedByName ?? "",
     acceptedByEmail: devis.acceptedByEmail ?? "",
+    refusedAt: devis.refusedAt ?? null,
+    refusedByName: devis.refusedByName ?? "",
+    refusedByEmail: devis.refusedByEmail ?? "",
   };
 }
 
@@ -168,6 +188,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return jsonSuccess({
       devis: toPublicDevis(devis),
       alreadyAccepted: devis.statut === "Accepté" || Boolean(devis.acceptedAt),
+      alreadyRefused: devis.statut === "Refusé" || Boolean(devis.refusedAt),
     });
   } catch (error) {
     if (error instanceof AcceptanceError) {
@@ -184,12 +205,14 @@ export async function POST(request: Request, context: RouteContext) {
     const token = await getToken(context);
     const body = (await request.json()) as AcceptanceBody;
     const identite = normaliserIdentite(body);
+    const action = normaliserAction(body.action);
     const tokenHash = hashAcceptanceToken(token);
     const maintenant = Date.now();
     const linkRef = adminDb.collection("devisAcceptanceLinks").doc(tokenHash);
 
-    const acceptedDevis = await adminDb.runTransaction(async (transaction) => {
-      const acceptedStatut = "Accepté" as const;
+    const updatedDevis = await adminDb.runTransaction(async (transaction) => {
+      const statutFinal: DevisBusiness["statut"] =
+        action === "accept" ? "Accepté" : "Refusé";
       const linkSnap = await transaction.get(linkRef);
 
       if (!linkSnap.exists) {
@@ -219,42 +242,55 @@ export async function POST(request: Request, context: RouteContext) {
         throw new AcceptanceError("Lien d'acceptation invalide.", 404);
       }
 
-      if (devis.statut === "Accepté" || devis.acceptedAt) {
-        throw new AcceptanceError("Ce devis est déjà accepté.", 409);
+      if (
+        devis.statut === "Accepté" ||
+        devis.statut === "Refusé" ||
+        devis.acceptedAt ||
+        devis.refusedAt
+      ) {
+        throw new AcceptanceError("Ce devis est déjà traité.", 409);
       }
 
-      transaction.update(devisRef, {
-        statut: acceptedStatut,
-        acceptedAt: maintenant,
-        acceptedByName: identite.name,
-        acceptedByEmail: identite.email,
-      });
+      const updateDevis =
+        action === "accept"
+          ? {
+              statut: statutFinal,
+              acceptedAt: maintenant,
+              acceptedByName: identite.name,
+              acceptedByEmail: identite.email,
+            }
+          : {
+              statut: statutFinal,
+              refusedAt: maintenant,
+              refusedByName: identite.name,
+              refusedByEmail: identite.email,
+            };
+
+      transaction.update(devisRef, updateDevis);
 
       transaction.update(linkRef, {
         usedAt: maintenant,
+        usedAction: action,
         usedByName: identite.name,
         usedByEmail: identite.email,
       });
 
       return {
         ...devis,
-        statut: acceptedStatut,
-        acceptedAt: maintenant,
-        acceptedByName: identite.name,
-        acceptedByEmail: identite.email,
+        ...updateDevis,
       };
     });
 
     return jsonSuccess({
       success: true,
-      devis: toPublicDevis(acceptedDevis),
+      devis: toPublicDevis(updatedDevis),
     });
   } catch (error) {
     if (error instanceof AcceptanceError) {
       return jsonError(error.message, error.status);
     }
 
-    console.error("Erreur acceptation devis :", error);
-    return jsonError("Impossible d'accepter le devis.", 500);
+    console.error("Erreur traitement devis :", error);
+    return jsonError("Impossible de traiter le devis.", 500);
   }
 }

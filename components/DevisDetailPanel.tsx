@@ -4,6 +4,7 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import {
+  calculerValiditeDevis,
   calculerMontantTva,
   calculerTotalHt,
   calculerTotalTvac,
@@ -185,6 +186,15 @@ export default function DevisDetailPanel({
   const acompteSelectionne =
     totalTvacSelectionne * (devisSelectionne.acomptePourcentage / 100);
   const devisEstAccepte = devisSelectionne.statut === "Accepté";
+  const devisEstRefuse = devisSelectionne.statut === "Refusé";
+  const devisEstTraite = devisEstAccepte || devisEstRefuse;
+  const messageVerrouillage = devisEstAccepte
+    ? "Ce devis est accepté et ne peut plus être modifié."
+    : "Ce devis est refusé et ne peut plus être modifié.";
+  const validiteSelectionnee = calculerValiditeDevis(
+    devisSelectionne.date,
+    devisSelectionne.validiteJours
+  );
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(
     devisSelectionne.id
   );
@@ -222,10 +232,10 @@ export default function DevisDetailPanel({
           <div className="grid grid-cols-3 gap-2 md:hidden">
             <button
               onClick={ouvrirEdition}
-              disabled={devisEstAccepte}
+              disabled={devisEstTraite}
               title={
-                devisEstAccepte
-                  ? "Ce devis est accepté et ne peut plus être modifié."
+                devisEstTraite
+                  ? messageVerrouillage
                   : undefined
               }
               className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
@@ -260,7 +270,12 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={handleEnvoyerParMail}
-                disabled={envoiEnCours}
+                disabled={envoiEnCours || devisEstRefuse}
+                title={
+                  devisEstRefuse
+                    ? "Ce devis est refusé et ne peut plus être renvoyé."
+                    : undefined
+                }
                 className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
@@ -269,10 +284,10 @@ export default function DevisDetailPanel({
               {!devisSelectionne.archive ? (
                 <button
                   onClick={archiverDevis}
-                  disabled={devisEstAccepte}
+                  disabled={devisEstTraite}
                   title={
-                    devisEstAccepte
-                      ? "Ce devis est accepté et ne peut plus être modifié."
+                    devisEstTraite
+                      ? messageVerrouillage
                       : undefined
                   }
                   className={`w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ${actionVerrouilleClasses}`}
@@ -282,10 +297,10 @@ export default function DevisDetailPanel({
               ) : (
                 <button
                   onClick={restaurerDevis}
-                  disabled={devisEstAccepte}
+                  disabled={devisEstTraite}
                   title={
-                    devisEstAccepte
-                      ? "Ce devis est accepté et ne peut plus être modifié."
+                    devisEstTraite
+                      ? messageVerrouillage
                       : undefined
                   }
                   className={`w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 ${actionVerrouilleClasses}`}
@@ -296,10 +311,10 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={() => setAfficherStatutsMobile((prev) => !prev)}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 title={
-                  devisEstAccepte
-                    ? "Ce devis est accepté et ne peut plus changer de statut."
+                  devisEstTraite
+                    ? "Ce devis est déjà traité et ne peut plus changer de statut."
                     : undefined
                 }
                 className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 ${actionVerrouilleClasses}`}
@@ -311,28 +326,28 @@ export default function DevisDetailPanel({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleChangerStatut("Brouillon")}
-                    disabled={devisEstAccepte}
+                    disabled={devisEstTraite}
                     className={`rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 ${actionVerrouilleClasses}`}
                   >
                     Brouillon
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Envoyé")}
-                    disabled={devisEstAccepte}
+                    disabled={devisEstTraite}
                     className={`rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 ${actionVerrouilleClasses}`}
                   >
                     Envoyé
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Accepté")}
-                    disabled={devisEstAccepte}
+                    disabled={devisEstTraite}
                     className={`rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ${actionVerrouilleClasses}`}
                   >
                     Accepté
                   </button>
                   <button
                     onClick={() => handleChangerStatut("Refusé")}
-                    disabled={devisEstAccepte}
+                    disabled={devisEstTraite}
                     className={`rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ${actionVerrouilleClasses}`}
                   >
                     Refusé
@@ -342,10 +357,10 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={supprimerDevis}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 title={
-                  devisEstAccepte
-                    ? "Ce devis est accepté et ne peut plus être supprimé."
+                  devisEstTraite
+                    ? "Ce devis est déjà traité et ne peut plus être supprimé."
                     : undefined
                 }
                 className={`w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 ${actionVerrouilleClasses}`}
@@ -358,10 +373,10 @@ export default function DevisDetailPanel({
           <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
             <button
               onClick={ouvrirEdition}
-              disabled={devisEstAccepte}
+              disabled={devisEstTraite}
               title={
-                devisEstAccepte
-                  ? "Ce devis est accepté et ne peut plus être modifié."
+                devisEstTraite
+                  ? messageVerrouillage
                   : undefined
               }
               className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
@@ -386,7 +401,12 @@ export default function DevisDetailPanel({
             <button
               data-testid="devis-send-email"
               onClick={handleEnvoyerParMail}
-              disabled={envoiEnCours}
+              disabled={envoiEnCours || devisEstRefuse}
+              title={
+                devisEstRefuse
+                  ? "Ce devis est refusé et ne peut plus être renvoyé."
+                  : undefined
+              }
               className={`${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
             >
               {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
@@ -395,10 +415,10 @@ export default function DevisDetailPanel({
             {!devisSelectionne.archive ? (
               <button
                 onClick={archiverDevis}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 title={
-                  devisEstAccepte
-                    ? "Ce devis est accepté et ne peut plus être modifié."
+                  devisEstTraite
+                    ? messageVerrouillage
                     : undefined
                 }
                 className={`${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 ${actionVerrouilleClasses}`}
@@ -408,10 +428,10 @@ export default function DevisDetailPanel({
             ) : (
               <button
                 onClick={restaurerDevis}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 title={
-                  devisEstAccepte
-                    ? "Ce devis est accepté et ne peut plus être modifié."
+                  devisEstTraite
+                    ? messageVerrouillage
                     : undefined
                 }
                 className={`${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ${actionVerrouilleClasses}`}
@@ -422,10 +442,10 @@ export default function DevisDetailPanel({
 
             <button
               onClick={supprimerDevis}
-              disabled={devisEstAccepte}
+              disabled={devisEstTraite}
               title={
-                devisEstAccepte
-                  ? "Ce devis est accepté et ne peut plus être supprimé."
+                devisEstTraite
+                  ? "Ce devis est déjà traité et ne peut plus être supprimé."
                   : undefined
               }
               className={`${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1 ${actionVerrouilleClasses}`}
@@ -441,8 +461,8 @@ export default function DevisDetailPanel({
                   Changer le statut
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {devisEstAccepte
-                    ? "Ce devis est accepté et son statut est verrouillé."
+                  {devisEstTraite
+                    ? "Ce devis est déjà traité et son statut est verrouillé."
                     : "Mets rapidement à jour l’état commercial du devis."}
                 </p>
               </div>
@@ -459,7 +479,7 @@ export default function DevisDetailPanel({
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <button
                 onClick={() => handleChangerStatut("Brouillon")}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 ${actionVerrouilleClasses}`}
               >
                 Mettre en brouillon
@@ -467,7 +487,7 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={() => handleChangerStatut("Envoyé")}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 className={`w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-100 ${actionVerrouilleClasses}`}
               >
                 Marquer envoyé
@@ -475,7 +495,7 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={() => handleChangerStatut("Accepté")}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 className={`w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 ${actionVerrouilleClasses}`}
               >
                 Marquer accepté
@@ -483,7 +503,7 @@ export default function DevisDetailPanel({
 
               <button
                 onClick={() => handleChangerStatut("Refusé")}
-                disabled={devisEstAccepte}
+                disabled={devisEstTraite}
                 className={`w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100 ${actionVerrouilleClasses}`}
               >
                 Marquer refusé
@@ -491,6 +511,41 @@ export default function DevisDetailPanel({
             </div>
           </div>
         </div>
+
+        {(devisSelectionne.acceptedAt || devisSelectionne.refusedAt) && (
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            {devisSelectionne.acceptedAt && (
+              <>
+                <p className="text-sm font-semibold text-emerald-700">
+                  Preuve d&apos;acceptation
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  Accepté par {devisSelectionne.acceptedByName || "Client"} (
+                  {devisSelectionne.acceptedByEmail || "email non renseigné"})
+                  le{" "}
+                  {new Date(devisSelectionne.acceptedAt).toLocaleString(
+                    "fr-BE"
+                  )}
+                </p>
+              </>
+            )}
+
+            {devisSelectionne.refusedAt && (
+              <div className={devisSelectionne.acceptedAt ? "mt-4" : ""}>
+                <p className="text-sm font-semibold text-red-700">
+                  Preuve de refus
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  Refusé par {devisSelectionne.refusedByName || "Client"} (
+                  {devisSelectionne.refusedByEmail || "email non renseigné"}) le{" "}
+                  {new Date(devisSelectionne.refusedAt).toLocaleString(
+                    "fr-BE"
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 space-y-4">
           <div className="rounded-2xl bg-slate-50 p-4">
@@ -552,7 +607,16 @@ export default function DevisDetailPanel({
             <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
               <p className="text-sm text-slate-500">Validité</p>
               <p className="mt-1 font-semibold">
-                {devisSelectionne.validiteJours} jours
+                {validiteSelectionnee.dateValidite
+                  ? `Jusqu'au ${validiteSelectionnee.dateValidite}`
+                  : `${devisSelectionne.validiteJours} jours`}
+              </p>
+              <p
+                className={`mt-1 text-sm font-medium ${
+                  validiteSelectionnee.expire ? "text-red-700" : "text-slate-600"
+                }`}
+              >
+                {validiteSelectionnee.statutLabel}
               </p>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { entreprise as entrepriseParDefaut } from "./devis-constants";
 import {
+  calculerValiditeDevis,
   calculerMontantTva,
   calculerTotalHt,
   calculerTotalTvac,
@@ -219,6 +220,7 @@ export function renderDevisEmailHtml(
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
+  const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
 
   const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
 
@@ -292,7 +294,9 @@ export function renderDevisEmailHtml(
                       </div>
 
                       <div style="font-size:14px; line-height:22px; color:#475569;">
-                        <strong>Validité :</strong> ${devis.validiteJours} jours
+                        <strong>Validité :</strong> ${echapperHtml(
+                          validite.label
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -481,6 +485,7 @@ export function renderDevisEmailText(
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
+  const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
 
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
     .filter(Boolean)
@@ -507,7 +512,7 @@ TVA : ${entreprise.tva || "-"}
 DEVIS ${numeroDevisAffiche}
 Date : ${devis.date}
 Statut : ${devis.statut}
-Validité : ${devis.validiteJours} jours
+Validité : ${validite.label}
 
 CLIENT
 Client : ${devis.client}

@@ -229,13 +229,17 @@ export async function POST(request: Request) {
     const subject = `Devis ${formatNumeroDevisPourAffichage(devis.id)} - ${
       entreprise.nom
     }`;
+    const devisPourEmail: DevisBusiness = {
+      ...devis,
+      statut: "Envoyé",
+    };
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
       to: [toEmail],
       subject,
-      html: renderDevisEmailHtml(devis, entreprise, acceptanceUrl),
-      text: renderDevisEmailText(devis, entreprise, acceptanceUrl),
+      html: renderDevisEmailHtml(devisPourEmail, entreprise, acceptanceUrl),
+      text: renderDevisEmailText(devisPourEmail, entreprise, acceptanceUrl),
     });
 
     if (error) {

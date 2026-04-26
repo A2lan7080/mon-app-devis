@@ -3,6 +3,7 @@ import {
   type EntrepriseSettings,
 } from "./get-entreprise-settings";
 import {
+  calculerValiditeDevis,
   calculerMontantTva,
   calculerTotalHt,
   calculerTotalTvac,
@@ -130,6 +131,175 @@ function getBlocEntreprise(entreprise: EntrepriseSettings) {
   `;
 }
 
+function formaterHorodatage(timestamp?: number) {
+  if (!timestamp || !Number.isFinite(timestamp)) return "";
+
+  return new Intl.DateTimeFormat("fr-BE", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(timestamp));
+}
+
+function getStatutPdfClasse(statut: DevisBusiness["statut"]) {
+  switch (statut) {
+    case "Accepté":
+      return "status-accepted";
+    case "Refusé":
+      return "status-refused";
+    case "Envoyé":
+      return "status-sent";
+    case "Brouillon":
+    default:
+      return "status-draft";
+  }
+}
+
+function getPreuveElectroniqueHtml(devis: DevisBusiness) {
+  if (devis.statut === "Accepté") {
+    return `
+      <div class="card proof-card proof-accepted">
+        <div class="label">Preuve électronique</div>
+        <div class="proof-title">Accepté électroniquement</div>
+        <div class="proof-grid">
+          <div>
+            <div class="info-label">Date</div>
+            <div class="info-value">${texteOuDefaut(
+              formaterHorodatage(devis.acceptedAt)
+            )}</div>
+          </div>
+          <div>
+            <div class="info-label">Nom</div>
+            <div class="info-value">${texteOuDefaut(
+              devis.acceptedByName,
+              "Non renseigné"
+            )}</div>
+          </div>
+          <div>
+            <div class="info-label">Email</div>
+            <div class="info-value">${texteOuDefaut(
+              devis.acceptedByEmail,
+              "Non renseigné"
+            )}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (devis.statut === "Refusé") {
+    return `
+      <div class="card proof-card proof-refused">
+        <div class="label">Preuve électronique</div>
+        <div class="proof-title">Refusé électroniquement</div>
+        <div class="proof-grid">
+          <div>
+            <div class="info-label">Date</div>
+            <div class="info-value">${texteOuDefaut(
+              formaterHorodatage(devis.refusedAt)
+            )}</div>
+          </div>
+          <div>
+            <div class="info-label">Nom</div>
+            <div class="info-value">${texteOuDefaut(
+              devis.refusedByName,
+              "Non renseigné"
+            )}</div>
+          </div>
+          <div>
+            <div class="info-label">Email</div>
+            <div class="info-value">${texteOuDefaut(
+              devis.refusedByEmail,
+              "Non renseigné"
+            )}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return "";
+}
+
+function getSignatureEntrepriseHtml(entreprise: EntrepriseSettings) {
+  return `
+    <div class="signature-box">
+      <div class="label">Pour l’entreprise</div>
+      <div class="signature-name">${texteOuDefaut(
+        entreprise.nom,
+        "BatiFlow"
+      )}</div>
+      <div class="signature-field">
+        <span>Date</span>
+      </div>
+      <div class="signature-field">
+        <span>Nom</span>
+      </div>
+      <div class="signature-field signature-field-large">
+        <span>Signature</span>
+      </div>
+    </div>
+  `;
+}
+
+function getSignatureClientHtml(devis: DevisBusiness) {
+  if (devis.statut === "Accepté" && devis.acceptedAt) {
+    return `
+      <div class="signature-box">
+        <div class="label">Pour le client</div>
+        <div class="signature-proof-title">Accepté électroniquement</div>
+        <div class="signature-proof-line">
+          Date : ${texteOuDefaut(formaterHorodatage(devis.acceptedAt))}
+        </div>
+        <div class="signature-proof-line">
+          Nom : ${texteOuDefaut(devis.acceptedByName, "Non renseigné")}
+        </div>
+        <div class="signature-proof-line">
+          Email : ${texteOuDefaut(devis.acceptedByEmail, "Non renseigné")}
+        </div>
+        <div class="signature-electronic-mark">Signature électronique enregistrée</div>
+      </div>
+    `;
+  }
+
+  if (devis.statut === "Refusé" && devis.refusedAt) {
+    return `
+      <div class="signature-box">
+        <div class="label">Pour le client</div>
+        <div class="signature-proof-title signature-proof-title-refused">Refusé électroniquement</div>
+        <div class="signature-proof-line">
+          Date : ${texteOuDefaut(formaterHorodatage(devis.refusedAt))}
+        </div>
+        <div class="signature-proof-line">
+          Nom : ${texteOuDefaut(devis.refusedByName, "Non renseigné")}
+        </div>
+        <div class="signature-proof-line">
+          Email : ${texteOuDefaut(devis.refusedByEmail, "Non renseigné")}
+        </div>
+        <div class="signature-electronic-mark signature-electronic-mark-refused">Signature électronique de refus enregistrée</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="signature-box">
+      <div class="label">Pour le client</div>
+      <div class="signature-name">${texteOuDefaut(
+        devis.client,
+        "Client"
+      )}</div>
+      <div class="signature-field">
+        <span>Date</span>
+      </div>
+      <div class="signature-field">
+        <span>Nom</span>
+      </div>
+      <div class="signature-field signature-field-large">
+        <span>Signature</span>
+      </div>
+    </div>
+  `;
+}
+
 function getPrintScript() {
   return `
     <script>
@@ -176,6 +346,10 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
   const soldeRestant = totalTvac - montantAcompte;
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(
     devisSelectionne.id
+  );
+  const validite = calculerValiditeDevis(
+    devisSelectionne.date,
+    devisSelectionne.validiteJours
   );
 
   const fenetre = window.open("", "_blank", "width=1100,height=900");
@@ -255,6 +429,36 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
             color: #334155;
             font-size: 11px;
             line-height: 1.3;
+          }
+
+          .status-pill {
+            display: inline-block;
+            margin: 2px 0 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 10px;
+            line-height: 1;
+            font-weight: 800;
+          }
+
+          .status-draft {
+            background: #f1f5f9;
+            color: #334155;
+          }
+
+          .status-sent {
+            background: #dbeafe;
+            color: #1d4ed8;
+          }
+
+          .status-accepted {
+            background: #dcfce7;
+            color: #15803d;
+          }
+
+          .status-refused {
+            background: #fee2e2;
+            color: #b91c1c;
           }
 
           .card {
@@ -438,6 +642,41 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
             line-height: 1.4;
           }
 
+          .proof-card {
+            border-width: 1.5px;
+          }
+
+          .proof-accepted {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+          }
+
+          .proof-refused {
+            border-color: #fecaca;
+            background: #fef2f2;
+          }
+
+          .proof-title {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.25;
+            font-weight: 900;
+          }
+
+          .proof-accepted .proof-title {
+            color: #15803d;
+          }
+
+          .proof-refused .proof-title {
+            color: #b91c1c;
+          }
+
+          .proof-grid {
+            display: grid;
+            grid-template-columns: 0.8fr 1fr 1.2fr;
+            gap: 8px 14px;
+          }
+
           .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -448,10 +687,74 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           }
 
           .signature-box {
-            min-height: 72px;
+            min-height: 142px;
             border: 1px solid #dbe4ef;
             border-radius: 13px;
             padding: 12px;
+          }
+
+          .signature-box-legacy {
+            display: none;
+          }
+
+          .signature-name {
+            min-height: 18px;
+            margin-bottom: 10px;
+            color: #0f172a;
+            font-size: 12px;
+            line-height: 1.3;
+            font-weight: 800;
+            word-break: break-word;
+          }
+
+          .signature-field {
+            display: flex;
+            align-items: flex-end;
+            height: 26px;
+            margin-top: 6px;
+            border-bottom: 1px solid #cbd5e1;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+          }
+
+          .signature-field-large {
+            height: 42px;
+          }
+
+          .signature-proof-title {
+            margin-bottom: 8px;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 900;
+          }
+
+          .signature-proof-title-refused {
+            color: #b91c1c;
+          }
+
+          .signature-proof-line {
+            margin-top: 4px;
+            color: #334155;
+            font-size: 10px;
+            line-height: 1.35;
+            word-break: break-word;
+          }
+
+          .signature-electronic-mark {
+            margin-top: 12px;
+            border-top: 1px solid #bbf7d0;
+            padding-top: 8px;
+            color: #15803d;
+            font-size: 10px;
+            font-weight: 800;
+          }
+
+          .signature-electronic-mark-refused {
+            border-top-color: #fecaca;
+            color: #b91c1c;
           }
 
           .footer {
@@ -493,14 +796,17 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
               <p class="doc-line"><strong>Date :</strong> ${texteOuDefaut(
                 devisSelectionne.date
               )}</p>
-              <p class="doc-line"><strong>Statut :</strong> ${texteOuDefaut(
+              <div class="doc-line"><strong>Statut :</strong></div>
+              <div class="status-pill ${getStatutPdfClasse(
                 devisSelectionne.statut
-              )}</p>
+              )}">${texteOuDefaut(devisSelectionne.statut)}</div>
               <p class="doc-line"><strong>Validité :</strong> ${
-                devisSelectionne.validiteJours
-              } jours</p>
+                validite.label
+              }</p>
             </div>
           </div>
+
+          ${getPreuveElectroniqueHtml(devisSelectionne)}
 
           <div class="card">
             <div class="label">Client</div>
@@ -612,14 +918,10 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           </div>
 
           <div class="signature-grid">
-            <div class="signature-box">
-              <div class="label">Pour le client</div>
-              <div class="conditions-text">
-                Bon pour accord, date, nom et signature.
-              </div>
-            </div>
+            ${getSignatureEntrepriseHtml(entreprise)}
+            ${getSignatureClientHtml(devisSelectionne)}
 
-            <div class="signature-box">
+            <div class="signature-box signature-box-legacy">
               <div class="label">Pour l’entreprise</div>
               <div class="conditions-text">
                 ${texteOuDefaut(entreprise.nom, "BatiFlow")}
@@ -628,9 +930,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           </div>
 
           <div class="footer">
-            Merci pour votre confiance. Ce devis est valable ${
-              devisSelectionne.validiteJours
-            } jours à compter de sa date d’émission.
+            Merci pour votre confiance. Ce devis est valable ${validite.label}.
           </div>
         </div>
 

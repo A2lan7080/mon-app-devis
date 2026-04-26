@@ -9,16 +9,24 @@ type PublicDevis = {
   statut: string;
   chantierTitre: string;
   validiteJours: number;
+  dateValidite: string;
+  validiteLabel: string;
+  validiteExpiree: boolean;
+  joursRestants: number | null;
   totalHtLabel: string;
   totalTvacLabel: string;
   acceptedAt: number | null;
   acceptedByName: string;
   acceptedByEmail: string;
+  refusedAt: number | null;
+  refusedByName: string;
+  refusedByEmail: string;
 };
 
 type ApiResponse = {
   devis?: PublicDevis;
   alreadyAccepted?: boolean;
+  alreadyRefused?: boolean;
   success?: boolean;
   error?: string;
 };
@@ -30,8 +38,11 @@ type Props = {
 export default function AcceptanceClient({ token }: Props) {
   const [devis, setDevis] = useState<PublicDevis | null>(null);
   const [alreadyAccepted, setAlreadyAccepted] = useState(false);
+  const [alreadyRefused, setAlreadyRefused] = useState(false);
   const [chargement, setChargement] = useState(true);
-  const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [actionEnCours, setActionEnCours] = useState<"accept" | "refuse" | null>(
+    null
+  );
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -59,6 +70,7 @@ export default function AcceptanceClient({ token }: Props) {
 
         setDevis(data.devis);
         setAlreadyAccepted(Boolean(data.alreadyAccepted));
+        setAlreadyRefused(Boolean(data.alreadyRefused));
       } catch (error) {
         setErreur(
           error instanceof Error
@@ -73,8 +85,12 @@ export default function AcceptanceClient({ token }: Props) {
     void chargerDevis();
   }, [endpoint]);
 
-  const accepterDevis = async (event: FormEvent<HTMLFormElement>) => {
+  const traiterDevis = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const submitter = (event.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement | null;
+    const action = submitter?.value === "refuse" ? "refuse" : "accept";
 
     if (!nom.trim() || !email.trim()) {
       setErreur("Le nom et l'adresse email sont obligatoires.");
@@ -82,7 +98,7 @@ export default function AcceptanceClient({ token }: Props) {
     }
 
     try {
-      setEnvoiEnCours(true);
+      setActionEnCours(action);
       setErreur("");
       setMessage("");
 
@@ -92,6 +108,7 @@ export default function AcceptanceClient({ token }: Props) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          action,
           name: nom,
           email,
         }),
@@ -99,20 +116,25 @@ export default function AcceptanceClient({ token }: Props) {
       const data = (await response.json()) as ApiResponse;
 
       if (!response.ok || !data.success || !data.devis) {
-        throw new Error(data.error || "Impossible d'accepter le devis.");
+        throw new Error(data.error || "Impossible de traiter le devis.");
       }
 
       setDevis(data.devis);
-      setAlreadyAccepted(true);
-      setMessage("Merci, votre acceptation a bien été enregistrée.");
+      setAlreadyAccepted(action === "accept");
+      setAlreadyRefused(action === "refuse");
+      setMessage(
+        action === "accept"
+          ? "Merci, votre acceptation a bien été enregistrée."
+          : "Votre refus a bien été enregistré."
+      );
     } catch (error) {
       setErreur(
         error instanceof Error
           ? error.message
-          : "Impossible d'accepter le devis."
+          : "Impossible de traiter le devis."
       );
     } finally {
-      setEnvoiEnCours(false);
+      setActionEnCours(null);
     }
   };
 
@@ -183,6 +205,24 @@ export default function AcceptanceClient({ token }: Props) {
                     {devis.totalTvacLabel}
                   </p>
                 </div>
+
+                <div className="rounded-xl bg-slate-50 p-4 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Validité
+                  </p>
+                  <p className="mt-2 font-semibold text-slate-950">
+                    {devis.dateValidite
+                      ? `Valable jusqu'au ${devis.dateValidite}`
+                      : `${devis.validiteJours} jours`}
+                  </p>
+                  <p
+                    className={`mt-1 text-sm font-medium ${
+                      devis.validiteExpiree ? "text-red-700" : "text-slate-600"
+                    }`}
+                  >
+                    {devis.validiteLabel}
+                  </p>
+                </div>
               </div>
 
               {alreadyAccepted ? (
@@ -196,8 +236,18 @@ export default function AcceptanceClient({ token }: Props) {
                     </p>
                   )}
                 </div>
+              ) : alreadyRefused ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                  <p className="font-semibold">Ce devis est refusé.</p>
+                  {devis.refusedAt && (
+                    <p className="mt-1">
+                      Refusé par {devis.refusedByName} ({devis.refusedByEmail})
+                      le {new Date(devis.refusedAt).toLocaleString("fr-BE")}
+                    </p>
+                  )}
+                </div>
               ) : (
-                <form onSubmit={accepterDevis} className="space-y-4">
+                <form onSubmit={traiterDevis} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -240,14 +290,32 @@ export default function AcceptanceClient({ token }: Props) {
                     </div>
                   )}
 
-                  <button
-                    data-testid="acceptance-submit"
-                    type="submit"
-                    disabled={envoiEnCours}
-                    className="w-full rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                  >
-                    {envoiEnCours ? "Acceptation..." : "Accepter le devis"}
-                  </button>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      data-testid="acceptance-submit"
+                      type="submit"
+                      name="action"
+                      value="accept"
+                      disabled={actionEnCours !== null}
+                      className="w-full rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    >
+                      {actionEnCours === "accept"
+                        ? "Acceptation..."
+                        : "Accepter le devis"}
+                    </button>
+
+                    <button
+                      type="submit"
+                      name="action"
+                      value="refuse"
+                      disabled={actionEnCours !== null}
+                      className="w-full rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    >
+                      {actionEnCours === "refuse"
+                        ? "Refus..."
+                        : "Refuser le devis"}
+                    </button>
+                  </div>
                 </form>
               )}
             </div>

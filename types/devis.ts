@@ -28,6 +28,9 @@ export type Devis = {
   acceptedAt?: number;
   acceptedByName?: string;
   acceptedByEmail?: string;
+  refusedAt?: number;
+  refusedByName?: string;
+  refusedByEmail?: string;
   acceptanceTokenHash?: string;
   acceptanceTokenCreatedAt?: number;
   acceptanceTokenLastSentAt?: number;
