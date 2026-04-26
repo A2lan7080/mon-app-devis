@@ -4,6 +4,7 @@ import {
   renderDevisEmailHtml,
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
+import { formatNumeroDevisPourAffichage } from "../../../../lib/format-numero-devis";
 import {
   buildAcceptanceUrl,
   generateAcceptanceToken,
@@ -225,7 +226,9 @@ export async function POST(request: Request) {
     await batch.commit();
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const subject = `Devis ${devis.id} - ${entreprise.nom}`;
+    const subject = `Devis ${formatNumeroDevisPourAffichage(devis.id)} - ${
+      entreprise.nom
+    }`;
 
     const { data, error } = await resend.emails.send({
       from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,

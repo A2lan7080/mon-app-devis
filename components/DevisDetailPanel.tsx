@@ -9,6 +9,7 @@ import {
   calculerTotalTvac,
   formatMontant,
 } from "../lib/devis-helpers";
+import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type { PrestationEdition } from "../hooks/useDevisActions";
 import type { Devis, NouvelleLigneState, StatutDevis } from "../types/devis";
 
@@ -184,6 +185,9 @@ export default function DevisDetailPanel({
   const acompteSelectionne =
     totalTvacSelectionne * (devisSelectionne.acomptePourcentage / 100);
   const devisEstAccepte = devisSelectionne.statut === "Accepté";
+  const numeroDevisAffiche = formatNumeroDevisPourAffichage(
+    devisSelectionne.id
+  );
 
   if (!modeEdition) {
     return (
@@ -193,7 +197,7 @@ export default function DevisDetailPanel({
             <div className="min-w-0">
               <p className="text-sm text-slate-500">Fiche devis</p>
               <h3 className="mt-1 break-all text-xl font-bold sm:text-2xl">
-                {devisSelectionne.id}
+                {numeroDevisAffiche}
               </h3>
             </div>
 
@@ -714,7 +718,7 @@ export default function DevisDetailPanel({
         <div className="min-w-0">
           <p className="text-sm text-slate-500">Édition devis</p>
           <h3 className="mt-1 break-all text-xl font-bold sm:text-2xl">
-            {devisSelectionne.id}
+            {numeroDevisAffiche}
           </h3>
         </div>
 

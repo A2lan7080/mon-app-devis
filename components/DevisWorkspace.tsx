@@ -9,6 +9,7 @@ import DevisList from "./DevisList";
 import DevisSearch from "./DevisSearch";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
+import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type {
   DevisBusiness,
   EditFormState,
@@ -111,7 +112,10 @@ export default function DevisWorkspace({
   const titreMobile = useMemo(() => {
     if (afficherFormulaire) return "Nouveau devis";
     if (!devisSelectionne) return "Détail devis";
-    return modeEdition ? `Édition ${devisSelectionne.id}` : devisSelectionne.id;
+    const numeroDevisAffiche = formatNumeroDevisPourAffichage(
+      devisSelectionne.id
+    );
+    return modeEdition ? `Édition ${numeroDevisAffiche}` : numeroDevisAffiche;
   }, [afficherFormulaire, devisSelectionne, modeEdition]);
 
   const fermerDetailMobile = () => {

@@ -5,6 +5,7 @@ import {
   calculerTotalTvac,
   formatMontant,
 } from "./devis-helpers";
+import { formatNumeroDevisPourAffichage } from "./format-numero-devis";
 import type { Devis, Entreprise } from "../types/devis";
 
 type DevisBusiness = Devis & {
@@ -217,6 +218,7 @@ export function renderDevisEmailHtml(
   const totalTvac = calculerTotalTvac(devis);
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
+  const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
 
   const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
 
@@ -258,7 +260,7 @@ export function renderDevisEmailHtml(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${echapperHtml(devis.id)}</title>
+    <title>${echapperHtml(numeroDevisAffiche)}</title>
   </head>
 
   <body style="margin:0; padding:0; background:#f1f5f9; font-family:Arial, sans-serif; color:#0f172a;">
@@ -278,7 +280,7 @@ export function renderDevisEmailHtml(
                       </div>
 
                       <div style="margin-top:6px; font-size:30px; line-height:36px; font-weight:700; color:#0f172a; word-break:break-word;">
-                        ${echapperHtml(devis.id)}
+                        ${echapperHtml(numeroDevisAffiche)}
                       </div>
 
                       <div style="margin-top:10px; font-size:14px; line-height:22px; color:#475569;">
@@ -478,6 +480,7 @@ export function renderDevisEmailText(
   const totalTvac = calculerTotalTvac(devis);
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
+  const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
 
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
     .filter(Boolean)
@@ -501,7 +504,7 @@ Email : ${entreprise.email || "-"}
 Téléphone : ${entreprise.telephone || "-"}
 TVA : ${entreprise.tva || "-"}
 
-DEVIS ${devis.id}
+DEVIS ${numeroDevisAffiche}
 Date : ${devis.date}
 Statut : ${devis.statut}
 Validité : ${devis.validiteJours} jours

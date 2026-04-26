@@ -8,6 +8,7 @@ import {
   calculerTotalTvac,
   formatMontant,
 } from "./devis-helpers";
+import { formatNumeroDevisPourAffichage } from "./format-numero-devis";
 import type { Devis } from "../types/devis";
 
 type DevisBusiness = Devis & {
@@ -173,6 +174,9 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
   const montantAcompte =
     totalTvac * (devisSelectionne.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
+  const numeroDevisAffiche = formatNumeroDevisPourAffichage(
+    devisSelectionne.id
+  );
 
   const fenetre = window.open("", "_blank", "width=1100,height=900");
 
@@ -206,7 +210,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
     <html lang="fr">
       <head>
         <meta charset="UTF-8" />
-        <title>${echapperHtml(devisSelectionne.id)}</title>
+        <title>${echapperHtml(numeroDevisAffiche)}</title>
         <style>
           * {
             box-sizing: border-box;
@@ -484,7 +488,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
             <div class="document-header">
               <h1 class="doc-title">Devis</h1>
               <p class="doc-line"><strong>N°</strong> ${echapperHtml(
-                devisSelectionne.id
+                numeroDevisAffiche
               )}</p>
               <p class="doc-line"><strong>Date :</strong> ${texteOuDefaut(
                 devisSelectionne.date

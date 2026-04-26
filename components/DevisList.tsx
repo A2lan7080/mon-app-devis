@@ -2,6 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { calculerTotalTvac, formatMontant } from "../lib/devis-helpers";
+import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type { DevisBusiness } from "../hooks/useDevisActions";
 
 type Props = {
@@ -60,7 +61,7 @@ export default function DevisList({
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {item.id}
+                    {formatNumeroDevisPourAffichage(item.id)}
                   </p>
 
                   <p className="mt-1 truncate text-sm text-slate-700">
