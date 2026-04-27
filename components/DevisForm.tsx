@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
@@ -40,6 +40,9 @@ type DevisFormProps = {
   devis: DevisBusiness[];
   entrepriseId?: string;
   createdByUid?: string;
+  formId?: string;
+  modePanneau?: boolean;
+  afficherEntete?: boolean;
   onDevisCree: (id: string) => void;
   onClose: () => void;
 };
@@ -55,10 +58,10 @@ const STATUTS_CHANTIER: StatutChantier[] = [
 ];
 
 const champFormulaireClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 sm:px-4 sm:py-3";
 
 const champDateMobileClasses =
-  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 sm:py-3";
 
 const styleDateMobile = {
   width: "100%",
@@ -104,6 +107,9 @@ export default function DevisForm({
   devis,
   entrepriseId,
   createdByUid,
+  formId,
+  modePanneau = false,
+  afficherEntete = true,
   onDevisCree,
   onClose,
 }: DevisFormProps) {
@@ -115,6 +121,15 @@ export default function DevisForm({
   const [nouveauChantierDateFin, setNouveauChantierDateFin] = useState("");
   const [nouveauChantierStatut, setNouveauChantierStatut] =
     useState<StatutChantier>("À planifier");
+
+  const [sectionClientMobileOuverte, setSectionClientMobileOuverte] =
+    useState(true);
+  const [sectionConditionsMobileOuverte, setSectionConditionsMobileOuverte] =
+    useState(false);
+  const [sectionTotauxMobileOuverte, setSectionTotauxMobileOuverte] =
+    useState(false);
+  const [bibliothequeMobileOuverte, setBibliothequeMobileOuverte] =
+    useState(false);
 
   const { clients } = useEntrepriseClients({
     authChargee: true,
@@ -341,6 +356,8 @@ export default function DevisForm({
   };
 
   const handleCreerDevis = async () => {
+    if (sauvegardeEnCours) return;
+
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
@@ -521,14 +538,103 @@ export default function DevisForm({
     }
   };
 
-  return (
-    <div
-      data-testid="devis-form"
-      className="mb-6 max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-6"
-    >
-      <h3 className="text-xl font-semibold sm:text-2xl">Créer un devis</h3>
+  const totalHtSaisie = useMemo(
+    () =>
+      lignes.reduce(
+        (total, ligne) =>
+          total +
+          (Number(ligne.quantite) || 0) * (Number(ligne.prixUnitaire) || 0),
+        0
+      ),
+    [lignes]
+  );
+  const tauxTvaSaisi = Number(nouveauDevis.tvaTaux) || 0;
+  const totalTvaSaisie = totalHtSaisie * (tauxTvaSaisi / 100);
+  const totalTtcSaisie = totalHtSaisie + totalTvaSaisie;
+  const acompteSaisi =
+    totalTtcSaisie * ((Number(nouveauDevis.acomptePourcentage) || 0) / 100);
+  const lignesRenseignees = lignes.filter((ligne) =>
+    ligne.designation.trim()
+  ).length;
 
-      <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void handleCreerDevis();
+  };
+
+  return (
+    <form
+      id={formId}
+      onSubmit={handleSubmit}
+      data-testid="devis-form"
+      className={
+        modePanneau
+          ? "max-w-full overflow-visible"
+          : "mb-6 max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-6"
+      }
+    >
+      {afficherEntete && (
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm text-slate-500">Nouveau devis</p>
+          <h3 className="mt-1 text-xl font-semibold sm:text-2xl">
+            Créer un devis
+          </h3>
+        </div>
+
+        <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm sm:grid-cols-4 lg:min-w-[28rem]">
+          <div>
+            <p className="text-xs text-slate-500">HT</p>
+            <p className="mt-1 font-semibold text-slate-900">
+              {formatMontant(totalHtSaisie)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">TVA</p>
+            <p className="mt-1 font-semibold text-slate-900">
+              {formatMontant(totalTvaSaisie)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">TTC</p>
+            <p className="mt-1 font-semibold text-slate-900">
+              {formatMontant(totalTtcSaisie)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Acompte</p>
+            <p className="mt-1 font-semibold text-slate-900">
+              {formatMontant(acompteSaisi)}
+            </p>
+          </div>
+        </div>
+      </div>
+      )}
+
+      <div className={`${afficherEntete ? "mt-6" : ""} grid min-w-0 max-w-full gap-2.5 sm:gap-6 xl:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)]`}>
+        <div className="min-w-0 space-y-2.5 sm:space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5">
+            <div className="mb-2 flex items-center justify-between gap-3 sm:mb-4">
+              <div>
+              <h4 className="text-sm font-semibold text-slate-900 sm:text-base">
+                Client et chantier
+              </h4>
+              <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+                Les informations principales du devis restent regroupées.
+              </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setSectionClientMobileOuverte((prev) => !prev)
+                }
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 md:hidden"
+              >
+                {sectionClientMobileOuverte ? "Masquer" : "Ouvrir"}
+              </button>
+            </div>
+
+      <div className={`${sectionClientMobileOuverte ? "grid" : "hidden"} min-w-0 max-w-full gap-3 sm:gap-4 md:grid md:grid-cols-2`}>
         <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client existant
@@ -584,7 +690,7 @@ export default function DevisForm({
             placeholder="Ex. Rénovation cuisine, pose châssis, dressing sur mesure..."
             className={champFormulaireClasses}
           />
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 hidden text-xs text-slate-400 sm:block">
             Si aucun client ni chantier n’est sélectionné, ils pourront être
             créés automatiquement à l’enregistrement du devis selon les
             informations saisies.
@@ -894,11 +1000,20 @@ export default function DevisForm({
           />
         </div>
       </div>
+          </div>
 
-      <div className="mt-4 min-w-0 overflow-hidden">
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Conditions
-        </label>
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5">
+        <button
+          type="button"
+          onClick={() => setSectionConditionsMobileOuverte((prev) => !prev)}
+          className="mb-2 flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-slate-900 sm:pointer-events-none sm:text-base"
+        >
+          <span>Conditions</span>
+          <span className="text-xs font-semibold text-slate-500 sm:hidden">
+            {sectionConditionsMobileOuverte ? "Masquer" : "Ouvrir"}
+          </span>
+        </button>
+        <div className={`${sectionConditionsMobileOuverte ? "block" : "hidden"} sm:block`}>
         <textarea
           value={nouveauDevis.conditions}
           onChange={(e) =>
@@ -907,17 +1022,20 @@ export default function DevisForm({
               conditions: e.target.value,
             }))
           }
-          rows={4}
+          rows={3}
           className={champFormulaireClasses}
         />
+        </div>
+          </div>
       </div>
 
-      <div className="mt-8 max-w-full overflow-hidden rounded-2xl bg-slate-50 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h4 className="text-lg font-semibold">Prestations du devis</h4>
-            <p className="mt-1 text-sm text-slate-500">
-              Ajoute des lignes manuellement ou depuis la bibliothèque en bas.
+        <div className="min-w-0 space-y-2.5 sm:space-y-4">
+      <div className="max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm sm:border-0 sm:p-5 sm:shadow-none">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+            <h4 className="text-base font-semibold sm:text-lg">Prestations</h4>
+            <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+              {lignesRenseignees} ligne{lignesRenseignees > 1 ? "s" : ""} renseignée{lignesRenseignees > 1 ? "s" : ""}. La bibliothèque reste juste dessous.
             </p>
           </div>
 
@@ -925,19 +1043,20 @@ export default function DevisForm({
             type="button"
             data-testid="devis-add-line"
             onClick={ajouterLigne}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
-            Ajouter une ligne
+            + Ligne
           </button>
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div>
+        <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-4">
           {lignes.map((ligne, index) => (
             <div
               key={index}
-              className="max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4"
+              className="max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-3 sm:rounded-2xl sm:p-4"
             >
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
                 <p className="text-sm font-semibold text-slate-700">
                   Ligne {index + 1}
                 </p>
@@ -946,16 +1065,16 @@ export default function DevisForm({
                   <button
                     type="button"
                     onClick={() => supprimerLigne(index)}
-                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                    className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 sm:px-3 sm:py-2"
                   >
                     Supprimer
                   </button>
                 )}
               </div>
 
-              <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="min-w-0 overflow-hidden xl:col-span-1">
-                  <label className="mb-2 block text-xs font-medium text-slate-500">
+              <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="col-span-2 min-w-0 overflow-hidden xl:col-span-1">
+                  <label className="mb-1 block text-xs font-medium text-slate-500 sm:mb-2">
                     Désignation
                   </label>
                   <input
@@ -1023,8 +1142,8 @@ export default function DevisForm({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Total ligne :{" "}
+              <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:mt-4 sm:px-4 sm:py-3 sm:text-sm">
+                Total :{" "}
                 <span className="font-semibold text-slate-900">
                   {formatMontant(
                     (Number(ligne.quantite) || 0) *
@@ -1036,19 +1155,27 @@ export default function DevisForm({
           ))}
         </div>
 
-        <div className="mt-6 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mt-2.5 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 sm:mt-6 sm:p-4">
+          <div className="flex items-center justify-between gap-3 lg:items-end">
             <div className="min-w-0">
-              <h5 className="text-base font-semibold text-slate-900">
+              <h5 className="text-sm font-semibold text-slate-900 sm:text-base">
                 Bibliothèque de prestations
               </h5>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 hidden text-sm text-slate-500 sm:block">
                 Sélectionne rapidement une prestation enregistrée pour l’ajouter
                 au devis.
               </p>
             </div>
 
-            <div className="w-full min-w-0 lg:max-w-sm">
+            <button
+              type="button"
+              onClick={() => setBibliothequeMobileOuverte((prev) => !prev)}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 md:hidden"
+            >
+              Bibliothèque
+            </button>
+
+            <div className={`${bibliothequeMobileOuverte ? "block" : "hidden"} w-full min-w-0 md:block lg:max-w-sm`}>
               <label className="mb-2 block text-xs font-medium text-slate-500">
                 Rechercher une prestation
               </label>
@@ -1062,6 +1189,7 @@ export default function DevisForm({
             </div>
           </div>
 
+          <div className={`${bibliothequeMobileOuverte ? "block" : "hidden"} md:block`}>
           {prestationsActives.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
               Aucune prestation n’est encore enregistrée dans la bibliothèque.
@@ -1104,14 +1232,88 @@ export default function DevisForm({
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
+      </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2.5 sm:hidden">
+            <button
+              type="button"
+              onClick={() => setSectionTotauxMobileOuverte((prev) => !prev)}
+              className="flex w-full items-center justify-between text-sm font-semibold text-slate-900"
+            >
+              <span>Totaux détaillés</span>
+              <span className="text-xs text-slate-500">
+                {sectionTotauxMobileOuverte ? "Masquer" : "Ouvrir"}
+              </span>
+            </button>
+            {sectionTotauxMobileOuverte && (
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">HT</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(totalHtSaisie)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">TVA</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(totalTvaSaisie)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">Acompte</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(acompteSaisi)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-3 py-2 shadow-[0_-8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4 sm:shadow-none">
+            <div className="flex items-center gap-3 sm:hidden">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-slate-500">Total TTC</p>
+                <p className="truncate text-lg font-bold text-slate-900">
+                  {formatMontant(totalTtcSaisie)}
+                </p>
+              </div>
+              <button
+                type="submit"
+                disabled={sauvegardeEnCours}
+                className="shrink-0 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {sauvegardeEnCours ? "..." : "Enregistrer"}
+              </button>
+            </div>
+
+            <div className="hidden sm:mb-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:text-sm">
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <p className="text-xs text-slate-500">HT</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {formatMontant(totalHtSaisie)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <p className="text-xs text-slate-500">TVA</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {formatMontant(totalTvaSaisie)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-900 px-3 py-2 text-white">
+                <p className="text-xs text-slate-300">TTC</p>
+                <p className="mt-1 font-semibold">
+                  {formatMontant(totalTtcSaisie)}
+                </p>
+              </div>
+            </div>
+
+      <div className="hidden flex-col gap-3 sm:flex sm:flex-row">
         <button
-          type="button"
+          type="submit"
           data-testid="devis-save"
-          onClick={handleCreerDevis}
           disabled={sauvegardeEnCours}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
@@ -1127,6 +1329,9 @@ export default function DevisForm({
           Annuler
         </button>
       </div>
-    </div>
+          </div>
+        </div>
+      </div>
+    </form>
   );
 }

@@ -115,6 +115,7 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
     await expect(page.getByTestId("devis-detail-status").first()).toContainText(
       /Accept/
     );
+    await page.getByRole("button", { name: "Fermer", exact: true }).first().click();
 
     await page.getByTestId("nav-factures").click();
     await expect(page.getByRole("heading", { name: "Factures" })).toBeVisible();

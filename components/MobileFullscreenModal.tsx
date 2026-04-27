@@ -18,14 +18,14 @@ export default function MobileFullscreenModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-80 w-screen max-w-[100vw] overflow-hidden md:hidden">
+    <div className="fixed inset-0 z-80 w-screen max-w-[100vw] overflow-hidden bg-slate-100 md:hidden">
       <button
         aria-label="Fermer"
-        className="absolute inset-0 bg-slate-900/40"
+        className="absolute inset-0"
         onClick={onClose}
       />
 
-      <div className="absolute inset-x-0 bottom-0 top-10 flex w-screen max-w-[100vw] min-w-0 flex-col overflow-hidden rounded-t-[28px] bg-slate-100 shadow-2xl">
+      <div className="absolute inset-0 flex w-screen max-w-[100vw] min-w-0 flex-col overflow-hidden bg-slate-100">
         <div className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4">
           <div className="min-w-0 flex-1 overflow-hidden">
             <p className="truncate text-xs font-medium uppercase tracking-wide text-slate-400">

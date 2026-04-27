@@ -72,6 +72,7 @@ type Props = {
   handleEnvoyerParMail: () => void;
   envoiEnCours: boolean;
   handleChangerStatut: (statut: StatutDevis) => void;
+  onClose?: () => void;
 };
 
 function getStatutClasses(statut: StatutDevis) {
@@ -90,10 +91,10 @@ function getStatutClasses(statut: StatutDevis) {
 }
 
 const champFormulaireClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 sm:px-4 sm:py-3";
 
 const champDateClasses =
-  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 sm:py-3";
 
 const styleDateMobile = {
   width: "100%",
@@ -135,11 +136,20 @@ export default function DevisDetailPanel({
   handleEnvoyerParMail,
   envoiEnCours,
   handleChangerStatut,
+  onClose,
 }: Props) {
   const [recherchePrestation, setRecherchePrestation] = useState("");
   const [afficherActionsMobile, setAfficherActionsMobile] = useState(false);
   const [afficherStatutsMobile, setAfficherStatutsMobile] = useState(false);
   const [bibliothequeEditionOuverte, setBibliothequeEditionOuverte] =
+    useState(false);
+  const [sectionClientEditionMobileOuverte, setSectionClientEditionMobileOuverte] =
+    useState(true);
+  const [
+    sectionConditionsEditionMobileOuverte,
+    setSectionConditionsEditionMobileOuverte,
+  ] = useState(false);
+  const [sectionTotauxEditionMobileOuverte, setSectionTotauxEditionMobileOuverte] =
     useState(false);
 
   const { prestations } = useEntreprisePrestations({
@@ -198,6 +208,20 @@ export default function DevisDetailPanel({
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(
     devisSelectionne.id
   );
+  const totalHtEdition = editLignes.reduce(
+    (total, ligne) =>
+      total +
+      (Number(ligne.quantite) || 0) * (Number(ligne.prixUnitaire) || 0),
+    0
+  );
+  const totalTvaEdition =
+    totalHtEdition * ((Number(editForm.tvaTaux) || 0) / 100);
+  const totalTvacEdition = totalHtEdition + totalTvaEdition;
+  const acompteEdition =
+    totalTvacEdition * ((Number(editForm.acomptePourcentage) || 0) / 100);
+  const lignesEditionRenseignees = editLignes.filter((ligne) =>
+    ligne.designation.trim()
+  ).length;
 
   if (!modeEdition) {
     return (
@@ -229,19 +253,15 @@ export default function DevisDetailPanel({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 md:hidden">
-            <button
-              onClick={ouvrirEdition}
-              disabled={devisEstTraite}
-              title={
-                devisEstTraite
-                  ? messageVerrouillage
-                  : undefined
-              }
-              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
-            >
-              Modifier
-            </button>
+          <div className="grid grid-cols-2 gap-2 md:hidden">
+            {!devisEstTraite && (
+              <button
+                onClick={ouvrirEdition}
+                className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              >
+                Modifier
+              </button>
+            )}
 
             <button
               data-testid="devis-export-pdf"
@@ -276,9 +296,9 @@ export default function DevisDetailPanel({
                     ? "Ce devis est refusé et ne peut plus être renvoyé."
                     : undefined
                 }
-                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60`}
               >
-                {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+                {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
               </button>
 
               {!devisSelectionne.archive ? (
@@ -290,7 +310,7 @@ export default function DevisDetailPanel({
                       ? messageVerrouillage
                       : undefined
                   }
-                  className={`w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ${actionVerrouilleClasses}`}
+                  className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ${actionVerrouilleClasses}`}
                 >
                   Archiver
                 </button>
@@ -303,7 +323,7 @@ export default function DevisDetailPanel({
                       ? messageVerrouillage
                       : undefined
                   }
-                  className={`w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 ${actionVerrouilleClasses}`}
+                  className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 ${actionVerrouilleClasses}`}
                 >
                   Restaurer
                 </button>
@@ -317,13 +337,13 @@ export default function DevisDetailPanel({
                     ? "Ce devis est déjà traité et ne peut plus changer de statut."
                     : undefined
                 }
-                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 ${actionVerrouilleClasses}`}
+                className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 ${actionVerrouilleClasses}`}
               >
                 Changer le statut
               </button>
 
               {afficherStatutsMobile && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`${devisEstTraite ? "hidden " : ""}grid grid-cols-2 gap-2`}>
                   <button
                     onClick={() => handleChangerStatut("Brouillon")}
                     disabled={devisEstTraite}
@@ -363,14 +383,30 @@ export default function DevisDetailPanel({
                     ? "Ce devis est déjà traité et ne peut plus être supprimé."
                     : undefined
                 }
-                className={`w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 ${actionVerrouilleClasses}`}
+                className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 ${actionVerrouilleClasses}`}
               >
                 Supprimer
               </button>
+
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                  Fermer
+                </button>
+              )}
             </div>
           )}
 
-          <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
+          {devisEstTraite && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              {messageVerrouillage} Les actions disponibles restent limitées à
+              la consultation, au PDF et à la duplication.
+            </div>
+          )}
+
+          <div className="hidden gap-2 md:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <button
               onClick={ouvrirEdition}
               disabled={devisEstTraite}
@@ -379,7 +415,7 @@ export default function DevisDetailPanel({
                   ? messageVerrouillage
                   : undefined
               }
-              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
+              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
             >
               Modifier
             </button>
@@ -407,9 +443,9 @@ export default function DevisDetailPanel({
                   ? "Ce devis est refusé et ne peut plus être renvoyé."
                   : undefined
               }
-              className={`${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
+              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
             >
-              {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+              {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
             </button>
 
             {!devisSelectionne.archive ? (
@@ -421,7 +457,7 @@ export default function DevisDetailPanel({
                     ? messageVerrouillage
                     : undefined
                 }
-                className={`${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 ${actionVerrouilleClasses}`}
+                className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 ${actionVerrouilleClasses}`}
               >
                 Archiver
               </button>
@@ -434,7 +470,7 @@ export default function DevisDetailPanel({
                     ? messageVerrouillage
                     : undefined
                 }
-                className={`${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ${actionVerrouilleClasses}`}
+                className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ${actionVerrouilleClasses}`}
               >
                 Restaurer
               </button>
@@ -448,13 +484,26 @@ export default function DevisDetailPanel({
                   ? "Ce devis est déjà traité et ne peut plus être supprimé."
                   : undefined
               }
-              className={`${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1 ${actionVerrouilleClasses}`}
+              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1 ${actionVerrouilleClasses}`}
             >
               Supprimer
             </button>
+
+            {onClose && (
+              <button
+                onClick={onClose}
+                className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              >
+                Fermer
+              </button>
+            )}
           </div>
 
-          <div className="hidden rounded-2xl bg-slate-50 p-4 md:block">
+          <div
+            className={`hidden rounded-2xl bg-slate-50 p-4 md:block ${
+              devisEstTraite ? "md:hidden" : ""
+            }`}
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
@@ -794,7 +843,57 @@ export default function DevisDetailPanel({
         </button>
       </div>
 
-      <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+      <div className="mt-4 hidden gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm sm:grid sm:grid-cols-4">
+        <div>
+          <p className="text-xs text-slate-500">HT</p>
+          <p className="mt-1 font-semibold text-slate-900">
+            {formatMontant(totalHtEdition)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">TVA</p>
+          <p className="mt-1 font-semibold text-slate-900">
+            {formatMontant(totalTvaEdition)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">TTC</p>
+          <p className="mt-1 font-semibold text-slate-900">
+            {formatMontant(totalTvacEdition)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">Acompte</p>
+          <p className="mt-1 font-semibold text-slate-900">
+            {formatMontant(acompteEdition)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid min-w-0 max-w-full gap-2.5 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)]">
+        <div className="min-w-0 space-y-2.5 sm:space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5">
+            <div className="mb-2 flex items-center justify-between gap-3 sm:mb-4">
+              <div>
+              <h4 className="text-sm font-semibold text-slate-900 sm:text-base">
+                Client et chantier
+              </h4>
+              <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+                Modifie les informations du devis sans changer sa structure.
+              </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setSectionClientEditionMobileOuverte((prev) => !prev)
+                }
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 md:hidden"
+              >
+                {sectionClientEditionMobileOuverte ? "Masquer" : "Ouvrir"}
+              </button>
+            </div>
+
+      <div className={`${sectionClientEditionMobileOuverte ? "grid" : "hidden"} min-w-0 max-w-full gap-3 sm:gap-4 md:grid md:grid-cols-2`}>
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
@@ -1058,11 +1157,22 @@ export default function DevisDetailPanel({
           />
         </div>
       </div>
+          </div>
 
-      <div className="mt-4 min-w-0 overflow-hidden">
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Conditions
-        </label>
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5">
+        <button
+          type="button"
+          onClick={() =>
+            setSectionConditionsEditionMobileOuverte((prev) => !prev)
+          }
+          className="mb-2 flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-slate-900 sm:pointer-events-none sm:text-base"
+        >
+          <span>Conditions</span>
+          <span className="text-xs font-semibold text-slate-500 sm:hidden">
+            {sectionConditionsEditionMobileOuverte ? "Masquer" : "Ouvrir"}
+          </span>
+        </button>
+        <div className={`${sectionConditionsEditionMobileOuverte ? "block" : "hidden"} sm:block`}>
         <textarea
           value={editForm.conditions}
           onChange={(e) =>
@@ -1071,23 +1181,32 @@ export default function DevisDetailPanel({
               conditions: e.target.value,
             }))
           }
-          rows={4}
+          rows={3}
           className={champFormulaireClasses}
         />
+        </div>
+          </div>
       </div>
 
-      <div className="mt-8 rounded-2xl bg-slate-50 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-lg font-semibold">Lignes de prestation</h4>
+        <div className="min-w-0 space-y-2.5 sm:space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm sm:border-0 sm:p-5 sm:shadow-none">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="min-w-0">
+            <h4 className="text-base font-semibold sm:text-lg">Prestations</h4>
+            <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+              {lignesEditionRenseignees} ligne{lignesEditionRenseignees > 1 ? "s" : ""} renseignée{lignesEditionRenseignees > 1 ? "s" : ""}.
+            </p>
+          </div>
           <button
             onClick={ajouterLigneEdition}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
-            Ajouter une ligne
+            + Ligne
           </button>
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div>
+        <div className="mt-3 space-y-3 sm:mt-4">
           {editLignes.map((ligne, index) => (
             <div
               key={`edition-${index}`}
@@ -1292,8 +1411,83 @@ export default function DevisDetailPanel({
           )}
         </div>
       </div>
+      </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2.5 sm:hidden">
+            <button
+              type="button"
+              onClick={() =>
+                setSectionTotauxEditionMobileOuverte((prev) => !prev)
+              }
+              className="flex w-full items-center justify-between text-sm font-semibold text-slate-900"
+            >
+              <span>Totaux détaillés</span>
+              <span className="text-xs text-slate-500">
+                {sectionTotauxEditionMobileOuverte ? "Masquer" : "Ouvrir"}
+              </span>
+            </button>
+            {sectionTotauxEditionMobileOuverte && (
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">HT</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(totalHtEdition)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">TVA</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(totalTvaEdition)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <p className="text-slate-500">Acompte</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {formatMontant(acompteEdition)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-3 py-2 shadow-[0_-8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4 sm:shadow-none">
+            <div className="flex items-center gap-3 sm:hidden">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-slate-500">Total TTC</p>
+                <p className="truncate text-lg font-bold text-slate-900">
+                  {formatMontant(totalTvacEdition)}
+                </p>
+              </div>
+              <button
+                onClick={enregistrerEdition}
+                className="shrink-0 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                Enregistrer
+              </button>
+            </div>
+
+            <div className="hidden sm:mb-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:text-sm">
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <p className="text-xs text-slate-500">HT</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {formatMontant(totalHtEdition)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <p className="text-xs text-slate-500">TVA</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {formatMontant(totalTvaEdition)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-900 px-3 py-2 text-white">
+                <p className="text-xs text-slate-300">TTC</p>
+                <p className="mt-1 font-semibold">
+                  {formatMontant(totalTvacEdition)}
+                </p>
+              </div>
+            </div>
+
+      <div className="hidden flex-col gap-3 sm:flex sm:flex-row">
         <button
           onClick={enregistrerEdition}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
@@ -1307,6 +1501,9 @@ export default function DevisDetailPanel({
         >
           Annuler
         </button>
+      </div>
+          </div>
+        </div>
       </div>
     </div>
   );

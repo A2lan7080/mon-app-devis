@@ -6,6 +6,7 @@ import DevisDetailPanel from "./DevisDetailPanel";
 import DevisForm from "./DevisForm";
 import DevisKpiCards from "./DevisKpiCards";
 import DevisList from "./DevisList";
+import DevisPreviewModal from "./DevisPreviewModal";
 import DevisSearch from "./DevisSearch";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
@@ -118,10 +119,69 @@ export default function DevisWorkspace({
     return modeEdition ? `Édition ${numeroDevisAffiche}` : numeroDevisAffiche;
   }, [afficherFormulaire, devisSelectionne, modeEdition]);
 
-  const fermerDetailMobile = () => {
+  const fermerDetail = () => {
     setModeEdition(false);
     setDevisSelectionneId(null);
   };
+  const detailOuvert = !afficherFormulaire && devisSelectionne !== null;
+  const creationFormDesktopId = "devis-create-form-desktop";
+  const devisEstVerrouille =
+    devisSelectionne?.statut === "Accepté" ||
+    devisSelectionne?.statut === "Refusé";
+  const actionsCreationDesktop = (
+    <button
+      type="submit"
+      form={creationFormDesktopId}
+      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+    >
+      Enregistrer
+    </button>
+  );
+  const actionsDetailDesktop = modeEdition ? (
+    <>
+      <button
+        type="button"
+        onClick={enregistrerEdition}
+        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+      >
+        Enregistrer
+      </button>
+      <button
+        type="button"
+        onClick={annulerEdition}
+        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+      >
+        Annuler
+      </button>
+    </>
+  ) : (
+    <>
+      {!devisEstVerrouille && (
+        <button
+          type="button"
+          onClick={handleEnvoyerParMail}
+          disabled={envoiEnCours}
+          className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={handleExporterPdf}
+        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+      >
+        PDF
+      </button>
+      <button
+        type="button"
+        onClick={dupliquerDevis}
+        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+      >
+        Dupliquer
+      </button>
+    </>
+  );
 
   return (
     <>
@@ -132,7 +192,7 @@ export default function DevisWorkspace({
         caSigne={caSigne}
       />
 
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="grid gap-4 lg:gap-6">
         <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
           <DevisSearch
             recherche={recherche}
@@ -152,43 +212,6 @@ export default function DevisWorkspace({
           />
         </div>
 
-        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6 xl:block">
-          {afficherFormulaire ? (
-            <DevisForm
-              devis={devis}
-              entrepriseId={entrepriseId}
-              createdByUid={createdByUid}
-              onDevisCree={onDevisCree}
-              onClose={onCloseFormulaire}
-            />
-          ) : (
-            <DevisDetailPanel
-              devisSelectionne={devisSelectionne}
-              modeEdition={modeEdition}
-              editForm={editForm}
-              setEditForm={setEditForm}
-              editLignes={editLignes}
-              entrepriseId={entrepriseId}
-              createdByUid={createdByUid}
-              setModeEdition={setModeEdition}
-              ouvrirEdition={ouvrirEdition}
-              annulerEdition={annulerEdition}
-              ajouterLigneEdition={ajouterLigneEdition}
-              ajouterPrestationEdition={ajouterPrestationEdition}
-              supprimerLigneEdition={supprimerLigneEdition}
-              mettreAJourLigneEdition={mettreAJourLigneEdition}
-              enregistrerEdition={enregistrerEdition}
-              dupliquerDevis={dupliquerDevis}
-              supprimerDevis={supprimerDevis}
-              archiverDevis={archiverDevis}
-              restaurerDevis={restaurerDevis}
-              handleExporterPdf={handleExporterPdf}
-              handleEnvoyerParMail={handleEnvoyerParMail}
-              envoiEnCours={envoiEnCours}
-              handleChangerStatut={handleChangerStatut}
-            />
-          )}
-        </div>
       </div>
 
       <MobileFullscreenModal
@@ -200,15 +223,18 @@ export default function DevisWorkspace({
           devis={devis}
           entrepriseId={entrepriseId}
           createdByUid={createdByUid}
+          formId="devis-create-form-mobile"
+          modePanneau
+          afficherEntete={false}
           onDevisCree={onDevisCree}
           onClose={onCloseFormulaire}
         />
       </MobileFullscreenModal>
 
       <MobileFullscreenModal
-        open={!afficherFormulaire && devisSelectionne !== null}
+        open={detailOuvert}
         title={titreMobile}
-        onClose={fermerDetailMobile}
+        onClose={fermerDetail}
       >
         <DevisDetailPanel
           devisSelectionne={devisSelectionne}
@@ -234,8 +260,63 @@ export default function DevisWorkspace({
           handleEnvoyerParMail={handleEnvoyerParMail}
           envoiEnCours={envoiEnCours}
           handleChangerStatut={handleChangerStatut}
+          onClose={fermerDetail}
         />
       </MobileFullscreenModal>
+
+      <DevisPreviewModal
+        open={afficherFormulaire}
+        title="Nouveau devis"
+        eyebrow="Création devis"
+        actions={actionsCreationDesktop}
+        onClose={onCloseFormulaire}
+      >
+        <DevisForm
+          devis={devis}
+          entrepriseId={entrepriseId}
+          createdByUid={createdByUid}
+          formId={creationFormDesktopId}
+          modePanneau
+          afficherEntete={false}
+          onDevisCree={onDevisCree}
+          onClose={onCloseFormulaire}
+        />
+      </DevisPreviewModal>
+
+      <DevisPreviewModal
+        open={detailOuvert}
+        title={titreMobile}
+        eyebrow={modeEdition ? "Modification devis" : "Consultation devis"}
+        actions={actionsDetailDesktop}
+        onClose={fermerDetail}
+      >
+        <DevisDetailPanel
+          devisSelectionne={devisSelectionne}
+          modeEdition={modeEdition}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          editLignes={editLignes}
+          entrepriseId={entrepriseId}
+          createdByUid={createdByUid}
+          setModeEdition={setModeEdition}
+          ouvrirEdition={ouvrirEdition}
+          annulerEdition={annulerEdition}
+          ajouterLigneEdition={ajouterLigneEdition}
+          ajouterPrestationEdition={ajouterPrestationEdition}
+          supprimerLigneEdition={supprimerLigneEdition}
+          mettreAJourLigneEdition={mettreAJourLigneEdition}
+          enregistrerEdition={enregistrerEdition}
+          dupliquerDevis={dupliquerDevis}
+          supprimerDevis={supprimerDevis}
+          archiverDevis={archiverDevis}
+          restaurerDevis={restaurerDevis}
+          handleExporterPdf={handleExporterPdf}
+          handleEnvoyerParMail={handleEnvoyerParMail}
+          envoiEnCours={envoiEnCours}
+          handleChangerStatut={handleChangerStatut}
+          onClose={fermerDetail}
+        />
+      </DevisPreviewModal>
     </>
   );
 }
