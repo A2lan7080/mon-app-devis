@@ -57,7 +57,10 @@ export function useEntrepriseDevis({
       devisQuery,
       (snapshot) => {
         const donnees = snapshot.docs
-          .map((item) => item.data() as DevisBusiness)
+          .map((item) => ({
+            ...(item.data() as DevisBusiness),
+            id: item.id,
+          }))
           .filter((item) => item && item.id && item.client)
           .sort((a, b) => {
             const aCreated = a.createdAt ?? 0;

@@ -130,8 +130,15 @@ export const convertirDateVersInput = (dateFr: string) => {
 };
 
 export const genererNumeroDevis = (devisExistants: Devis[]) => {
-  const prochainNumero = devisExistants.length + 1;
-  return `DEV-2026-${String(prochainNumero).padStart(3, "0")}`;
+  const plusGrandNumero = devisExistants.reduce((max, devis) => {
+    const match = devis.id?.match(/DEV-2026-(\d+)$/);
+    if (!match) return max;
+
+    const numero = Number(match[1]);
+    return Number.isNaN(numero) ? max : Math.max(max, numero);
+  }, 0);
+
+  return `DEV-2026-${String(plusGrandNumero + 1).padStart(3, "0")}`;
 };
 
 export const genererIdLigne = () =>

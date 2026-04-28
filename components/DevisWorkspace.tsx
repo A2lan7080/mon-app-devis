@@ -21,6 +21,21 @@ import type { NouvelleLigneState, StatutDevis } from "../types/devis";
 type FiltreStatut = "Tous" | StatutDevis;
 type FiltreArchivage = "actifs" | "archives" | "tous";
 
+type DevisAvecInfosEnvoi = DevisBusiness & {
+  sentAt?: unknown;
+  emailSentAt?: unknown;
+};
+
+function devisADejaEteEnvoye(devis: DevisAvecInfosEnvoi) {
+  const dateEnvoi =
+    devis.sentAt ?? devis.emailSentAt ?? devis.acceptanceTokenLastSentAt;
+
+  return (
+    (dateEnvoi !== undefined && dateEnvoi !== null && dateEnvoi !== "") ||
+    devis.statut === "Envoyé"
+  );
+}
+
 type Props = {
   devis: DevisBusiness[];
   devisFiltres: DevisBusiness[];
@@ -128,11 +143,15 @@ export default function DevisWorkspace({
   const devisEstVerrouille =
     devisSelectionne?.statut === "Accepté" ||
     devisSelectionne?.statut === "Refusé";
+  const libelleEnvoiDevis =
+    devisSelectionne && devisADejaEteEnvoye(devisSelectionne)
+      ? "Renvoyer"
+      : "Envoyer";
   const actionsCreationDesktop = (
     <button
       type="submit"
       form={creationFormDesktopId}
-      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+      className="bf-button-primary"
     >
       Enregistrer
     </button>
@@ -142,14 +161,14 @@ export default function DevisWorkspace({
       <button
         type="button"
         onClick={enregistrerEdition}
-        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        className="bf-button-primary"
       >
         Enregistrer
       </button>
       <button
         type="button"
         onClick={annulerEdition}
-        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        className="bf-button-secondary"
       >
         Annuler
       </button>
@@ -161,22 +180,22 @@ export default function DevisWorkspace({
           type="button"
           onClick={handleEnvoyerParMail}
           disabled={envoiEnCours}
-          className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="bf-button-soft disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
+          {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
         </button>
       )}
       <button
         type="button"
         onClick={handleExporterPdf}
-        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        className="bf-button-primary"
       >
         PDF
       </button>
       <button
         type="button"
         onClick={dupliquerDevis}
-        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        className="bf-button-secondary"
       >
         Dupliquer
       </button>
@@ -193,7 +212,7 @@ export default function DevisWorkspace({
       />
 
       <div className="grid gap-4 lg:gap-6">
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
+        <div className="bf-card min-w-0 overflow-hidden p-4 sm:p-5 md:p-6">
           <DevisSearch
             recherche={recherche}
             setRecherche={setRecherche}
@@ -206,6 +225,7 @@ export default function DevisWorkspace({
 
           <DevisList
             devis={devisFiltres}
+            totalDevis={devis.length}
             devisSelectionneId={devisSelectionneId}
             setDevisSelectionneId={setDevisSelectionneId}
             setModeEdition={setModeEdition}

@@ -29,7 +29,7 @@ export default function DevisSearch({
   statuts,
 }: Props) {
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
       <input
         type="text"
         value={recherche}

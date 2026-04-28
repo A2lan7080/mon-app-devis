@@ -4,6 +4,7 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import type { User } from "firebase/auth";
 import {
   deleteDoc,
+  getDoc,
   setDoc,
   updateDoc,
   type DocumentReference,
@@ -64,6 +65,11 @@ type UseDevisActionsParams = {
   setFiltreArchivage: Dispatch<SetStateAction<"actifs" | "archives" | "tous">>;
 };
 
+const STATUTS_DEVIS_VERROUILLES: StatutDevis[] = ["Accepté", "Refusé"];
+
+const devisEstStatutVerrouille = (statut?: StatutDevis | null) =>
+  statut ? STATUTS_DEVIS_VERROUILLES.includes(statut) : false;
+
 export function useDevisActions({
   devis,
   devisSelectionne,
@@ -108,8 +114,7 @@ export function useDevisActions({
     resolver: (devisId: string) => DocumentReference
   ) => resolver(devisId);
 
-  const afficherMessageDevisVerrouille = () => {
-    const statut = devisSelectionne?.statut;
+  const afficherMessageDevisVerrouille = (statut = devisSelectionne?.statut) => {
     alert(
       statut === "Refusé"
         ? "Ce devis est refusé et ne peut plus être modifié."
@@ -118,7 +123,7 @@ export function useDevisActions({
   };
 
   const devisEstVerrouille = () =>
-    devisSelectionne?.statut === "Accepté" || devisSelectionne?.statut === "Refusé";
+    devisEstStatutVerrouille(devisSelectionne?.statut);
 
   const handleChangerStatut = async (
     nouveauStatut: StatutDevis,
@@ -313,21 +318,43 @@ export function useDevisActions({
     if (!devisSelectionne || !user || !entrepriseIdCourante || !estAdmin)
       return;
 
-    const numeroBase = genererNumeroDevis(devis);
-    const nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
-    const devisSansAcceptation = Object.fromEntries(
-      Object.entries(devisSelectionne).filter(
-        ([champ]) =>
-          !champ.startsWith("accepted") &&
-          !champ.startsWith("acceptance") &&
-          !champ.startsWith("refused")
-      )
-    ) as DevisBusiness;
+    let numeroBase = genererNumeroDevis(devis);
+    let nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
+    let tentative = 0;
+
+    while (devis.some((item) => item.id === nouveauId)) {
+      tentative += 1;
+      numeroBase = genererNumeroDevis([
+        ...devis,
+        {
+          ...devisSelectionne,
+          id: `${entrepriseIdCourante}-DEV-2026-${String(
+            devis.length + tentative
+          ).padStart(3, "0")}`,
+        },
+      ]);
+      nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
+    }
 
     const copie: DevisBusiness = {
-      ...devisSansAcceptation,
       id: nouveauId,
+      client: devisSelectionne.client,
       statut: "Brouillon",
+      date: devisSelectionne.date,
+      adresse: devisSelectionne.adresse,
+      codePostal: devisSelectionne.codePostal,
+      ville: devisSelectionne.ville,
+      email: devisSelectionne.email,
+      telephone: devisSelectionne.telephone,
+      typeClient: devisSelectionne.typeClient,
+      societe: devisSelectionne.societe,
+      tvaClient: devisSelectionne.tvaClient,
+      chantierId: devisSelectionne.chantierId,
+      chantierTitre: devisSelectionne.chantierTitre,
+      tvaTaux: devisSelectionne.tvaTaux,
+      acomptePourcentage: devisSelectionne.acomptePourcentage,
+      validiteJours: devisSelectionne.validiteJours,
+      conditions: devisSelectionne.conditions,
       archive: false,
       createdAt: Date.now(),
       createdByUid: user.uid,
@@ -357,20 +384,36 @@ export function useDevisActions({
   ) => {
     if (!devisSelectionne || !estAdmin) return;
 
-    if (devisEstVerrouille()) {
-      afficherMessageDevisVerrouille();
+    const devisIdCible = devisSelectionne.id;
+    const statutSelectionne = devisSelectionne.statut;
+
+    if (devisEstStatutVerrouille(statutSelectionne)) {
+      afficherMessageDevisVerrouille(statutSelectionne);
       return;
     }
 
     const confirmation = window.confirm(
-      `Supprimer définitivement le devis ${devisSelectionne.id} ?`
+      `Supprimer définitivement le devis ${devisIdCible} ?`
     );
 
     if (!confirmation) return;
 
     try {
       setSauvegardeEnCours(true);
-      await deleteDoc(withRef(devisSelectionne.id, resolver));
+
+      const devisRef = withRef(devisIdCible, resolver);
+      const devisCibleSnap = await getDoc(devisRef);
+      const devisCible = devisCibleSnap.data() as
+        | Partial<DevisBusiness>
+        | undefined;
+      const statutCible = devisCible?.statut ?? statutSelectionne;
+
+      if (devisEstStatutVerrouille(statutCible)) {
+        afficherMessageDevisVerrouille(statutCible);
+        return;
+      }
+
+      await deleteDoc(devisRef);
       setModeEdition(false);
       setDevisSelectionneId(null);
     } catch (error) {

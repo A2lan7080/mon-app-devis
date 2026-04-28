@@ -18,6 +18,8 @@ type DevisBusiness = Devis & {
   acomptePourcentage: number;
   validiteJours: number;
   conditions: string;
+  sentAt?: unknown;
+  emailSentAt?: unknown;
   archive?: boolean;
   createdAt?: number;
   entrepriseId?: string;
@@ -113,6 +115,16 @@ const actionDesktop =
 
 const actionVerrouilleClasses = "disabled:cursor-not-allowed disabled:opacity-50";
 
+function devisADejaEteEnvoye(devis: DevisBusiness) {
+  const dateEnvoi =
+    devis.sentAt ?? devis.emailSentAt ?? devis.acceptanceTokenLastSentAt;
+
+  return (
+    (dateEnvoi !== undefined && dateEnvoi !== null && dateEnvoi !== "") ||
+    devis.statut === "Envoyé"
+  );
+}
+
 export default function DevisDetailPanel({
   devisSelectionne,
   modeEdition,
@@ -144,7 +156,7 @@ export default function DevisDetailPanel({
   const [bibliothequeEditionOuverte, setBibliothequeEditionOuverte] =
     useState(false);
   const [sectionClientEditionMobileOuverte, setSectionClientEditionMobileOuverte] =
-    useState(true);
+    useState(false);
   const [
     sectionConditionsEditionMobileOuverte,
     setSectionConditionsEditionMobileOuverte,
@@ -198,6 +210,9 @@ export default function DevisDetailPanel({
   const devisEstAccepte = devisSelectionne.statut === "Accepté";
   const devisEstRefuse = devisSelectionne.statut === "Refusé";
   const devisEstTraite = devisEstAccepte || devisEstRefuse;
+  const libelleEnvoiDevis = devisADejaEteEnvoye(devisSelectionne)
+    ? "Renvoyer"
+    : "Envoyer";
   const messageVerrouillage = devisEstAccepte
     ? "Ce devis est accepté et ne peut plus être modifié."
     : "Ce devis est refusé et ne peut plus être modifié.";
@@ -298,7 +313,7 @@ export default function DevisDetailPanel({
                 }
                 className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60`}
               >
-                {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
+                {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
               </button>
 
               {!devisSelectionne.archive ? (
@@ -445,7 +460,7 @@ export default function DevisDetailPanel({
               }
               className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
             >
-              {envoiEnCours ? "Envoi..." : "Envoyer / Renvoyer"}
+              {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
             </button>
 
             {!devisSelectionne.archive ? (
@@ -870,7 +885,7 @@ export default function DevisDetailPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid min-w-0 max-w-full gap-2.5 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)]">
+      <div className="mt-3 grid min-w-0 max-w-full gap-2.5 pb-24 sm:mt-6 sm:gap-6 sm:pb-28 xl:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)]">
         <div className="min-w-0 space-y-2.5 sm:space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5">
             <div className="mb-2 flex items-center justify-between gap-3 sm:mb-4">
@@ -887,13 +902,15 @@ export default function DevisDetailPanel({
                 onClick={() =>
                   setSectionClientEditionMobileOuverte((prev) => !prev)
                 }
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 md:hidden"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 md:hidden"
               >
-                {sectionClientEditionMobileOuverte ? "Masquer" : "Ouvrir"}
+                {sectionClientEditionMobileOuverte
+                  ? "Masquer"
+                  : "Informations avancées"}
               </button>
             </div>
 
-      <div className={`${sectionClientEditionMobileOuverte ? "grid" : "hidden"} min-w-0 max-w-full gap-3 sm:gap-4 md:grid md:grid-cols-2`}>
+      <div className="grid min-w-0 max-w-full gap-3 sm:gap-4 md:grid-cols-2">
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
@@ -928,6 +945,7 @@ export default function DevisDetailPanel({
           />
         </div>
 
+        <div className={`${sectionClientEditionMobileOuverte ? "grid" : "hidden"} min-w-0 gap-3 sm:gap-4 md:contents`}>
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date
@@ -1156,6 +1174,7 @@ export default function DevisDetailPanel({
             className={champFormulaireClasses}
           />
         </div>
+        </div>
       </div>
           </div>
 
@@ -1206,13 +1225,13 @@ export default function DevisDetailPanel({
         </div>
 
         <div>
-        <div className="mt-3 space-y-3 sm:mt-4">
+        <div className="mt-2.5 space-y-2.5 sm:mt-4 sm:space-y-3">
           {editLignes.map((ligne, index) => (
             <div
               key={`edition-${index}`}
-              className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4"
+              className="rounded-xl border border-slate-200 bg-white p-2.5 sm:rounded-2xl sm:p-4"
             >
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Ligne {index + 1}
@@ -1251,8 +1270,8 @@ export default function DevisDetailPanel({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="min-w-0 overflow-hidden">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                  <div className="order-1 min-w-0 overflow-hidden sm:order-none">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       Qté
                     </label>
@@ -1270,7 +1289,7 @@ export default function DevisDetailPanel({
                     />
                   </div>
 
-                  <div className="min-w-0 overflow-hidden">
+                  <div className="order-4 col-span-2 min-w-0 overflow-hidden sm:order-none sm:col-span-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       Unité
                     </label>
@@ -1288,7 +1307,7 @@ export default function DevisDetailPanel({
                     />
                   </div>
 
-                  <div className="min-w-0 overflow-hidden">
+                  <div className="order-2 min-w-0 overflow-hidden sm:order-none">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       PU HT
                     </label>
@@ -1306,7 +1325,7 @@ export default function DevisDetailPanel({
                     />
                   </div>
 
-                  <div className="flex min-w-0 flex-col justify-end overflow-hidden">
+                  <div className="order-3 flex min-w-0 flex-col justify-end overflow-hidden sm:order-none">
                     <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
                       Total
                       <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">
@@ -1323,13 +1342,21 @@ export default function DevisDetailPanel({
           ))}
         </div>
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h5 className="text-base font-semibold text-slate-900">
+        <button
+          type="button"
+          onClick={ajouterLigneEdition}
+          className="mt-2.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:mt-4 sm:w-auto sm:px-4 sm:py-3"
+        >
+          + Ligne
+        </button>
+
+        <div className="mt-2.5 rounded-xl border border-slate-200 bg-white p-2.5 sm:mt-6 sm:rounded-2xl sm:p-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+              <h5 className="text-sm font-semibold text-slate-900 sm:text-base">
                 Bibliothèque de prestations
               </h5>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 hidden text-sm text-slate-500 sm:block">
                 {prestationsActives.length} prestation
                 {prestationsActives.length > 1 ? "s" : ""} disponible
                 {prestationsActives.length > 1 ? "s" : ""}.
@@ -1339,11 +1366,9 @@ export default function DevisDetailPanel({
             <button
               type="button"
               onClick={() => setBibliothequeEditionOuverte((prev) => !prev)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+              className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
             >
-              {bibliothequeEditionOuverte
-                ? "Masquer la bibliothèque"
-                : "Afficher la bibliothèque"}
+              {bibliothequeEditionOuverte ? "Masquer" : "Bibliothèque"}
             </button>
           </div>
 
@@ -1450,23 +1475,25 @@ export default function DevisDetailPanel({
             )}
           </div>
 
-          <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-3 py-2 shadow-[0_-8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4 sm:shadow-none">
-            <div className="flex items-center gap-3 sm:hidden">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-slate-500">Total TTC</p>
-                <p className="truncate text-lg font-bold text-slate-900">
+          <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] sm:sticky sm:inset-x-auto sm:bottom-0 sm:z-20 sm:mx-0 sm:rounded-2xl sm:border sm:bg-white/95 sm:px-4 sm:py-3 sm:shadow-[0_-8px_20px_rgba(15,23,42,0.10)] sm:backdrop-blur md:flex md:items-center md:gap-3">
+            <div className="flex items-center justify-between gap-3 sm:hidden">
+              <div className="flex min-w-0 flex-1 flex-col justify-center">
+                <p className="text-[11px] font-semibold uppercase text-slate-500">
+                  Total TTC
+                </p>
+                <p className="break-words text-lg font-bold leading-tight text-slate-950">
                   {formatMontant(totalTvacEdition)}
                 </p>
               </div>
               <button
                 onClick={enregistrerEdition}
-                className="shrink-0 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                className="min-h-11 shrink-0 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
               >
                 Enregistrer
               </button>
             </div>
 
-            <div className="hidden sm:mb-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:text-sm">
+            <div className="hidden sm:mb-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:text-sm md:mb-0 md:flex-1">
               <div className="rounded-xl bg-slate-50 px-3 py-2">
                 <p className="text-xs text-slate-500">HT</p>
                 <p className="mt-1 font-semibold text-slate-900">
@@ -1487,17 +1514,17 @@ export default function DevisDetailPanel({
               </div>
             </div>
 
-      <div className="hidden flex-col gap-3 sm:flex sm:flex-row">
+      <div className="hidden flex-col gap-3 sm:flex sm:flex-row md:shrink-0">
         <button
           onClick={enregistrerEdition}
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto md:py-2.5"
         >
           Enregistrer les modifications
         </button>
 
         <button
           onClick={annulerEdition}
-          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto md:py-2.5"
         >
           Annuler
         </button>

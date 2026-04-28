@@ -143,6 +143,10 @@ function getStatutClasses(statut: StatutFacture) {
   }
 }
 
+function factureADejaEteEnvoyee(facture: Facture) {
+  return facture.statut === "Envoyée";
+}
+
 export default function FacturesWorkspace({
   entrepriseId,
   createdByUid,
@@ -838,6 +842,14 @@ export default function FacturesWorkspace({
   const ibanEntreprise = entrepriseSettings.iban.trim();
   const mentionsLegalesFacture =
     entrepriseSettings.mentionsLegalesFacture.trim();
+  const libelleEnvoiFacture =
+    factureSelectionnee && factureADejaEteEnvoyee(factureSelectionnee)
+      ? "Renvoyer"
+      : "Envoyer";
+  const messageVideFactures =
+    factures.length === 0
+      ? "Aucune facture pour le moment."
+      : "Aucune facture ne correspond à cette recherche.";
 
   const contenuFormulaire = (
     <div data-testid="facture-form" className="max-w-full overflow-hidden">
@@ -855,7 +867,7 @@ export default function FacturesWorkspace({
 
         <button
           onClick={fermerFormulaire}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+          className="bf-button-secondary w-full sm:w-auto"
         >
           Fermer
         </button>
@@ -1097,7 +1109,7 @@ export default function FacturesWorkspace({
           data-testid="facture-save"
           onClick={enregistrerFacture}
           disabled={sauvegardeEnCours}
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {sauvegardeEnCours
             ? "Enregistrement..."
@@ -1109,7 +1121,7 @@ export default function FacturesWorkspace({
         <button
           onClick={fermerFormulaire}
           disabled={sauvegardeEnCours}
-          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="bf-button-secondary w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           Annuler
         </button>
@@ -1145,7 +1157,7 @@ export default function FacturesWorkspace({
         <div className="grid grid-cols-3 gap-2 md:hidden">
           <button
             onClick={ouvrirEdition}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="bf-button-secondary min-h-0 px-3 py-2.5 text-xs"
           >
             Modifier
           </button>
@@ -1153,14 +1165,14 @@ export default function FacturesWorkspace({
           <button
             data-testid="facture-export-pdf"
             onClick={handleExporterPdf}
-            className="rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
+            className="bf-button-primary min-h-0 px-3 py-2.5 text-xs"
           >
             PDF
           </button>
 
           <button
             onClick={() => setAfficherActionsFactureMobile((prev) => !prev)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="bf-button-secondary min-h-0 px-3 py-2.5 text-xs"
           >
             Plus
           </button>
@@ -1171,9 +1183,9 @@ export default function FacturesWorkspace({
             <button
               onClick={handleEnvoyerParMail}
               disabled={envoiEnCours}
-              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="bf-button-soft w-full disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+              {envoiEnCours ? "Envoi..." : libelleEnvoiFacture}
             </button>
 
             {!factureSelectionnee.archive ? (
@@ -1194,7 +1206,7 @@ export default function FacturesWorkspace({
 
             <button
               onClick={supprimerFacture}
-              className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"
+              className="bf-button-secondary bf-button-danger w-full"
             >
               Supprimer
             </button>
@@ -1204,7 +1216,7 @@ export default function FacturesWorkspace({
         <div className="hidden gap-2 md:grid sm:grid-cols-2 xl:grid-cols-3">
           <button
             onClick={ouvrirEdition}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="bf-button-secondary w-full"
           >
             Modifier
           </button>
@@ -1212,7 +1224,7 @@ export default function FacturesWorkspace({
           <button
             data-testid="facture-export-pdf"
             onClick={handleExporterPdf}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            className="bf-button-primary w-full"
           >
             Export PDF
           </button>
@@ -1220,9 +1232,9 @@ export default function FacturesWorkspace({
           <button
             onClick={handleEnvoyerParMail}
             disabled={envoiEnCours}
-            className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="bf-button-soft w-full disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {envoiEnCours ? "Envoi..." : "Envoyer par mail"}
+            {envoiEnCours ? "Envoi..." : libelleEnvoiFacture}
           </button>
 
           {!factureSelectionnee.archive ? (
@@ -1243,7 +1255,7 @@ export default function FacturesWorkspace({
 
           <button
             onClick={supprimerFacture}
-            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+            className="bf-button-secondary bf-button-danger w-full sm:col-span-2 xl:col-span-1"
           >
             Supprimer
           </button>
@@ -1401,13 +1413,13 @@ export default function FacturesWorkspace({
       </MobileFullscreenModal>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="bf-card overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 sm:text-sm">
                 Factures actives
               </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {totalFactures}
               </p>
             </div>
@@ -1416,18 +1428,18 @@ export default function FacturesWorkspace({
               🧾
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             Factures en suivi
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="bf-card overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 sm:text-sm">
                 Payées
               </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {totalPayees}
               </p>
             </div>
@@ -1436,18 +1448,18 @@ export default function FacturesWorkspace({
               ✅
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             Paiements confirmés
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="bf-card overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 sm:text-sm">
                 En retard
               </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {totalRetard}
               </p>
             </div>
@@ -1456,18 +1468,18 @@ export default function FacturesWorkspace({
               ⚠️
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             À surveiller ou relancer
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="bf-card overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 sm:text-sm">
                 Net facturé
               </p>
-              <p className="mt-2 break-words text-2xl font-bold sm:text-3xl">
+              <p className="mt-1 break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {formatMontant(totalNetFacture)}
               </p>
             </div>
@@ -1476,15 +1488,15 @@ export default function FacturesWorkspace({
               💶
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             Montant total hors factures annulées
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          <div className="grid gap-4">
+        <div className="bf-card min-w-0 overflow-hidden p-4 sm:p-5 md:p-6">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
             <input
               type="text"
               value={recherche}
@@ -1521,11 +1533,24 @@ export default function FacturesWorkspace({
 
           <div className="mt-4 space-y-2 overflow-hidden sm:mt-6 sm:space-y-3">
             {facturesFiltrees.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Aucune facture trouvée.
+              <div className="bf-empty-state">
+                <p className="text-sm font-semibold text-slate-700">
+                  {messageVideFactures}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Ajuste les filtres ou crée une nouvelle facture depuis
+                  l’action principale.
+                </p>
               </div>
             ) : (
-              facturesFiltrees.map((facture) => (
+              <>
+                <div className="bf-table-header hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_8rem_8rem] gap-3 rounded-t-xl px-4 py-3 md:grid">
+                  <span>Facture</span>
+                  <span>Client / chantier</span>
+                  <span>Statut</span>
+                  <span className="text-right">Net à payer</span>
+                </div>
+                {facturesFiltrees.map((facture) => (
                 <button
                   key={facture.id}
                   data-testid="facture-list-item"
@@ -1535,13 +1560,13 @@ export default function FacturesWorkspace({
                     setModeEdition(false);
                     setAfficherFormulaire(false);
                   }}
-                  className={`block w-full min-w-0 overflow-hidden rounded-xl border p-3 text-left transition sm:rounded-2xl sm:p-4 ${
+                  className={`block w-full min-w-0 overflow-hidden rounded-xl border p-3 text-left transition sm:p-4 md:grid md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_8rem_8rem] md:items-center md:gap-3 md:rounded-none md:border-x-0 md:border-t-0 md:px-4 md:py-3 ${
                     factureSelectionnee?.id === facture.id
-                      ? "border-slate-900 bg-slate-50"
+                      ? "border-slate-900 bg-slate-50 shadow-sm"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
+                  <div className="flex min-w-0 flex-col gap-2 sm:gap-3 md:hidden">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-xs text-slate-500 sm:text-sm">
@@ -1557,7 +1582,7 @@ export default function FacturesWorkspace({
 
                       <div className="flex shrink-0 flex-col items-end gap-1 sm:gap-2">
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:text-xs ${getStatutClasses(
+                          className={`bf-status-pill ${getStatutClasses(
                             facture.statut
                           )}`}
                         >
@@ -1565,14 +1590,14 @@ export default function FacturesWorkspace({
                         </span>
 
                         {facture.archive && (
-                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800 sm:px-3 sm:text-xs">
+                          <span className="bf-status-pill bg-amber-100 text-amber-800">
                             Archivée
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid gap-1 rounded-xl bg-slate-50 p-2 sm:gap-2 sm:p-3">
+                    <div className="bf-card-soft grid gap-1 p-2 sm:gap-2 sm:p-3">
                       <p className="truncate text-xs text-slate-600 sm:text-sm">
                         {facture.chantierTitre || "Sans chantier associé"}
                       </p>
@@ -1589,13 +1614,44 @@ export default function FacturesWorkspace({
                       </div>
                     </div>
                   </div>
+
+                  <div className="hidden min-w-0 md:block">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {facture.reference}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {facture.objet}
+                    </p>
+                  </div>
+
+                  <div className="hidden min-w-0 md:block">
+                    <p className="truncate text-sm font-medium text-slate-800">
+                      {facture.clientNom}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {facture.chantierTitre || "Sans chantier associé"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`bf-status-pill hidden justify-self-start md:inline-flex ${getStatutClasses(
+                      facture.statut
+                    )}`}
+                  >
+                    {facture.statut}
+                  </span>
+
+                  <p className="hidden truncate text-right text-sm font-semibold text-slate-950 md:block">
+                    {formatMontant(calculerNetAPayer(facture))}
+                  </p>
                 </button>
-              ))
+                ))}
+              </>
             )}
           </div>
         </div>
 
-        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:block md:p-6">
+        <div className="bf-card hidden min-w-0 overflow-hidden p-4 sm:p-5 md:block md:p-6">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des factures...

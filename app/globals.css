@@ -42,3 +42,129 @@ canvas {
   max-width: 100%;
   height: auto;
 }
+
+.bf-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.bf-card-soft {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+}
+
+.bf-button-primary,
+.bf-button-secondary,
+.bf-button-soft {
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.bf-button-primary {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+}
+
+.bf-button-primary:hover {
+  opacity: 0.9;
+}
+
+.bf-button-secondary {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.bf-button-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.bf-button-soft {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.bf-button-soft:hover {
+  background: #dbeafe;
+}
+
+.bf-button-danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.bf-button-danger:hover {
+  background: #fee2e2;
+}
+
+.bf-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1rem;
+  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 0.06);
+}
+
+.bf-empty-state {
+  border: 1px dashed #cbd5e1;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.bf-table-header {
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bf-table-row {
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.bf-table-row:hover {
+  background: #f8fafc;
+}
+
+.bf-table-row-selected {
+  background: #f8fafc;
+  box-shadow: inset 3px 0 0 #0f172a;
+}
+
+@media (max-width: 640px) {
+  .bf-card {
+    border-radius: 0.875rem;
+  }
+
+  .bf-empty-state {
+    padding: 1.5rem 0.875rem;
+  }
+}
