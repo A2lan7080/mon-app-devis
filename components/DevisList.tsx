@@ -11,6 +11,7 @@ type Props = {
   devisSelectionneId: string | null;
   setDevisSelectionneId: Dispatch<SetStateAction<string | null>>;
   setModeEdition: Dispatch<SetStateAction<boolean>>;
+  onCreateFirstDevis: () => void;
 };
 
 function getStatutClasses(statut: string) {
@@ -34,6 +35,7 @@ export default function DevisList({
   devisSelectionneId,
   setDevisSelectionneId,
   setModeEdition,
+  onCreateFirstDevis,
 }: Props) {
   const messageVide =
     totalDevis === 0
@@ -51,9 +53,19 @@ export default function DevisList({
         <div className="bf-empty-state">
           <p className="text-sm font-semibold text-slate-700">{messageVide}</p>
           <p className="mt-1 text-xs text-slate-500">
-            Ajuste les filtres ou crée un nouveau devis depuis l’action
-            principale.
+            {totalDevis === 0
+              ? "Démarre avec un premier devis client, puis envoie-le par email."
+              : "Ajuste les filtres ou crée un nouveau devis depuis l'action principale."}
           </p>
+          {totalDevis === 0 && (
+            <button
+              type="button"
+              onClick={onCreateFirstDevis}
+              className="bf-button-primary mt-4"
+            >
+              Créer votre premier devis
+            </button>
+          )}
         </div>
       ) : (
         <>

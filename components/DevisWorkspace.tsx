@@ -79,6 +79,7 @@ type Props = {
   handleEnvoyerParMail: () => void;
   envoiEnCours: boolean;
   handleChangerStatut: (statut: StatutDevis) => void;
+  onCreateFirstDevis: () => void;
   onDevisCree: (id: string) => void;
   onCloseFormulaire: () => void;
 };
@@ -122,6 +123,7 @@ export default function DevisWorkspace({
   handleEnvoyerParMail,
   envoiEnCours,
   handleChangerStatut,
+  onCreateFirstDevis,
   onDevisCree,
   onCloseFormulaire,
 }: Props) {
@@ -229,6 +231,7 @@ export default function DevisWorkspace({
             devisSelectionneId={devisSelectionneId}
             setDevisSelectionneId={setDevisSelectionneId}
             setModeEdition={setModeEdition}
+            onCreateFirstDevis={onCreateFirstDevis}
           />
         </div>
 

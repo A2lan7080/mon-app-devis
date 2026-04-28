@@ -81,7 +81,8 @@ function renderEntrepriseBloc(
     .filter(Boolean)
     .join(" · ");
 
-  const afficherNom = !afficherLogo;
+  const afficherNom =
+    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">
@@ -137,6 +138,13 @@ function renderEntrepriseBloc(
               "Non renseignée"
             )}
           </div>
+
+          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
+            <strong>IBAN :</strong> ${texteOuDefaut(
+              entreprise.iban,
+              "IBAN non renseigné"
+            )}
+          </div>
         </td>
       </tr>
     </table>
@@ -149,6 +157,7 @@ function renderFooterEntreprise(entreprise: EntrepriseSettings) {
     entreprise.email?.trim(),
     entreprise.telephone?.trim(),
     entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
+    entreprise.iban?.trim() ? `IBAN : ${entreprise.iban.trim()}` : "",
   ].filter(Boolean);
 
   return `
@@ -508,6 +517,7 @@ Code postal / Ville : ${codePostalVille || "-"}
 Email : ${entreprise.email || "-"}
 Téléphone : ${entreprise.telephone || "-"}
 TVA : ${entreprise.tva || "-"}
+IBAN : ${entreprise.iban || "-"}
 
 DEVIS ${numeroDevisAffiche}
 Date : ${devis.date}

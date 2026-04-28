@@ -59,6 +59,15 @@ export default function Home() {
     authChargee,
   });
 
+  const entrepriseConfiguree = Boolean(
+    entrepriseSettings.nom.trim() &&
+      entrepriseSettings.adresse.trim() &&
+      entrepriseSettings.email.trim() &&
+      entrepriseSettings.telephone.trim() &&
+      entrepriseSettings.tva.trim() &&
+      entrepriseSettings.iban.trim()
+  );
+
   const { devis, chargement } = useEntrepriseDevis({
     authChargee,
     userId: user?.uid ?? null,
@@ -257,11 +266,13 @@ export default function Home() {
       role={profilUtilisateur.role}
       sauvegardeEnCours={sauvegardeEnCours}
       afficherFormulaire={afficherFormulaire}
+      entrepriseConfiguree={entrepriseConfiguree}
       onOuvrirVueDevis={ouvrirVueDevis}
       onOuvrirVueClients={ouvrirVueClients}
       onOuvrirVueChantiers={ouvrirVueChantiers}
       onOuvrirVueFactures={ouvrirVueFactures}
       onOuvrirVueAdmin={ouvrirVueAdmin}
+      onOuvrirParametresEntreprise={ouvrirVueAdmin}
       onToggleFormulaireDevis={toggleFormulaireDevis}
       onDeconnexion={handleDeconnexion}
     >
@@ -341,6 +352,7 @@ export default function Home() {
           handleChangerStatut={(statut) =>
             handleChangerStatut(statut, getDevisDocRef)
           }
+          onCreateFirstDevis={toggleFormulaireDevis}
           onDevisCree={handleDevisCree}
           onCloseFormulaire={fermerFormulaireDevis}
         />

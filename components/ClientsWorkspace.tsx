@@ -843,8 +843,26 @@ export default function ClientsWorkspace({
 
           <div className="mt-6 space-y-2 overflow-hidden">
             {clientsFiltres.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Aucun client trouvé.
+              <div className="bf-empty-state">
+                <p className="text-sm font-semibold text-slate-700">
+                  {clients.length === 0
+                    ? "Aucun client pour le moment."
+                    : "Aucun client trouvé."}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {clients.length === 0
+                    ? "Ajoute ton premier client pour réutiliser ses coordonnées dans les devis et factures."
+                    : "Ajuste les filtres ou lance une nouvelle fiche client."}
+                </p>
+                {clients.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={ouvrirCreation}
+                    className="bf-button-primary mt-4"
+                  >
+                    Ajouter un client
+                  </button>
+                )}
               </div>
             ) : (
               clientsFiltres.map((client) => {

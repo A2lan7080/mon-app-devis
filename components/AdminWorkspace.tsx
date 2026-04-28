@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import {
   deleteObject,
@@ -74,6 +74,24 @@ function genererReferencePrestation(prestations: PrestationBibliotheque[]) {
   return `PRE-${String(plusGrandNumero + 1).padStart(4, "0")}`;
 }
 
+function entrepriseEstConfiguree(entreprise: {
+  nom: string;
+  adresse: string;
+  email: string;
+  telephone: string;
+  tva: string;
+  iban: string;
+}) {
+  return Boolean(
+    entreprise.nom.trim() &&
+      entreprise.adresse.trim() &&
+      entreprise.email.trim() &&
+      entreprise.telephone.trim() &&
+      entreprise.tva.trim() &&
+      entreprise.iban.trim()
+  );
+}
+
 export default function AdminWorkspace({
   valeurBusinessTotale,
   caSigne,
@@ -127,10 +145,18 @@ export default function AdminWorkspace({
     [prestations]
   );
 
+  const entrepriseConfiguree = entrepriseEstConfiguree(entrepriseSettings);
+
   const prestationsArchivees = useMemo(
     () => prestations.filter((prestation) => prestation.archive),
     [prestations]
   );
+
+  useEffect(() => {
+    if (!chargementEntreprise && !entrepriseConfiguree) {
+      setInfosEntrepriseOuvertes(true);
+    }
+  }, [chargementEntreprise, entrepriseConfiguree]);
 
   const resetPrestationFormulaire = () => {
     setFormulairePrestation(creerPrestationVide());
@@ -400,7 +426,7 @@ export default function AdminWorkspace({
       />
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+        <div className="bf-card p-4 sm:p-6">
           <button
             type="button"
             onClick={() => setInfosEntrepriseOuvertes((prev) => !prev)}
@@ -408,11 +434,13 @@ export default function AdminWorkspace({
           >
             <div className="min-w-0">
               <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                Informations entreprise
+                Entreprise
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                {entrepriseSettings.nom || "Entreprise non renseignée"}
-                {entrepriseSettings.logoUrl ? " · Logo chargé" : " · Aucun logo"}
+                {entrepriseConfiguree
+                  ? "Profil prêt pour les devis, factures, PDF et emails"
+                  : "Configuration entreprise à finaliser"}
+                {entrepriseSettings.logoUrl ? " - Logo chargé" : " - Aucun logo"}
               </p>
             </div>
 
@@ -423,6 +451,13 @@ export default function AdminWorkspace({
 
           {infosEntrepriseOuvertes && (
             <>
+              {!entrepriseConfiguree && (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                  Complète ces informations une fois pour les réutiliser
+                  automatiquement dans les devis, factures, PDF et emails.
+                </div>
+              )}
+
               <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-slate-800">

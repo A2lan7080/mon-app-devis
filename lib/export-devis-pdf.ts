@@ -119,6 +119,14 @@ function getBlocEntreprise(entreprise: EntrepriseSettings) {
           )}</div>
         </div>
 
+        <div class="iban-info">
+          <div class="info-label">IBAN</div>
+          <div class="info-value iban-value">${texteOuDefaut(
+            entreprise.iban,
+            "IBAN non renseigné"
+          )}</div>
+        </div>
+
         <div>
           <div class="info-label">TVA</div>
           <div class="info-value">${texteOuDefaut(
@@ -522,6 +530,15 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
 
           .entreprise-info {
             grid-template-columns: 1fr 1fr;
+          }
+
+          .iban-info {
+            grid-column: 1 / -1;
+          }
+
+          .iban-value {
+            font-size: 13px;
+            letter-spacing: 0.02em;
           }
 
           .info-label {

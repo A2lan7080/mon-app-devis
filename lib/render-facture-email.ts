@@ -74,7 +74,8 @@ function renderEntrepriseBloc(
     .filter(Boolean)
     .join(" · ");
 
-  const afficherNom = !afficherLogo;
+  const afficherNom =
+    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">

@@ -20,11 +20,13 @@ type Props = {
   role: string;
   sauvegardeEnCours: boolean;
   afficherFormulaire: boolean;
+  entrepriseConfiguree?: boolean;
   onOuvrirVueDevis: () => void;
   onOuvrirVueClients: () => void;
   onOuvrirVueChantiers: () => void;
   onOuvrirVueFactures: () => void;
   onOuvrirVueAdmin: () => void;
+  onOuvrirParametresEntreprise?: () => void;
   onToggleFormulaireDevis: () => void;
   onDeconnexion: () => void;
   children: ReactNode;
@@ -134,11 +136,13 @@ export default function AdminShell({
   role,
   sauvegardeEnCours,
   afficherFormulaire,
+  entrepriseConfiguree = true,
   onOuvrirVueDevis,
   onOuvrirVueClients,
   onOuvrirVueChantiers,
   onOuvrirVueFactures,
   onOuvrirVueAdmin,
+  onOuvrirParametresEntreprise,
   onToggleFormulaireDevis,
   onDeconnexion,
   children,
@@ -214,6 +218,11 @@ export default function AdminShell({
     if (vueAffichee === "factures") {
       window.dispatchEvent(new CustomEvent("batiflow:nouvelle-facture"));
     }
+  };
+
+  const ouvrirParametresEntreprise = () => {
+    setMenuMobileOuvert(false);
+    onOuvrirParametresEntreprise?.();
   };
 
   const navDesktop: NavItem[] = [
@@ -428,6 +437,30 @@ export default function AdminShell({
                 </div>
               </div>
             </header>
+
+            {!entrepriseConfiguree && (
+              <div className="bf-card mb-4 border-amber-200 bg-amber-50 p-4 md:mb-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-amber-900">
+                      Entreprise à compléter
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-amber-800">
+                      Ajoute le nom, les coordonnées, la TVA et l&apos;IBAN pour que
+                      les devis, factures, PDF et emails soient prêts.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={ouvrirParametresEntreprise}
+                    className="w-full rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 md:w-auto"
+                  >
+                    Aller aux paramètres
+                  </button>
+                </div>
+              </div>
+            )}
 
             {children}
           </div>
