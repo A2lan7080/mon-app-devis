@@ -213,6 +213,29 @@ export default function DevisWorkspace({
         caSigne={caSigne}
       />
 
+      {devis.length === 0 && !afficherFormulaire && (
+        <div className="bf-card mb-4 p-4 sm:p-5 md:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h3 className="text-xl font-bold text-slate-950">
+                Bienvenue sur BatiFlow
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Créez votre premier devis en quelques secondes
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onCreateFirstDevis}
+              className="bf-button-primary w-full sm:w-auto"
+            >
+              Créer mon premier devis
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:gap-6">
         <div className="bf-card min-w-0 overflow-hidden p-4 sm:p-5 md:p-6">
           <DevisSearch

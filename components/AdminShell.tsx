@@ -29,6 +29,7 @@ type Props = {
   onOuvrirParametresEntreprise?: () => void;
   onToggleFormulaireDevis: () => void;
   onDeconnexion: () => void;
+  feedbackMessage?: string | null;
   children: ReactNode;
 };
 
@@ -145,6 +146,7 @@ export default function AdminShell({
   onOuvrirParametresEntreprise,
   onToggleFormulaireDevis,
   onDeconnexion,
+  feedbackMessage,
   children,
 }: Props) {
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false);
@@ -515,6 +517,16 @@ export default function AdminShell({
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {feedbackMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 shadow-xl md:bottom-6 md:right-6 md:left-auto md:w-auto md:translate-x-0"
+        >
+          {feedbackMessage}
         </div>
       )}
     </main>

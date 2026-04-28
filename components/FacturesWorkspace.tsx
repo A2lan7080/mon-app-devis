@@ -23,6 +23,7 @@ type FiltreStatut = "Tous" | StatutFacture;
 type Props = {
   entrepriseId?: string;
   createdByUid?: string;
+  onFeedback?: (message: string) => void;
 };
 
 type FactureFormState = {
@@ -150,6 +151,7 @@ function factureADejaEteEnvoyee(facture: Facture) {
 export default function FacturesWorkspace({
   entrepriseId,
   createdByUid,
+  onFeedback,
 }: Props) {
   const [recherche, setRecherche] = useState("");
   const [filtreArchivage, setFiltreArchivage] =
@@ -689,6 +691,7 @@ export default function FacturesWorkspace({
 
       setFactureSelectionneeId(nouvelId);
       setAfficherFormulaire(false);
+      onFeedback?.("Facture créée.");
       resetFormulaire();
     } catch (error) {
       console.error("Erreur enregistrement facture :", error);
@@ -737,9 +740,7 @@ export default function FacturesWorkspace({
   const supprimerFacture = async () => {
     if (!factureSelectionnee) return;
 
-    const confirmation = window.confirm(
-      `Supprimer définitivement la facture ${factureSelectionnee.reference} ?`
-    );
+    const confirmation = window.confirm("Êtes-vous sûr ?");
 
     if (!confirmation) return;
 
@@ -1541,6 +1542,13 @@ export default function FacturesWorkspace({
                   Ajuste les filtres ou crée une nouvelle facture depuis
                   l’action principale.
                 </p>
+                <button
+                  type="button"
+                  onClick={ouvrirCreation}
+                  className="bf-button-primary mt-4"
+                >
+                  Nouvelle facture
+                </button>
               </div>
             ) : (
               <>

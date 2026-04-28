@@ -844,6 +844,11 @@ export default function ClientsWorkspace({
           <div className="mt-6 space-y-2 overflow-hidden">
             {clientsFiltres.length === 0 ? (
               <div className="bf-empty-state">
+                {clients.length === 0 && (
+                  <p className="mb-1 text-sm font-semibold text-emerald-700">
+                    Ajoutez votre premier client
+                  </p>
+                )}
                 <p className="text-sm font-semibold text-slate-700">
                   {clients.length === 0
                     ? "Aucun client pour le moment."
@@ -854,15 +859,13 @@ export default function ClientsWorkspace({
                     ? "Ajoute ton premier client pour réutiliser ses coordonnées dans les devis et factures."
                     : "Ajuste les filtres ou lance une nouvelle fiche client."}
                 </p>
-                {clients.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={ouvrirCreation}
-                    className="bf-button-primary mt-4"
-                  >
-                    Ajouter un client
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={ouvrirCreation}
+                  className="bf-button-primary mt-4"
+                >
+                  {clients.length === 0 ? "Ajouter un client" : "Nouveau client"}
+                </button>
               </div>
             ) : (
               clientsFiltres.map((client) => {

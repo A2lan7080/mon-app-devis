@@ -44,6 +44,7 @@ export default function Home() {
     null
   );
   const [envoiDevisEnCours, setEnvoiDevisEnCours] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const { goToLogin, handleDeconnexion } = useSessionNavigation(router);
 
@@ -99,6 +100,11 @@ export default function Home() {
   });
 
   const getDevisDocRef = (devisId: string) => doc(db, "devis", devisId);
+
+  const afficherFeedback = (message: string) => {
+    setFeedbackMessage(message);
+    window.setTimeout(() => setFeedbackMessage(null), 3200);
+  };
 
   const {
     modeEdition,
@@ -212,7 +218,7 @@ export default function Home() {
         });
       }
 
-      alert(`Devis envoyé à ${emailClient}.`);
+      afficherFeedback(`Devis envoyé à ${emailClient}.`);
     } catch (error) {
       console.error("Erreur envoi devis :", error);
       alert(
@@ -275,6 +281,7 @@ export default function Home() {
       onOuvrirParametresEntreprise={ouvrirVueAdmin}
       onToggleFormulaireDevis={toggleFormulaireDevis}
       onDeconnexion={handleDeconnexion}
+      feedbackMessage={feedbackMessage}
     >
 
       {vueAffichee === "admin" ? (
@@ -309,6 +316,7 @@ export default function Home() {
         <FacturesWorkspace
           entrepriseId={entrepriseIdCourante ?? undefined}
           createdByUid={user?.uid}
+          onFeedback={afficherFeedback}
         />
       ) : (
         <DevisWorkspace
@@ -353,7 +361,10 @@ export default function Home() {
             handleChangerStatut(statut, getDevisDocRef)
           }
           onCreateFirstDevis={toggleFormulaireDevis}
-          onDevisCree={handleDevisCree}
+          onDevisCree={(id) => {
+            handleDevisCree(id);
+            afficherFeedback("Devis créé.");
+          }}
           onCloseFormulaire={fermerFormulaireDevis}
         />
       )}

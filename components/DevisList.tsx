@@ -57,15 +57,13 @@ export default function DevisList({
               ? "Démarre avec un premier devis client, puis envoie-le par email."
               : "Ajuste les filtres ou crée un nouveau devis depuis l'action principale."}
           </p>
-          {totalDevis === 0 && (
-            <button
-              type="button"
-              onClick={onCreateFirstDevis}
-              className="bf-button-primary mt-4"
-            >
-              Créer votre premier devis
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onCreateFirstDevis}
+            className="bf-button-primary mt-4"
+          >
+            {totalDevis === 0 ? "Créer mon premier devis" : "Nouveau devis"}
+          </button>
         </div>
       ) : (
         <>

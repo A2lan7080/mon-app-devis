@@ -1047,6 +1047,9 @@ export default function DevisForm({
         <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="min-w-0">
             <h4 className="text-base font-semibold sm:text-lg">Prestations</h4>
+            <p className="mt-1 text-sm font-medium text-blue-700">
+              Ajoutez vos prestations ici
+            </p>
             <p className="mt-1 hidden text-sm text-slate-500 sm:block">
               {lignesRenseignees} ligne{lignesRenseignees > 1 ? "s" : ""} renseignée{lignesRenseignees > 1 ? "s" : ""}. La bibliothèque reste juste dessous.
             </p>

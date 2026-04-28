@@ -392,9 +392,7 @@ export function useDevisActions({
       return;
     }
 
-    const confirmation = window.confirm(
-      `Supprimer définitivement le devis ${devisIdCible} ?`
-    );
+    const confirmation = window.confirm("Êtes-vous sûr ?");
 
     if (!confirmation) return;
 
