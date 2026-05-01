@@ -66,10 +66,12 @@ async function initialiserCompte({
   user,
   displayName,
   entrepriseNom,
+  invitationCode,
 }: {
   user: User;
   displayName: string;
   entrepriseNom: string;
+  invitationCode: string;
 }) {
   const idToken = await user.getIdToken(true);
   const response = await fetch("/api/auth/onboard", {
@@ -81,6 +83,7 @@ async function initialiserCompte({
     body: JSON.stringify({
       displayName,
       entrepriseNom,
+      invitationCode,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {
@@ -103,12 +106,14 @@ export default function SignupPage() {
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [erreur, setErreur] = useState("");
   const [chargement, setChargement] = useState(false);
 
   const displayNameNettoye = displayName.trim();
   const entrepriseNomNettoye = entrepriseNom.trim();
   const emailNettoye = email.trim().toLowerCase();
+  const invitationCodeNettoye = invitationCode.trim();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +156,7 @@ export default function SignupPage() {
         user,
         displayName: displayNameNettoye,
         entrepriseNom: entrepriseNomNettoye,
+        invitationCode: invitationCodeNettoye,
       });
 
       router.push("/");
@@ -274,6 +280,24 @@ export default function SignupPage() {
                     autoComplete="new-password"
                     className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Code d&apos;invitation
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={invitationCode}
+                    onChange={(e) => setInvitationCode(e.target.value)}
+                    placeholder="Code fourni pour la bêta privée"
+                    autoComplete="off"
+                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
+                  />
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Code fourni pour la bêta privée
+                  </p>
                 </div>
 
                 {erreur && (

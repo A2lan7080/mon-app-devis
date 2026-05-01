@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 type Payload = {
   displayName?: string;
   entrepriseNom?: string;
+  invitationCode?: string;
 };
 
 type ProfilUtilisateurOnboarding = {
@@ -36,6 +37,33 @@ function nettoyerChampTexte(valeur: unknown, maxLength: number) {
 
 function creerEntrepriseId(uid: string) {
   return `ent_${uid}`;
+}
+
+function verifierCodeInvitation(invitationCode: string) {
+  const betaCode = process.env.BATIFLOW_BETA_CODE?.trim() ?? "";
+
+  if (!betaCode) {
+    return {
+      ok: false,
+      status: 500,
+      error:
+        "Configuration serveur manquante : BATIFLOW_BETA_CODE n'est pas defini.",
+    };
+  }
+
+  if (!invitationCode || invitationCode !== betaCode) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Code d’invitation invalide",
+    };
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    error: "",
+  };
 }
 
 export async function POST(request: Request) {
@@ -71,6 +99,15 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as Payload;
     const displayName = nettoyerChampTexte(body.displayName, 120);
     const entrepriseNom = nettoyerChampTexte(body.entrepriseNom, 140);
+    const invitationCode = nettoyerChampTexte(body.invitationCode, 120);
+    const validationInvitation = verifierCodeInvitation(invitationCode);
+
+    if (!validationInvitation.ok) {
+      return NextResponse.json(
+        { error: validationInvitation.error },
+        { status: validationInvitation.status }
+      );
+    }
 
     if (!displayName) {
       return NextResponse.json(
@@ -176,6 +213,13 @@ export async function POST(request: Request) {
           conditionsFacture: "",
           mentionsLegales: "",
           mentionsLegalesFacture: "",
+          plan: "beta",
+          subscriptionStatus: "beta",
+          trialEndsAt: null,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+          billingEmail: email,
+          billingName: displayName,
           createdAt: maintenant,
           updatedAt: maintenant,
           createdByUid: uid,
