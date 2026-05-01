@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import {
   sendPasswordResetEmail,
@@ -216,6 +217,16 @@ export default function LoginPage() {
                   {chargement ? "Connexion..." : "Se connecter"}
                 </button>
               </form>
+
+              <p className="mt-6 text-center text-sm text-slate-500">
+                Pas encore de compte ?{" "}
+                <Link
+                  href="/signup"
+                  className="font-semibold text-slate-800 underline-offset-4 transition hover:text-slate-950 hover:underline"
+                >
+                  Créer un compte
+                </Link>
+              </p>
 
               <div className="mt-6 rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
