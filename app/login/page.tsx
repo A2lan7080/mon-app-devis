@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import AuthFeatureCards from "@/components/AuthFeatureCards";
 import { auth } from "@/lib/firebase";
 
 function LogoBatiflow({ grand = false }: { grand?: boolean }) {
@@ -109,22 +110,7 @@ export default function LoginPage() {
               clients, chantiers et informations d’entreprise.
             </p>
 
-            <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">PDF</p>
-                <p className="mt-1 text-xs text-slate-300">exports propres</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">Mail</p>
-                <p className="mt-1 text-xs text-slate-300">envoi client</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">Mobile</p>
-                <p className="mt-1 text-xs text-slate-300">prêt terrain</p>
-              </div>
-            </div>
+            <AuthFeatureCards />
           </div>
 
           <div className="relative z-10 text-xs text-slate-400">

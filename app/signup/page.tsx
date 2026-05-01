@@ -10,6 +10,7 @@ import {
   type User,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import AuthFeatureCards from "@/components/AuthFeatureCards";
 import { auth } from "@/lib/firebase";
 
 function LogoBatiflow({ grand = false }: { grand?: boolean }) {
@@ -185,22 +186,7 @@ export default function SignupPage() {
               ensemble pour garder devis, factures, clients et chantiers séparés.
             </p>
 
-            <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">Auth</p>
-                <p className="mt-1 text-xs text-slate-300">compte sécurisé</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">ID</p>
-                <p className="mt-1 text-xs text-slate-300">entreprise unique</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <p className="text-2xl font-bold">V1</p>
-                <p className="mt-1 text-xs text-slate-300">prêt terrain</p>
-              </div>
-            </div>
+            <AuthFeatureCards />
           </div>
 
           <div className="relative z-10 text-xs text-slate-400">
