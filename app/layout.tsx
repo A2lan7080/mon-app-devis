@@ -13,8 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Batiflow",
-  description: "Gestion devis & pilotage",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://batiflow.be"),
+  applicationName: "BatiFlow",
+  title: {
+    default: "BatiFlow | Logiciel devis et factures pour artisans",
+    template: "%s | BatiFlow",
+  },
+  description:
+    "Logiciel simple pour créer et suivre devis, factures, clients et chantiers des artisans du bâtiment.",
+  openGraph: {
+    siteName: "BatiFlow",
+    locale: "fr_BE",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {

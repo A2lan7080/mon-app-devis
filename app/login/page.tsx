@@ -51,7 +51,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, emailNettoye, password);
-      router.push("/");
+      router.push("/dashboard");
     } catch {
       setErreur("Email ou mot de passe incorrect.");
     } finally {

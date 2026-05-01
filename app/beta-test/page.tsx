@@ -302,7 +302,7 @@ export default function BetaTestPage() {
                 </p>
               </div>
 
-              <Link href="/" className="bf-button-secondary text-center">
+              <Link href="/dashboard" className="bf-button-secondary text-center">
                 Accéder à BatiFlow
               </Link>
             </div>
