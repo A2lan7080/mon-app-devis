@@ -297,10 +297,29 @@ export default function DevisForm({
     );
   };
 
+  const viderChampsClient = () => {
+    setNouveauDevis((prev) => ({
+      ...prev,
+      client: "",
+      adresse: "",
+      codePostal: "",
+      ville: "",
+      email: "",
+      telephone: "",
+      typeClient: "Particulier",
+      societe: "",
+      tvaClient: "",
+    }));
+  };
+
   const handleSelectionClient = (clientId: string) => {
     setClientSelectionneId(clientId);
 
-    if (!clientId) return;
+    if (!clientId) {
+      viderChampsClient();
+      setSectionClientMobileOuverte(true);
+      return;
+    }
 
     const client = clientsActifs.find((item) => item.id === clientId);
     if (!client) return;
@@ -708,6 +727,26 @@ export default function DevisForm({
           </p>
         </div>
 
+        {!clientSelectionneId && (
+          <div className="min-w-0 overflow-hidden md:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Nom du client
+            </label>
+            <input
+              data-testid="devis-client"
+              type="text"
+              value={nouveauDevis.client}
+              onChange={(e) =>
+                setNouveauDevis((prev) => ({
+                  ...prev,
+                  client: e.target.value,
+                }))
+              }
+              className={champFormulaireClasses}
+            />
+          </div>
+        )}
+
         <div className={`${sectionClientMobileOuverte ? "grid" : "hidden"} min-w-0 gap-3 sm:gap-4 md:contents`}>
         {!chantierSelectionneId && nouveauDevis.chantierTitre.trim() && (
           <>
@@ -758,6 +797,7 @@ export default function DevisForm({
           </>
         )}
 
+        {clientSelectionneId && (
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Nom du client
@@ -775,6 +815,7 @@ export default function DevisForm({
             className={champFormulaireClasses}
           />
         </div>
+        )}
 
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
