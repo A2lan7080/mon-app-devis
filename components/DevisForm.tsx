@@ -338,6 +338,17 @@ export default function DevisForm({
     }));
   };
 
+  const handleNomNouveauClientChange = (valeur: string) => {
+    setNouveauDevis((prev) => ({
+      ...prev,
+      client: valeur,
+    }));
+
+    if (!clientSelectionneId && valeur.trim()) {
+      setSectionClientMobileOuverte(true);
+    }
+  };
+
   const handleSelectionChantier = (chantierId: string) => {
     setChantierSelectionneId(chantierId);
 
@@ -736,12 +747,7 @@ export default function DevisForm({
               data-testid="devis-client"
               type="text"
               value={nouveauDevis.client}
-              onChange={(e) =>
-                setNouveauDevis((prev) => ({
-                  ...prev,
-                  client: e.target.value,
-                }))
-              }
+              onChange={(e) => handleNomNouveauClientChange(e.target.value)}
               className={champFormulaireClasses}
             />
           </div>
