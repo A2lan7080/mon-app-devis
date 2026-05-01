@@ -159,7 +159,7 @@ export default function SignupPage() {
         invitationCode: invitationCodeNettoye,
       });
 
-      router.push("/");
+      router.push("/beta-test");
       router.refresh();
     } catch (error) {
       setErreur(messageErreurAuth(error));

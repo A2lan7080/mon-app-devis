@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { formatMontant } from "../lib/devis-helpers";
 
 type AdminDashboardProps = {
@@ -33,6 +34,21 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
   return (
     <>
+      <div className="bf-card mb-4 border-blue-200 bg-blue-50 p-4 sm:mb-6 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-blue-950">Retour bêta</p>
+            <p className="mt-1 text-sm leading-6 text-blue-800">
+              Donner votre avis sur BatiFlow
+            </p>
+          </div>
+
+          <Link href="/beta-test" className="bf-button-primary text-center">
+            Retour bêta
+          </Link>
+        </div>
+      </div>
+
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-6">
         <div className="bf-card col-span-2 p-4 sm:p-5 xl:col-span-1">
           <p className="text-xs font-medium text-slate-500 sm:text-sm">Valeur totale active</p>
