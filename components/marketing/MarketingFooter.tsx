@@ -1,45 +1,85 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const footerLinks = [
+const productLinks = [
   { href: "/fonctionnalites", label: "Fonctionnalités" },
+  { href: "/exemple-devis", label: "Exemple de devis" },
   { href: "/tarifs", label: "Tarifs" },
+];
+
+const companyLinks = [
   { href: "/a-propos", label: "À propos" },
+  { href: "/contact", label: "Contact" },
   { href: "/login", label: "Connexion" },
+];
+
+const legalLinks = [
+  { href: "/mentions-legales", label: "Mentions légales" },
+  { href: "/confidentialite", label: "Confidentialité" },
+  { href: "/conditions-utilisation", label: "Conditions d’utilisation" },
 ];
 
 export default function MarketingFooter() {
   return (
     <footer className="bg-[#0F172A] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-[1.35fr_1fr_1fr_1fr] lg:px-8">
         <div>
           <Image
             src="/logo-batiflow.png"
-            alt="BatiFlow"
-            width={154}
-            height={46}
-            className="h-11 w-auto rounded bg-white px-2 py-1"
+            alt="Logo BatiFlow"
+            width={132}
+            height={40}
+            className="h-9 w-auto rounded-md bg-white px-2 py-1"
           />
-          <p className="mt-5 max-w-xl text-sm leading-6 text-slate-300">
-            BatiFlow aide les artisans du bâtiment à créer des devis, factures,
-            clients et chantiers dans un outil clair, rapide et pensé pour le
-            terrain.
+          <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
+            Devis, factures, clients et chantiers dans un outil simple pour les
+            artisans du bâtiment.
           </p>
         </div>
 
-        <nav
-          aria-label="Navigation secondaire"
-          className="grid gap-3 text-sm font-semibold text-slate-200 sm:grid-cols-2"
-        >
-          {footerLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="transition hover:text-[#F97316]"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav aria-label="Navigation produit">
+          <h2 className="text-sm font-bold text-white">Produit</h2>
+          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+            {productLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="w-fit transition hover:text-[#F97316] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+
+        <nav aria-label="Navigation entreprise">
+          <h2 className="text-sm font-bold text-white">BatiFlow</h2>
+          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+            {companyLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="w-fit transition hover:text-[#F97316] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+
+        <nav aria-label="Navigation légale">
+          <h2 className="text-sm font-bold text-white">Légal</h2>
+          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+            {legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="w-fit transition hover:text-[#F97316] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
       <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-slate-400">
