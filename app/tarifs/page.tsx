@@ -4,16 +4,16 @@ import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
 
 export const metadata: Metadata = {
-  title: "Tarifs BatiFlow | Logiciel devis facture artisan",
+  title: "Tarifs BatiFlow | Devis, factures et chantiers",
   description:
-    "Testez BatiFlow gratuitement pour gérer devis, factures, clients et chantiers avec un logiciel simple pour artisans du bâtiment.",
+    "Testez BatiFlow gratuitement pour gérer devis, factures, clients et chantiers avec un logiciel simple pour artisans et petites entreprises.",
   alternates: {
     canonical: "/tarifs",
   },
   openGraph: {
-    title: "Tarifs BatiFlow | Logiciel devis facture artisan",
+    title: "Tarifs BatiFlow | Devis, factures et chantiers",
     description:
-      "Un essai gratuit pour tester un logiciel devis facture Belgique pensé pour les artisans.",
+      "Un essai gratuit pour tester un outil simple de devis, factures, clients et chantiers.",
     url: "/tarifs",
     siteName: "BatiFlow",
     locale: "fr_BE",
@@ -28,12 +28,12 @@ export const metadata: Metadata = {
 };
 
 const included = [
-  "✔ Devis et factures professionnels",
-  "✔ TVA, IBAN et mentions légales",
-  "✔ Clients et chantiers centralisés",
-  "✔ PDF propres et prêts à envoyer",
-  "✔ Suivi clair de l’activité",
-  "✔ Accès mobile et desktop",
+  "Devis et factures professionnels",
+  "TVA, IBAN et mentions utiles",
+  "Clients et chantiers centralisés",
+  "PDF propres et prêts à envoyer",
+  "Suivi clair de l’activité",
+  "Accès mobile et ordinateur",
 ];
 
 export default function TarifsPage() {
@@ -47,18 +47,18 @@ export default function TarifsPage() {
               Tarifs simples
             </p>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
-              Un logiciel devis facture artisan sans surprise
+              Un outil clair, sans surprise
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-700">
-              BatiFlow accompagne les artisans du bâtiment pour gérer devis,
-              factures, clients et chantiers simplement.
+              BatiFlow accompagne les artisans et petites entreprises pour
+              gérer devis, factures, clients et chantiers simplement.
             </p>
           </div>
         </section>
 
         <section className="px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
-            <article className="rounded-2xl border-2 border-[#F97316] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+            <article className="rounded-lg border-2 border-[#F97316] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wide text-[#1E3A8A]">
@@ -77,7 +77,7 @@ export default function TarifsPage() {
               </p>
               <p className="mt-4 text-sm leading-6 text-slate-600">
                 Testez BatiFlow sur vos vrais besoins : devis, factures,
-                clients et chantiers.
+                clients, documents et chantiers.
               </p>
               <ul className="mt-5 grid gap-3 text-sm font-semibold text-slate-700">
                 <li className="rounded-lg border border-slate-200 bg-[#F1F5F9] px-4 py-3">
@@ -95,7 +95,7 @@ export default function TarifsPage() {
               </Link>
             </article>
 
-            <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
@@ -110,13 +110,13 @@ export default function TarifsPage() {
                 </span>
               </div>
               <p className="mt-6 text-sm leading-6 text-slate-600">
-                Une formule payante pourra être proposée plus tard pour les
-                artisans qui veulent aller plus loin. Elle n&apos;est pas active
-                aujourd&apos;hui.
+                Une formule payante pourra être proposée plus tard aux
+                professionnels qui veulent aller plus loin. Elle n’est pas
+                active aujourd’hui.
               </p>
               <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white px-4 py-5 text-sm font-semibold text-slate-500">
-                Priorité actuelle : tester le logiciel devis facture Belgique
-                avec de vrais usages terrain.
+                Priorité actuelle : valider BatiFlow avec de vrais usages
+                terrain avant d’ouvrir une offre commerciale.
               </div>
             </article>
           </div>
@@ -125,8 +125,8 @@ export default function TarifsPage() {
             <div className="mx-auto max-w-5xl">
               <h2 className="text-2xl font-extrabold">Inclus</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                Les bases utiles pour un logiciel facture artisan, un logiciel
-                devis bâtiment et une gestion chantier artisan plus claire.
+                Les bases utiles pour créer des documents professionnels et
+                garder une gestion d’activité simple.
               </p>
               <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {included.map((item) => (

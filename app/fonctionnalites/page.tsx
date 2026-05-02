@@ -2,18 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import ProductVisual from "@/components/marketing/ProductVisuals";
 
 export const metadata: Metadata = {
   title: "Fonctionnalités BatiFlow | Devis, factures, clients et chantiers",
   description:
-    "Découvrez les fonctionnalités BatiFlow : devis, factures, PDF, clients, chantiers et suivi d’activité pour artisans du bâtiment.",
+    "Découvrez les fonctionnalités BatiFlow : devis, factures, PDF, clients, chantiers et suivi d’activité pour artisans et petites entreprises.",
   alternates: {
     canonical: "/fonctionnalites",
   },
   openGraph: {
     title: "Fonctionnalités BatiFlow",
     description:
-      "Un logiciel devis bâtiment pour centraliser devis, factures, clients et chantiers.",
+      "Un outil simple pour centraliser devis, factures, clients et chantiers.",
     url: "/fonctionnalites",
     siteName: "BatiFlow",
     locale: "fr_BE",
@@ -23,34 +24,34 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Fonctionnalités BatiFlow",
     description:
-      "Devis, factures, PDF, clients et gestion chantier artisan dans un espace simple.",
+      "Devis, factures, PDF, clients et chantiers dans un espace simple.",
   },
 };
 
 const sections = [
   {
     title: "Devis rapides",
-    text: "Préparez un devis facture artisan avec des lignes lisibles, TVA et totaux automatiques.",
+    text: "Préparez des devis lisibles avec des lignes claires, TVA et totaux automatiques.",
     label: "01",
   },
   {
-    title: "Factures conformes",
-    text: "Générez vos factures avec IBAN, TVA, mentions légales et informations entreprise.",
+    title: "Factures professionnelles",
+    text: "Générez vos factures avec IBAN, TVA, mentions utiles et informations entreprise.",
     label: "02",
   },
   {
-    title: "Clients & chantiers",
+    title: "Clients et chantiers",
     text: "Centralisez les coordonnées, adresses, documents et informations de chantier.",
     label: "03",
   },
   {
-    title: "PDF professionnels",
-    text: "Envoyez des documents propres, cohérents et prêts à partager avec vos clients.",
+    title: "PDF propres",
+    text: "Envoyez des documents cohérents, soignés et prêts à partager avec vos clients.",
     label: "04",
   },
   {
     title: "Bibliothèque de prestations",
-    text: "Réutilisez vos prestations habituelles, utile pour un logiciel menuisier ou bâtiment.",
+    text: "Réutilisez vos prestations habituelles pour préparer vos documents plus vite.",
     label: "05",
   },
   {
@@ -66,18 +67,20 @@ export default function FonctionnalitesPage() {
       <MarketingHeader />
       <main className="bg-white text-slate-900">
         <section className="bg-[#F1F5F9] px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
-            <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
-              Fonctionnalités
-            </p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
-              Les outils essentiels pour vos devis, factures et chantiers
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">
-              BatiFlow réunit un logiciel devis bâtiment, un logiciel facture
-              artisan et une gestion chantier artisan simple dans un même
-              espace.
-            </p>
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
+                Fonctionnalités
+              </p>
+              <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
+                Les outils essentiels pour vos devis, factures et chantiers
+              </h1>
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">
+                BatiFlow réunit la création de documents, le suivi client et la
+                gestion simple de l’activité dans un même espace.
+              </p>
+            </div>
+            <ProductVisual kind="devis" />
           </div>
         </section>
 
@@ -86,7 +89,7 @@ export default function FonctionnalitesPage() {
             {sections.map((section) => (
               <article
                 key={section.title}
-                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-sm font-extrabold text-[#1E3A8A]">
                   {section.label}

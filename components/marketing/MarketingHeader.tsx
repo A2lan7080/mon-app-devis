@@ -20,16 +20,16 @@ export default function MarketingHeader() {
           <Image
             src="/logo-batiflow.png"
             alt="BatiFlow"
-            width={132}
-            height={40}
+            width={112}
+            height={34}
             priority
-            className="h-8 w-auto sm:h-9"
+            className="h-6 w-auto sm:h-7"
           />
         </Link>
 
         <nav
           aria-label="Navigation principale"
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-700"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-700 lg:justify-end"
         >
           {navigation.map((item) => (
             <Link

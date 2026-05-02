@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Contact BatiFlow",
     description:
-      "Demandez une démo ou posez une question sur BatiFlow, logiciel devis facture pour artisans.",
+      "Demandez une démo ou posez une question sur BatiFlow, logiciel de devis, factures et chantiers.",
     url: "/contact",
     siteName: "BatiFlow",
     locale: "fr_BE",
@@ -48,13 +48,13 @@ export default function ContactPage() {
 
         <section className="px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-extrabold text-[#0F172A]">
                 Demander une démo
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 Pour la phase bêta, le contact se fait volontairement de façon
-                simple. Préparez votre métier, votre besoin principal et les
+                simple. Préparez votre activité, votre besoin principal et les
                 documents que vous souhaitez tester.
               </p>
               <Link
@@ -65,8 +65,10 @@ export default function ContactPage() {
               </Link>
             </div>
 
-            <div className="rounded-2xl bg-[#0F172A] p-6 text-white">
-              <h2 className="text-2xl font-extrabold">Ce que l’on peut voir ensemble</h2>
+            <div className="rounded-lg bg-[#0F172A] p-6 text-white">
+              <h2 className="text-2xl font-extrabold">
+                Ce que l’on peut voir ensemble
+              </h2>
               <ul className="mt-5 grid gap-3 text-sm font-semibold text-slate-200">
                 <li className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
                   Créer un devis professionnel avec TVA et mentions utiles

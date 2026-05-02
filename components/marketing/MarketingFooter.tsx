@@ -22,18 +22,18 @@ const legalLinks = [
 export default function MarketingFooter() {
   return (
     <footer className="bg-[#0F172A] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-[1.35fr_1fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-[1.25fr_1fr_1fr_1fr] lg:px-8">
         <div>
           <Image
             src="/logo-batiflow.png"
             alt="Logo BatiFlow"
-            width={132}
-            height={40}
-            className="h-9 w-auto rounded-md bg-white px-2 py-1"
+            width={104}
+            height={32}
+            className="h-7 w-auto rounded-md bg-white px-2 py-1"
           />
           <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
             Devis, factures, clients et chantiers dans un outil simple pour les
-            artisans du bâtiment.
+            artisans et petites entreprises.
           </p>
         </div>
 
