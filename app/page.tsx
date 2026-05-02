@@ -43,7 +43,6 @@ export const metadata: Metadata = {
 const trustItems = [
   "Documents professionnels",
   "TVA et IBAN intégrables",
-  "Mentions utiles incluses",
   "Données sécurisées",
   "Accès mobile et ordinateur",
   "Sans carte bancaire",
@@ -100,20 +99,20 @@ export default function HomePage() {
       <MarketingHeader />
       <main className="bg-white text-slate-900">
         <section className="overflow-hidden bg-[#F1F5F9]">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 md:py-16 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-7 px-4 py-7 sm:px-6 sm:py-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:px-8 lg:py-12">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
                 Pour artisans et petites entreprises
               </p>
-              <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
+              <h1 className="mt-3 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
                 Le logiciel simple pour vos devis, factures et chantiers
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
                 BatiFlow vous aide à créer, envoyer et suivre vos documents
                 sans logiciel compliqué. Tout reste clair, du premier devis au
                 suivi de vos chantiers.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/signup"
                   className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-[#F97316] px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:ring-offset-2 sm:w-auto"
@@ -127,23 +126,24 @@ export default function HomePage() {
                   Voir un exemple
                 </Link>
               </div>
-              <ul className="mt-7 grid gap-2 text-sm font-semibold text-slate-700 sm:grid-cols-2">
+              <ul className="mt-5 grid gap-2 text-sm font-semibold text-slate-700 sm:grid-cols-2 lg:max-w-xl">
                 {trustItems.slice(0, 4).map((item) => (
                   <li
                     key={item}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm"
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
                   >
-                    {item}
+                    <span className="h-2 w-2 rounded-full bg-[#F97316]" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <ProductVisual kind="dashboard" priority />
+            <ProductVisual kind="dashboard" priority variant="hero" />
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-5 md:grid-cols-3">
               {features.map((feature) => (
@@ -166,7 +166,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-[#F1F5F9] px-4 py-14 sm:px-6 lg:px-8">
+        <section className="bg-[#F1F5F9] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl">
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
@@ -181,7 +181,7 @@ export default function HomePage() {
                 au bon endroit.
               </p>
             </div>
-            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <div className="mt-7 grid gap-5 lg:grid-cols-3">
               <ProductVisual
                 kind="dashboard"
                 eyebrow="Pilotage"
@@ -197,7 +197,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-[#1E3A8A] px-4 py-12 text-white sm:px-6 lg:px-8">
+        <section className="bg-[#1E3A8A] px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-6xl gap-7 lg:grid-cols-[0.85fr_1fr] lg:items-start">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-orange-200">
@@ -220,8 +220,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.68fr_1.32fr] lg:items-start">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
                 Confiance
@@ -230,20 +230,21 @@ export default function HomePage() {
                 Les bases importantes sont là
               </h2>
             </div>
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               {trustItems.map((item) => (
                 <li
                   key={item}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-700 shadow-sm"
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 shadow-sm"
                 >
-                  {item}
+                  <span className="h-2 w-2 rounded-full bg-[#F97316]" />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
         </section>
 
-        <section className="bg-[#0F172A] px-4 py-12 text-white sm:px-6 lg:px-8">
+        <section className="bg-[#0F172A] px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
             <h2 className="text-3xl font-extrabold">
               Prêt à gagner du temps sur vos devis et factures ?

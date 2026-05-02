@@ -22,16 +22,16 @@ const legalLinks = [
 export default function MarketingFooter() {
   return (
     <footer className="bg-[#0F172A] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-[1.25fr_1fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 md:grid-cols-[1.15fr_1fr_1fr_1fr] lg:px-8">
         <div>
           <Image
             src="/logo-batiflow.png"
             alt="Logo BatiFlow"
-            width={104}
-            height={32}
-            className="h-7 w-auto rounded-md bg-white px-2 py-1"
+            width={96}
+            height={30}
+            className="h-6 w-auto rounded-md bg-white px-2 py-1"
           />
-          <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
             Devis, factures, clients et chantiers dans un outil simple pour les
             artisans et petites entreprises.
           </p>
@@ -39,7 +39,7 @@ export default function MarketingFooter() {
 
         <nav aria-label="Navigation produit">
           <h2 className="text-sm font-bold text-white">Produit</h2>
-          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+          <div className="mt-2 grid gap-1.5 text-sm font-semibold text-slate-300">
             {productLinks.map((item) => (
               <Link
                 key={item.href}
@@ -54,7 +54,7 @@ export default function MarketingFooter() {
 
         <nav aria-label="Navigation entreprise">
           <h2 className="text-sm font-bold text-white">BatiFlow</h2>
-          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+          <div className="mt-2 grid gap-1.5 text-sm font-semibold text-slate-300">
             {companyLinks.map((item) => (
               <Link
                 key={item.href}
@@ -69,7 +69,7 @@ export default function MarketingFooter() {
 
         <nav aria-label="Navigation légale">
           <h2 className="text-sm font-bold text-white">Légal</h2>
-          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-300">
+          <div className="mt-2 grid gap-1.5 text-sm font-semibold text-slate-300">
             {legalLinks.map((item) => (
               <Link
                 key={item.href}
@@ -82,7 +82,7 @@ export default function MarketingFooter() {
           </div>
         </nav>
       </div>
-      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-slate-400">
+      <div className="border-t border-white/10 px-4 py-3 text-center text-xs text-slate-400">
         © {new Date().getFullYear()} BatiFlow. Tous droits réservés.
       </div>
     </footer>

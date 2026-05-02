@@ -32,13 +32,13 @@ export default function AProposPage() {
     <>
       <MarketingHeader />
       <main className="bg-white text-slate-900">
-        <section className="bg-[#F1F5F9] px-4 py-12 sm:px-6 lg:px-8">
+        <section className="bg-[#F1F5F9] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.85fr] lg:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
                 À propos
               </p>
-              <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
+              <h1 className="mt-3 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
                 BatiFlow est pensé pour les artisans et petites entreprises
               </h1>
             </div>
@@ -54,7 +54,7 @@ export default function AProposPage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto max-w-4xl space-y-6 text-lg leading-8 text-slate-700">
             <p>
               Le projet est né d’un besoin simple : gérer ses devis, factures,
@@ -78,7 +78,7 @@ export default function AProposPage() {
           </div>
         </section>
 
-        <section className="bg-[#0F172A] px-4 py-12 text-white sm:px-6 lg:px-8">
+        <section className="bg-[#0F172A] px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
             <h2 className="text-3xl font-extrabold">
               Essayez BatiFlow sur vos vrais cas

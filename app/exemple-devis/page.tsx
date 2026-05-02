@@ -39,16 +39,16 @@ export default function ExempleDevisPage() {
     <>
       <MarketingHeader />
       <main className="bg-white text-slate-900">
-        <section className="bg-[#F1F5F9] px-4 py-12 sm:px-6 lg:px-8">
+        <section className="bg-[#F1F5F9] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
                 Exemple concret
               </p>
-              <h1 className="mt-4 text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
+              <h1 className="mt-3 text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
                 Un devis professionnel clair, prêt à envoyer
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
+              <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">
                 BatiFlow aide les artisans et petites entreprises à produire
                 des devis lisibles, avec TVA, totaux automatiques, IBAN et
                 mentions utiles.
@@ -65,7 +65,7 @@ export default function ExempleDevisPage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <article className="mx-auto max-w-5xl rounded-lg border border-slate-200 bg-white p-4 shadow-[0_18px_55px_rgba(15,23,42,0.10)] sm:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
               <div>

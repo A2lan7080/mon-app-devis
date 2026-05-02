@@ -41,22 +41,22 @@ export default function TarifsPage() {
     <>
       <MarketingHeader />
       <main className="bg-white text-slate-900">
-        <section className="bg-[#F1F5F9] px-4 py-12 sm:px-6 lg:px-8">
+        <section className="bg-[#F1F5F9] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto max-w-5xl text-center">
             <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
               Tarifs simples
             </p>
-            <h1 className="mt-4 text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
+            <h1 className="mt-3 text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
               Un outil clair, sans surprise
             </h1>
-            <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-700">
+            <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-slate-700">
               BatiFlow accompagne les artisans et petites entreprises pour
               gérer devis, factures, clients et chantiers simplement.
             </p>
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
             <article className="rounded-lg border-2 border-[#F97316] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
               <div className="flex items-start justify-between gap-4">

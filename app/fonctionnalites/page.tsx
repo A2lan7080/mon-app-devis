@@ -66,16 +66,16 @@ export default function FonctionnalitesPage() {
     <>
       <MarketingHeader />
       <main className="bg-white text-slate-900">
-        <section className="bg-[#F1F5F9] px-4 py-12 sm:px-6 lg:px-8">
+        <section className="bg-[#F1F5F9] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-[#F97316]">
                 Fonctionnalités
               </p>
-              <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
+              <h1 className="mt-3 max-w-4xl text-4xl font-extrabold leading-tight text-[#0F172A] sm:text-5xl">
                 Les outils essentiels pour vos devis, factures et chantiers
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">
+              <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-700">
                 BatiFlow réunit la création de documents, le suivi client et la
                 gestion simple de l’activité dans un même espace.
               </p>
@@ -84,7 +84,7 @@ export default function FonctionnalitesPage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-3">
             {sections.map((section) => (
               <article
@@ -105,7 +105,7 @@ export default function FonctionnalitesPage() {
           </div>
         </section>
 
-        <section className="bg-[#1E3A8A] px-4 py-12 text-white sm:px-6 lg:px-8">
+        <section className="bg-[#1E3A8A] px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-12">
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
             <h2 className="text-3xl font-extrabold">
               Simple sur chantier, clair au bureau

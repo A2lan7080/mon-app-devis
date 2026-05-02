@@ -11,10 +11,10 @@ const navigation = [
 export default function MarketingHeader() {
   return (
     <header className="border-b border-slate-200 bg-white/95 text-slate-900 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex w-fit items-center rounded-md focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+          className="flex shrink-0 items-center rounded-md focus:outline-none focus:ring-2 focus:ring-[#F97316]"
           aria-label="Accueil BatiFlow"
         >
           <Image
@@ -23,32 +23,32 @@ export default function MarketingHeader() {
             width={112}
             height={34}
             priority
-            className="h-6 w-auto sm:h-7"
+            className="h-5 w-auto sm:h-6 lg:h-7"
           />
         </Link>
 
         <nav
           aria-label="Navigation principale"
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-700 lg:justify-end"
+          className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs font-semibold text-slate-700 sm:gap-x-4 sm:text-sm"
         >
           {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md py-1.5 transition hover:text-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+              className="rounded-md py-1 transition hover:text-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#F97316] sm:py-1.5"
             >
               {item.label}
             </Link>
           ))}
           <Link
             href="/login"
-            className="rounded-md py-1.5 text-[#1E3A8A] transition hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+            className="rounded-md py-1 text-[#1E3A8A] transition hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#F97316] sm:py-1.5"
           >
             Connexion
           </Link>
           <Link
             href="/signup"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#F97316] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:ring-offset-2"
+            className="inline-flex min-h-8 items-center justify-center rounded-lg bg-[#F97316] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:ring-offset-2 sm:min-h-10 sm:px-4 sm:py-2 sm:text-sm"
           >
             Essayer gratuitement
           </Link>
