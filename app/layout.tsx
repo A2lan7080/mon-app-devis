@@ -13,7 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://batiflow.be"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://mon-app-devis-sepia.vercel.app"
+  ),
   applicationName: "BatiFlow",
   title: {
     default: "BatiFlow | Logiciel devis et factures pour artisans",
