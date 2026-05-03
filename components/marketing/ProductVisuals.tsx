@@ -14,10 +14,33 @@ type ProductVisualProps = {
   variant?: "default" | "hero";
 };
 
-const screenshotByKind: Record<ProductVisualKind, string> = {
-  dashboard: "/product-screenshots/dashboard.png",
-  devis: "/product-screenshots/devis.png",
-  facture: "/product-screenshots/facture.png",
+const screenshotByKind: Record<
+  ProductVisualKind,
+  {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+  }
+> = {
+  dashboard: {
+    src: "/product-screenshots/dashboard.png",
+    alt: "Aperçu du tableau de bord BatiFlow",
+    width: 1904,
+    height: 992,
+  },
+  devis: {
+    src: "/product-screenshots/devis.png",
+    alt: "Liste de devis BatiFlow",
+    width: 1919,
+    height: 991,
+  },
+  facture: {
+    src: "/product-screenshots/facture.png",
+    alt: "Suivi des factures BatiFlow",
+    width: 1919,
+    height: 981,
+  },
 };
 
 function hasPublicAsset(src: string) {
@@ -35,21 +58,27 @@ function BrowserFrame({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-lg border border-slate-200 bg-white ${
+      className={`overflow-hidden rounded-xl border border-slate-200/80 bg-white ${
         variant === "hero"
-          ? "shadow-[0_30px_90px_rgba(15,23,42,0.22)]"
-          : "shadow-[0_20px_55px_rgba(15,23,42,0.13)]"
+          ? "shadow-[0_34px_95px_rgba(15,23,42,0.24)] ring-1 ring-white/70"
+          : "shadow-[0_22px_65px_rgba(15,23,42,0.15)]"
       } ${className}`}
     >
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
         <div className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
         </div>
         <span className="hidden h-2 w-28 rounded-full bg-slate-100 sm:block" />
       </div>
-      {children}
+      <div
+        className={
+          variant === "hero" ? "bg-white p-1.5 sm:p-2" : "bg-white p-1.5"
+        }
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -268,16 +297,8 @@ export default function ProductVisual({
   priority = false,
   variant = "default",
 }: ProductVisualProps) {
-  const src = screenshotByKind[kind];
-  const hasScreenshot = hasPublicAsset(src);
-  const fallbackTitle =
-    title ??
-    (kind === "dashboard"
-      ? "Vue d'ensemble BatiFlow"
-      : kind === "devis"
-        ? "Création de devis"
-        : "Aperçu facture");
-
+  const screenshot = screenshotByKind[kind];
+  const hasScreenshot = hasPublicAsset(screenshot.src);
   return (
     <div className={`relative ${className}`}>
       {(eyebrow || title) && (
@@ -302,16 +323,37 @@ export default function ProductVisual({
           <p className="mt-1 text-2xl font-extrabold text-[#1E3A8A]">+32%</p>
         </div>
       )}
-      <BrowserFrame variant={variant}>
+      <BrowserFrame
+        variant={variant}
+        className={
+          variant === "hero"
+            ? ""
+            : "shadow-[0_18px_50px_rgba(15,23,42,0.12)]"
+        }
+      >
         {hasScreenshot ? (
-          <Image
-            src={src}
-            alt={fallbackTitle}
-            width={1440}
-            height={900}
-            priority={priority}
-            className="aspect-[16/10] w-full object-cover"
-          />
+          <div
+            className={`overflow-hidden rounded-lg bg-slate-50 ${
+              variant === "hero"
+                ? "max-h-[330px] sm:max-h-[420px] lg:max-h-none"
+                : ""
+            }`}
+          >
+            <Image
+              src={screenshot.src}
+              alt={screenshot.alt}
+              width={screenshot.width}
+              height={screenshot.height}
+              priority={priority}
+              sizes={
+                variant === "hero"
+                  ? "(min-width: 1024px) 58vw, (min-width: 640px) 92vw, 100vw"
+                  : "(min-width: 1024px) 31vw, (min-width: 768px) 50vw, 100vw"
+              }
+              quality={95}
+              className="block h-auto w-full"
+            />
+          </div>
         ) : (
           <ProductFallback kind={kind} />
         )}
