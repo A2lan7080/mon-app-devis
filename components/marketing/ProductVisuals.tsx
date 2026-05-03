@@ -350,7 +350,7 @@ export default function ProductVisual({
                   ? "(min-width: 1024px) 58vw, (min-width: 640px) 92vw, 100vw"
                   : "(min-width: 1024px) 31vw, (min-width: 768px) 50vw, 100vw"
               }
-              quality={95}
+              quality={75}
               className="block h-auto w-full"
             />
           </div>

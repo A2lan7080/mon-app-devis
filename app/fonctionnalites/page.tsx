@@ -80,7 +80,7 @@ export default function FonctionnalitesPage() {
                 gestion simple de l’activité dans un même espace.
               </p>
             </div>
-            <ProductVisual kind="devis" />
+            <ProductVisual kind="devis" priority />
           </div>
         </section>
 

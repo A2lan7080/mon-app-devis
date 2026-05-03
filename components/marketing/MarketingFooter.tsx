@@ -28,8 +28,8 @@ export default function MarketingFooter() {
             src="/logo-batiflow.png"
             alt="Logo BatiFlow"
             width={96}
-            height={30}
-            className="h-6 w-auto rounded-md bg-white px-2 py-1"
+            height={96}
+            className="h-10 w-10 rounded-md bg-white p-1"
           />
           <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
             Devis, factures, clients et chantiers dans un outil simple pour les
