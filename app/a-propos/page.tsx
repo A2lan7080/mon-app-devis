@@ -3,6 +3,8 @@ import Link from "next/link";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
 
+const ogImage = "/opengraph-image";
+
 export const metadata: Metadata = {
   title: "À propos de BatiFlow | Logiciel pour artisans et petites entreprises",
   description:
@@ -18,12 +20,21 @@ export const metadata: Metadata = {
     siteName: "BatiFlow",
     locale: "fr_BE",
     type: "website",
+    images: [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: "BatiFlow - Devis & factures pour artisans",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "À propos de BatiFlow",
     description:
       "BatiFlow aide les artisans et petites entreprises à gérer devis, factures et chantiers.",
+    images: [ogImage],
   },
 };
 

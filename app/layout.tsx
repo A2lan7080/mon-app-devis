@@ -12,24 +12,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://mon-app-devis-sepia.vercel.app";
+const defaultTitle = "BatiFlow — Devis & factures pour artisans";
+const defaultDescription =
+  "Créez, envoyez et faites signer vos devis en quelques clics. Pensé pour les artisans du bâtiment.";
+const ogImage = "/opengraph-image";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://mon-app-devis-sepia.vercel.app"
-  ),
+  metadataBase: new URL(siteUrl),
   applicationName: "BatiFlow",
   title: {
-    default: "BatiFlow | Logiciel devis et factures pour artisans",
+    default: defaultTitle,
     template: "%s | BatiFlow",
   },
-  description:
-    "Logiciel simple pour créer et suivre devis, factures, clients et chantiers des artisans du bâtiment.",
+  description: defaultDescription,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
+    title: defaultTitle,
+    description: defaultDescription,
+    url: "/",
     siteName: "BatiFlow",
     locale: "fr_BE",
     type: "website",
+    images: [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: "BatiFlow - Devis & factures pour artisans",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+    images: [ogImage],
   },
 };
 

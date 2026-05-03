@@ -4,6 +4,7 @@ import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
 
 const pdfHref = "/documents/exemple-devis-batiflow.pdf";
+const ogImage = "/opengraph-image";
 
 export const metadata: Metadata = {
   title: "Exemple de devis professionnel | BatiFlow",
@@ -20,12 +21,21 @@ export const metadata: Metadata = {
     siteName: "BatiFlow",
     locale: "fr_BE",
     type: "website",
+    images: [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: "BatiFlow - Devis & factures pour artisans",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Exemple de devis professionnel | BatiFlow",
     description:
       "Visualisez un exemple de devis PDF clair, prêt à envoyer à un client.",
+    images: [ogImage],
   },
 };
 

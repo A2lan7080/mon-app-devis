@@ -5,39 +5,39 @@ import MarketingHeader from "@/components/marketing/MarketingHeader";
 import ProductVisual from "@/components/marketing/ProductVisuals";
 import SeoJsonLd from "@/components/marketing/SeoJsonLd";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://mon-app-devis-sepia.vercel.app";
+const siteUrl = "https://mon-app-devis-sepia.vercel.app";
+const pageTitle = "BatiFlow — Devis & factures pour artisans";
+const pageDescription =
+  "Créez, envoyez et faites signer vos devis en quelques clics. Pensé pour les artisans du bâtiment.";
+const ogImage = "/opengraph-image";
 
 export const metadata: Metadata = {
-  title: "BatiFlow | Logiciel simple pour devis, factures et chantiers",
-  description:
-    "Créez, envoyez et suivez vos devis, factures, clients et chantiers avec BatiFlow, le logiciel simple pour artisans et petites entreprises.",
+  title: pageTitle,
+  description: pageDescription,
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "BatiFlow | Logiciel simple pour devis, factures et chantiers",
-    description:
-      "Un outil clair pour gérer devis, factures, clients et chantiers sans logiciel compliqué.",
+    title: pageTitle,
+    description: pageDescription,
     url: "/",
     siteName: "BatiFlow",
     locale: "fr_BE",
     type: "website",
     images: [
       {
-        url: "/logo-batiflow.png",
+        url: ogImage,
         width: 1200,
         height: 630,
-        alt: "BatiFlow",
+        alt: "BatiFlow - Devis & factures pour artisans",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BatiFlow | Logiciel simple pour devis, factures et chantiers",
-    description:
-      "Gagnez du temps sur vos devis, factures et chantiers avec un outil simple pour artisans et petites entreprises.",
-    images: ["/logo-batiflow.png"],
+    title: pageTitle,
+    description: pageDescription,
+    images: [ogImage],
   },
 };
 
