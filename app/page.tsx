@@ -5,7 +5,8 @@ import MarketingHeader from "@/components/marketing/MarketingHeader";
 import ProductVisual from "@/components/marketing/ProductVisuals";
 import SeoJsonLd from "@/components/marketing/SeoJsonLd";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://batiflow.be";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://mon-app-devis-sepia.vercel.app";
 
 export const metadata: Metadata = {
   title: "BatiFlow | Logiciel simple pour devis, factures et chantiers",
