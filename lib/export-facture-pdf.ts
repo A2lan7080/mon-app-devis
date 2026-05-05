@@ -3,19 +3,11 @@ import {
   type EntrepriseSettings,
 } from "./get-entreprise-settings";
 import { formatMontant } from "./devis-helpers";
+import {
+  calculerTotauxDepuisFacture,
+  normaliserLignesFacture,
+} from "./facture-helpers";
 import type { Facture } from "../types/factures";
-
-function calculerMontantTva(facture: Facture) {
-  return facture.montantHt * (facture.tvaTaux / 100);
-}
-
-function calculerTotalTtc(facture: Facture) {
-  return facture.montantHt + calculerMontantTva(facture);
-}
-
-function calculerNetAPayer(facture: Facture) {
-  return calculerTotalTtc(facture) - facture.acompteDeduit;
-}
 
 function echapperHtml(valeur: string) {
   return valeur
@@ -169,9 +161,34 @@ function getPrintScript() {
 }
 
 export async function exporterFacturePdf(factureSelectionnee: Facture) {
-  const montantTva = calculerMontantTva(factureSelectionnee);
-  const totalTtc = calculerTotalTtc(factureSelectionnee);
-  const netAPayer = calculerNetAPayer(factureSelectionnee);
+  const lignesFacture = normaliserLignesFacture(factureSelectionnee);
+  const totauxFacture = calculerTotauxDepuisFacture(factureSelectionnee);
+  const lignesHtml = lignesFacture
+    .map(
+      (ligne) => `
+        <tr>
+          <td>${texteOuDefaut(ligne.description)}</td>
+          <td class="align-right">${ligne.quantite}</td>
+          <td>${texteOuDefaut(ligne.unite)}</td>
+          <td class="align-right">${formatMontant(ligne.prixUnitaireHt)}</td>
+          <td class="align-right">${ligne.tvaTaux}%</td>
+          <td class="align-right">${formatMontant(ligne.totalHt)}</td>
+          <td class="align-right">${formatMontant(ligne.montantTva)}</td>
+          <td class="align-right">${formatMontant(ligne.totalTtc)}</td>
+        </tr>
+      `
+    )
+    .join("");
+  const detailTvaHtml = totauxFacture.detailTva
+    .map(
+      (ligne) => `
+        <div class="total-row">
+          <span>TVA ${ligne.taux}%</span>
+          <span>${formatMontant(ligne.montantTva)}</span>
+        </div>
+      `
+    )
+    .join("");
 
   const fenetre = window.open("", "_blank", "width=1100,height=900");
 
@@ -331,6 +348,33 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
             padding: 12px;
             break-inside: avoid;
             page-break-inside: avoid;
+          }
+
+          .lines-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-wrap: anywhere;
+          }
+
+          .lines-table th,
+          .lines-table td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 7px 6px;
+            font-size: 10px;
+            vertical-align: top;
+          }
+
+          .lines-table th {
+            color: #64748b;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+          }
+
+          .align-right {
+            text-align: right;
+            white-space: nowrap;
           }
 
           .total-row {
@@ -502,22 +546,40 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
           </div>
 
           <div class="card">
+            <div class="label">Lignes de facture</div>
+            <table class="lines-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th class="align-right">Qté</th>
+                  <th>Unité</th>
+                  <th class="align-right">PU HT</th>
+                  <th class="align-right">TVA</th>
+                  <th class="align-right">Total HT</th>
+                  <th class="align-right">TVA</th>
+                  <th class="align-right">TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lignesHtml}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
             <div class="label">Récapitulatif financier</div>
 
             <div class="total-box">
               <div class="total-row">
                 <span>Montant HT</span>
-                <span>${formatMontant(factureSelectionnee.montantHt)}</span>
+                <span>${formatMontant(totauxFacture.montantHt)}</span>
               </div>
 
-              <div class="total-row">
-                <span>TVA (${factureSelectionnee.tvaTaux}%)</span>
-                <span>${formatMontant(montantTva)}</span>
-              </div>
+              ${detailTvaHtml}
 
               <div class="total-row">
                 <span>Total TTC</span>
-                <span>${formatMontant(totalTtc)}</span>
+                <span>${formatMontant(totauxFacture.totalTtc)}</span>
               </div>
 
               <div class="total-row">
@@ -527,7 +589,7 @@ export async function exporterFacturePdf(factureSelectionnee: Facture) {
 
               <div class="total-row final">
                 <span>Net à payer</span>
-                <span>${formatMontant(netAPayer)}</span>
+                <span>${formatMontant(totauxFacture.netAPayer)}</span>
               </div>
             </div>
           </div>

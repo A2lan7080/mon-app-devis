@@ -5,6 +5,27 @@ export type StatutFacture =
   | "En retard"
   | "Annulée";
 
+export type TypeFacture = "depuis_devis" | "libre";
+
+export type LigneFacture = {
+  id: string;
+  description: string;
+  quantite: number;
+  unite: string;
+  prixUnitaireHt: number;
+  tvaTaux: number;
+  totalHt: number;
+  montantTva: number;
+  totalTtc: number;
+};
+
+export type DetailTvaFacture = {
+  taux: number;
+  montantHt: number;
+  montantTva: number;
+  totalTtc: number;
+};
+
 export type Facture = {
   id: string;
   reference: string;
@@ -26,6 +47,11 @@ export type Facture = {
   statut: StatutFacture;
   montantHt: number;
   tvaTaux: number;
+  lignes?: LigneFacture[];
+  detailTva?: DetailTvaFacture[];
+  totalTva?: number;
+  totalTtc?: number;
+  typeFacture?: TypeFacture;
   acompteDeduit: number;
   notes: string;
   entrepriseId: string;

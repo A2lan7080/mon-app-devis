@@ -8,15 +8,38 @@ export const formatMontant = (montant: number) =>
     maximumFractionDigits: 2,
   }).format(Number.isFinite(montant) ? montant : 0);
 
+const arrondirMontant = (valeur: number) =>
+  Math.round((valeur + Number.EPSILON) * 100) / 100;
+
 const securiserNombre = (valeur: unknown) => {
   const nombre = Number(valeur);
   return Number.isFinite(nombre) ? nombre : 0;
 };
 
-const securiserLignes = (devis: Devis | null | undefined): LigneDevis[] => {
+export const getTauxTvaFallbackDevis = (
+  devis: Partial<Devis> | null | undefined,
+  tauxEntreprise?: number
+) => {
+  if (typeof devis?.tvaTaux === "number" && Number.isFinite(devis.tvaTaux)) {
+    return devis.tvaTaux;
+  }
+
+  if (typeof tauxEntreprise === "number" && Number.isFinite(tauxEntreprise)) {
+    return tauxEntreprise;
+  }
+
+  return 21;
+};
+
+export const normaliserLignesDevis = (
+  devis: Partial<Devis> | null | undefined,
+  tauxEntreprise?: number
+): LigneDevis[] => {
   if (!devis || !Array.isArray(devis.lignes)) {
     return [];
   }
+
+  const tvaFallback = getTauxTvaFallbackDevis(devis, tauxEntreprise);
 
   return devis.lignes.map((ligne) => ({
     id: ligne?.id ?? genererIdLigne(),
@@ -27,22 +50,78 @@ const securiserLignes = (devis: Devis | null | undefined): LigneDevis[] => {
         ? ligne.unite.trim()
         : UNITE_PAR_DEFAUT,
     prixUnitaire: securiserNombre(ligne?.prixUnitaire),
+    tvaTaux:
+      typeof ligne?.tvaTaux === "number" && Number.isFinite(ligne.tvaTaux)
+        ? ligne.tvaTaux
+        : tvaFallback,
   }));
 };
 
 export const calculerTotalHt = (devis: Devis) =>
-  securiserLignes(devis).reduce(
+  normaliserLignesDevis(devis).reduce(
     (total, ligne) => total + ligne.quantite * ligne.prixUnitaire,
     0
   );
 
-export const calculerMontantTva = (devis: Devis) => {
-  const taux = securiserNombre(devis?.tvaTaux);
-  return calculerTotalHt(devis) * (taux / 100);
+export const calculerTotauxDevis = (
+  devis: Partial<Devis>,
+  tauxEntreprise?: number
+) => {
+  const lignes = normaliserLignesDevis(devis, tauxEntreprise);
+  const totalHt = arrondirMontant(
+    lignes.reduce(
+      (total, ligne) => total + ligne.quantite * ligne.prixUnitaire,
+      0
+    )
+  );
+
+  const groupes = new Map<
+    string,
+    { taux: number; montantHt: number; montantTva: number; totalTtc: number }
+  >();
+
+  lignes.forEach((ligne) => {
+    const montantHt = arrondirMontant(ligne.quantite * ligne.prixUnitaire);
+    const montantTva = arrondirMontant(montantHt * ((ligne.tvaTaux ?? 21) / 100));
+    const totalTtc = arrondirMontant(montantHt + montantTva);
+    const cle = String(ligne.tvaTaux ?? 21);
+    const precedent = groupes.get(cle) ?? {
+      taux: ligne.tvaTaux ?? 21,
+      montantHt: 0,
+      montantTva: 0,
+      totalTtc: 0,
+    };
+
+    groupes.set(cle, {
+      taux: ligne.tvaTaux ?? 21,
+      montantHt: arrondirMontant(precedent.montantHt + montantHt),
+      montantTva: arrondirMontant(precedent.montantTva + montantTva),
+      totalTtc: arrondirMontant(precedent.totalTtc + totalTtc),
+    });
+  });
+
+  const detailTva = Array.from(groupes.values()).sort(
+    (a, b) => a.taux - b.taux
+  );
+  const totalTva = arrondirMontant(
+    detailTva.reduce((total, ligne) => total + ligne.montantTva, 0)
+  );
+  const totalTtc = arrondirMontant(totalHt + totalTva);
+
+  return {
+    lignes,
+    totalHt,
+    detailTva,
+    totalTva,
+    totalTtc,
+  };
 };
 
+export const calculerMontantTva = (devis: Devis) =>
+  calculerTotauxDevis(devis).totalTva;
+
 export const calculerTotalTvac = (devis: Devis) =>
-  calculerTotalHt(devis) + calculerMontantTva(devis);
+  calculerTotauxDevis(devis).totalTtc;
 
 const MS_PAR_JOUR = 24 * 60 * 60 * 1000;
 
@@ -151,13 +230,16 @@ export const convertirLignesFormStateEnLignesMetier = (
     .map((ligne) => {
       const quantite = Number(ligne.quantite);
       const prixUnitaire = Number(ligne.prixUnitaire);
+      const tvaTaux = Number(ligne.tvaTaux);
 
       if (
         !ligne.designation.trim() ||
         Number.isNaN(quantite) ||
         Number.isNaN(prixUnitaire) ||
+        Number.isNaN(tvaTaux) ||
         quantite <= 0 ||
-        prixUnitaire <= 0
+        prixUnitaire <= 0 ||
+        tvaTaux < 0
       ) {
         return null;
       }
@@ -168,6 +250,7 @@ export const convertirLignesFormStateEnLignesMetier = (
         quantite,
         unite: ligne.unite.trim() || UNITE_PAR_DEFAUT,
         prixUnitaire,
+        tvaTaux,
       } satisfies LigneDevis;
     })
     .filter(Boolean) as LigneDevis[];

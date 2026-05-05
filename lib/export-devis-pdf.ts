@@ -3,11 +3,10 @@ import {
   type EntrepriseSettings,
 } from "./get-entreprise-settings";
 import {
+  calculerTotauxDevis,
   calculerValiditeDevis,
-  calculerMontantTva,
-  calculerTotalHt,
-  calculerTotalTvac,
   formatMontant,
+  normaliserLignesDevis,
 } from "./devis-helpers";
 import { formatNumeroDevisPourAffichage } from "./format-numero-devis";
 import type { Devis } from "../types/devis";
@@ -346,9 +345,9 @@ function getPrintScript() {
 }
 
 export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
-  const totalHt = calculerTotalHt(devisSelectionne);
-  const montantTva = calculerMontantTva(devisSelectionne);
-  const totalTvac = calculerTotalTvac(devisSelectionne);
+  const totauxDevis = calculerTotauxDevis(devisSelectionne);
+  const totalHt = totauxDevis.totalHt;
+  const totalTvac = totauxDevis.totalTtc;
   const montantAcompte =
     totalTvac * (devisSelectionne.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
@@ -371,7 +370,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
     devisSelectionne.entrepriseId ?? null
   );
 
-  const lignesHtml = devisSelectionne.lignes
+  const lignesHtml = normaliserLignesDevis(devisSelectionne)
     .map((ligne) => {
       const sousTotal = ligne.quantite * ligne.prixUnitaire;
 
@@ -381,10 +380,21 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
           <td class="center-cell">${ligne.quantite}</td>
           <td class="center-cell">${texteOuDefaut(ligne.unite)}</td>
           <td class="right-cell nowrap">${formatMontant(ligne.prixUnitaire)}</td>
+          <td class="right-cell nowrap">${ligne.tvaTaux}%</td>
           <td class="right-cell nowrap strong">${formatMontant(sousTotal)}</td>
         </tr>
       `;
     })
+    .join("");
+  const detailTvaHtml = totauxDevis.detailTva
+    .map(
+      (ligne) => `
+        <div class="total-row">
+          <span>TVA ${ligne.taux}%</span>
+          <span>${formatMontant(ligne.montantTva)}</span>
+        </div>
+      `
+    )
     .join("");
 
   fenetre.document.write(`
@@ -888,6 +898,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
                   <th class="center-cell">Qté</th>
                   <th class="center-cell">Unité</th>
                   <th class="right-cell">PU</th>
+                  <th class="right-cell">TVA</th>
                   <th class="right-cell">Total</th>
                 </tr>
               </thead>
@@ -904,10 +915,7 @@ export async function exporterDevisPdf(devisSelectionne: DevisBusiness) {
                   <span>${formatMontant(totalHt)}</span>
                 </div>
 
-                <div class="total-row">
-                  <span>TVA (${devisSelectionne.tvaTaux}%)</span>
-                  <span>${formatMontant(montantTva)}</span>
-                </div>
+                ${detailTvaHtml}
 
                 <div class="total-row final">
                   <span>Total TVAC</span>

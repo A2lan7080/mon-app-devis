@@ -1,5 +1,9 @@
 import { entreprise as entrepriseParDefaut } from "./devis-constants";
 import { formatMontant } from "./devis-helpers";
+import {
+  calculerTotauxDepuisFacture,
+  normaliserLignesFacture,
+} from "./facture-helpers";
 import type { Facture } from "../types/factures";
 import type { Entreprise } from "../types/devis";
 
@@ -7,18 +11,6 @@ type EntrepriseSettings = Entreprise & {
   logoUrl?: string;
   logoRemplaceNomEntreprise?: boolean;
 };
-
-function calculerMontantTva(facture: Facture) {
-  return facture.montantHt * (facture.tvaTaux / 100);
-}
-
-function calculerTotalTtc(facture: Facture) {
-  return facture.montantHt + calculerMontantTva(facture);
-}
-
-function calculerNetAPayer(facture: Facture) {
-  return calculerTotalTtc(facture) - facture.acompteDeduit;
-}
 
 function echapperHtml(valeur: string) {
   return valeur
@@ -129,9 +121,31 @@ export function renderFactureEmailHtml(
   facture: Facture,
   entreprise: EntrepriseSettings = entrepriseParDefaut
 ) {
-  const montantTva = calculerMontantTva(facture);
-  const totalTtc = calculerTotalTtc(facture);
-  const netAPayer = calculerNetAPayer(facture);
+  const lignesFacture = normaliserLignesFacture(facture);
+  const totauxFacture = calculerTotauxDepuisFacture(facture);
+  const lignesHtml = lignesFacture
+    .map(
+      (ligne) => `
+        <tr>
+          <td style="padding:8px 0; font-size:13px; line-height:19px; color:#334155; word-break:break-word;">${texteOuDefaut(ligne.description)}</td>
+          <td align="right" style="padding:8px 0; font-size:13px; line-height:19px; color:#334155;">${ligne.quantite} ${texteOuDefaut(ligne.unite, "")}</td>
+          <td align="right" style="padding:8px 0; font-size:13px; line-height:19px; color:#334155;">${formatMontant(ligne.prixUnitaireHt)}</td>
+          <td align="right" style="padding:8px 0; font-size:13px; line-height:19px; color:#334155;">${ligne.tvaTaux}%</td>
+          <td align="right" style="padding:8px 0; font-size:13px; line-height:19px; font-weight:700; color:#0f172a;">${formatMontant(ligne.totalTtc)}</td>
+        </tr>
+      `
+    )
+    .join("");
+  const detailTvaHtml = totauxFacture.detailTva
+    .map(
+      (ligne) => `
+        <tr>
+          <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA ${ligne.taux}%</td>
+          <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(ligne.montantTva)}</td>
+        </tr>
+      `
+    )
+    .join("");
   const ibanEntreprise = entreprise.iban.trim();
   const mentionsLegalesFacture = entreprise.mentionsLegalesFacture.trim();
 
@@ -180,6 +194,23 @@ export function renderFactureEmailHtml(
                       <div style="font-size:14px; line-height:22px; color:#475569;">
                         <strong>Statut :</strong> ${texteOuDefaut(facture.statut)}
                       </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom:16px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
+                        <tr>
+                          <td style="padding:18px;">
+                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:14px;">
+                              Lignes de facture
+                            </div>
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              ${lignesHtml}
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
 
@@ -239,15 +270,12 @@ export function renderFactureEmailHtml(
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                               <tr>
                                 <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Montant HT</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(facture.montantHt)}</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(totauxFacture.montantHt)}</td>
                               </tr>
-                              <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA (${facture.tvaTaux}%)</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(montantTva)}</td>
-                              </tr>
+                              ${detailTvaHtml}
                               <tr>
                                 <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Total TTC</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(totalTtc)}</td>
+                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(totauxFacture.totalTtc)}</td>
                               </tr>
                               <tr>
                                 <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Acompte déduit</td>
@@ -260,7 +288,7 @@ export function renderFactureEmailHtml(
                               </tr>
                               <tr>
                                 <td style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">Net à payer</td>
-                                <td align="right" style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">${formatMontant(netAPayer)}</td>
+                                <td align="right" style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">${formatMontant(totauxFacture.netAPayer)}</td>
                               </tr>
                             </table>
                           </td>
@@ -347,9 +375,17 @@ export function renderFactureEmailText(
   facture: Facture,
   entreprise: EntrepriseSettings = entrepriseParDefaut
 ) {
-  const montantTva = calculerMontantTva(facture);
-  const totalTtc = calculerTotalTtc(facture);
-  const netAPayer = calculerNetAPayer(facture);
+  const lignesFacture = normaliserLignesFacture(facture);
+  const totauxFacture = calculerTotauxDepuisFacture(facture);
+  const lignesTexte = lignesFacture
+    .map(
+      (ligne) =>
+        `- ${ligne.description} : ${ligne.quantite} ${ligne.unite} x ${formatMontant(ligne.prixUnitaireHt)} HT, TVA ${ligne.tvaTaux}%, TTC ${formatMontant(ligne.totalTtc)}`
+    )
+    .join("\n");
+  const detailTvaTexte = totauxFacture.detailTva
+    .map((ligne) => `TVA ${ligne.taux}% : ${formatMontant(ligne.montantTva)}`)
+    .join("\n");
   const ibanEntreprise = entreprise.iban.trim();
   const mentionsLegalesFacture = entreprise.mentionsLegalesFacture.trim();
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
@@ -382,11 +418,14 @@ Date échéance : ${facture.dateEcheance || "-"}
 Date paiement : ${facture.datePaiement || "-"}
 Statut : ${facture.statut}
 
-Montant HT : ${formatMontant(facture.montantHt)}
-TVA (${facture.tvaTaux}%) : ${formatMontant(montantTva)}
-Total TTC : ${formatMontant(totalTtc)}
+Lignes :
+${lignesTexte || "-"}
+
+Montant HT : ${formatMontant(totauxFacture.montantHt)}
+${detailTvaTexte}
+Total TTC : ${formatMontant(totauxFacture.totalTtc)}
 Acompte déduit : ${formatMontant(facture.acompteDeduit)}
-Net à payer : ${formatMontant(netAPayer)}
+Net à payer : ${formatMontant(totauxFacture.netAPayer)}
 
 Informations de paiement :
 IBAN : ${ibanEntreprise || "IBAN non renseigné."}

@@ -26,4 +26,5 @@ export const creerLigneVide = (): NouvelleLigneState => ({
   quantite: "1",
   unite: UNITE_PAR_DEFAUT,
   prixUnitaire: "",
+  tvaTaux: String(TVA_PAR_DEFAUT),
 });

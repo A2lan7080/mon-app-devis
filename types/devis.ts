@@ -6,6 +6,7 @@ export type LigneDevis = {
   quantite: number;
   unite: string;
   prixUnitaire: number;
+  tvaTaux?: number;
 };
 
 export type Devis = {
@@ -58,6 +59,7 @@ export type NouvelleLigneState = {
   quantite: string;
   unite: string;
   prixUnitaire: string;
+  tvaTaux: string;
 };
 
 export type Entreprise = {
@@ -70,4 +72,10 @@ export type Entreprise = {
   tva: string;
   iban: string;
   mentionsLegalesFacture: string;
+  invoiceNumberPrefix?: string;
+  invoiceNumberPadding?: number;
+  invoiceNextNumber?: number;
+  invoiceNumberFormat?: string;
+  invoiceResetYearly?: boolean;
+  invoiceLastYear?: number;
 };

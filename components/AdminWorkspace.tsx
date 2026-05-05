@@ -9,7 +9,12 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { formatMontant } from "../lib/devis-helpers";
+import {
+  genererReferenceFactureDepuisConfig,
+  getInvoiceNumberSettings,
+} from "../lib/facture-helpers";
 import { db, storage } from "../lib/firebase";
+import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import AdminDashboard from "./AdminDashboard";
@@ -40,6 +45,7 @@ type PrestationFormState = {
   designation: string;
   unite: UnitePrestation;
   prixUnitaire: string;
+  tvaTaux: string;
   description: string;
 };
 
@@ -59,6 +65,7 @@ const creerPrestationVide = (): PrestationFormState => ({
   designation: "",
   unite: "forfait",
   prixUnitaire: "",
+  tvaTaux: "21",
   description: "",
 });
 
@@ -129,6 +136,13 @@ export default function AdminWorkspace({
       estAdmin: true,
     });
 
+  const { factures } = useEntrepriseFactures({
+    authChargee,
+    userId: createdByUid ?? null,
+    entrepriseIdCourante: entrepriseId ?? null,
+    estAdmin: true,
+  });
+
   const [formulairePrestation, setFormulairePrestation] =
     useState<PrestationFormState>(creerPrestationVide());
   const [prestationEditionId, setPrestationEditionId] = useState<string | null>(
@@ -146,6 +160,22 @@ export default function AdminWorkspace({
   );
 
   const entrepriseConfiguree = entrepriseEstConfiguree(entrepriseSettings);
+  const invoiceNumberConfig = getInvoiceNumberSettings(entrepriseSettings);
+  const apercuProchaineFacture =
+    genererReferenceFactureDepuisConfig(entrepriseSettings);
+  const plusGrandNumeroFacture = useMemo(
+    () =>
+      factures.reduce((max, facture) => {
+        const match = facture.reference?.match(/(\d+)(?!.*\d)/);
+        if (!match) return max;
+
+        const numero = Number(match[1]);
+        return Number.isFinite(numero) ? Math.max(max, numero) : max;
+      }, 0),
+    [factures]
+  );
+  const prochaineFactureInvalide =
+    invoiceNumberConfig.invoiceNextNumber < plusGrandNumeroFacture + 1;
 
   const prestationsArchivees = useMemo(
     () => prestations.filter((prestation) => prestation.archive),
@@ -253,6 +283,13 @@ export default function AdminWorkspace({
   };
 
   const handleSauvegardeEntreprise = async () => {
+    if (prochaineFactureInvalide) {
+      alert(
+        `Le prochain numéro de facture doit être au moins ${plusGrandNumeroFacture + 1}.`
+      );
+      return;
+    }
+
     const succes = await enregistrerEntreprise();
 
     if (succes) {
@@ -272,9 +309,15 @@ export default function AdminWorkspace({
     }
 
     const prixUnitaire = Number(formulairePrestation.prixUnitaire);
+    const tvaTaux = Number(formulairePrestation.tvaTaux);
 
     if (Number.isNaN(prixUnitaire) || prixUnitaire < 0) {
       alert("Le prix unitaire doit être valide.");
+      return;
+    }
+
+    if (Number.isNaN(tvaTaux) || tvaTaux < 0) {
+      alert("Le taux de TVA doit être valide.");
       return;
     }
 
@@ -297,6 +340,7 @@ export default function AdminWorkspace({
           designation: formulairePrestation.designation.trim(),
           unite: formulairePrestation.unite,
           prixUnitaire,
+          tvaTaux,
           description: formulairePrestation.description.trim(),
           updatedAt: maintenant,
         });
@@ -314,6 +358,7 @@ export default function AdminWorkspace({
         designation: formulairePrestation.designation.trim(),
         unite: formulairePrestation.unite,
         prixUnitaire,
+        tvaTaux,
         description: formulairePrestation.description.trim(),
         entrepriseId,
         createdByUid,
@@ -342,6 +387,7 @@ export default function AdminWorkspace({
       designation: prestation.designation,
       unite: prestation.unite,
       prixUnitaire: String(prestation.prixUnitaire),
+      tvaTaux: String(prestation.tvaTaux ?? 21),
       description: prestation.description,
     });
     setBibliothequeOuverte(true);
@@ -624,6 +670,144 @@ export default function AdminWorkspace({
                         className={champFormulaireClasses}
                       />
                     </div>
+
+                    <div className="min-w-0 md:col-span-2">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              Numérotation des factures
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              Ce réglage s’applique uniquement aux nouvelles
+                              factures. Les anciennes conservent leur numéro.
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-900">
+                            {apercuProchaineFacture}
+                          </div>
+                        </div>
+
+                        {prochaineFactureInvalide && (
+                          <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                            Le prochain numéro doit être au moins{" "}
+                            {plusGrandNumeroFacture + 1} pour éviter une
+                            réutilisation apparente.
+                          </p>
+                        )}
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div className="min-w-0">
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                              Préfixe
+                            </label>
+                            <input
+                              type="text"
+                              value={invoiceNumberConfig.invoiceNumberPrefix}
+                              onChange={(e) =>
+                                setEntrepriseSettings((prev) => ({
+                                  ...prev,
+                                  invoiceNumberPrefix: e.target.value,
+                                }))
+                              }
+                              className={champFormulaireClasses}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                              Format
+                            </label>
+                            <select
+                              value={invoiceNumberConfig.invoiceNumberFormat}
+                              onChange={(e) =>
+                                setEntrepriseSettings((prev) => ({
+                                  ...prev,
+                                  invoiceNumberFormat: e.target.value,
+                                }))
+                              }
+                              className={champFormulaireClasses}
+                            >
+                              <option value="{prefix}-{year}-{number}">
+                                FAC-2026-001
+                              </option>
+                              <option value="{year}-{number}">2026-152</option>
+                              <option value="{prefix}-{number}">F-152</option>
+                              <option value="{prefix}-{year}-{rawNumber}">
+                                FAC-2026-152
+                              </option>
+                            </select>
+                          </div>
+
+                          <div className="min-w-0">
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                              Chiffres minimum
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={8}
+                              value={invoiceNumberConfig.invoiceNumberPadding}
+                              onChange={(e) =>
+                                setEntrepriseSettings((prev) => ({
+                                  ...prev,
+                                  invoiceNumberPadding: Math.max(
+                                    1,
+                                    Math.floor(Number(e.target.value) || 1)
+                                  ),
+                                }))
+                              }
+                              className={champFormulaireClasses}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                              Prochain numéro
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={invoiceNumberConfig.invoiceNextNumber}
+                              onChange={(e) =>
+                                setEntrepriseSettings((prev) => ({
+                                  ...prev,
+                                  invoiceNextNumber: Math.max(
+                                    1,
+                                    Math.floor(Number(e.target.value) || 1)
+                                  ),
+                                }))
+                              }
+                              className={champFormulaireClasses}
+                            />
+                          </div>
+                        </div>
+
+                        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                          <input
+                            type="checkbox"
+                            checked={invoiceNumberConfig.invoiceResetYearly}
+                            onChange={(e) =>
+                              setEntrepriseSettings((prev) => ({
+                                ...prev,
+                                invoiceResetYearly: e.target.checked,
+                              }))
+                            }
+                            className="mt-1 h-4 w-4 rounded border-slate-300"
+                          />
+                          <span>
+                            <span className="block text-sm font-semibold text-slate-800">
+                              Réinitialiser chaque année
+                            </span>
+                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                              Si activé, le compteur repart à 1 quand
+                              l’année change.
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mt-6">
@@ -818,6 +1002,24 @@ export default function AdminWorkspace({
                   />
                 </div>
 
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    TVA par défaut (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formulairePrestation.tvaTaux}
+                    onChange={(e) =>
+                      setFormulairePrestation((prev) => ({
+                        ...prev,
+                        tvaTaux: e.target.value,
+                      }))
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+
                 <div className="min-w-0 md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Description
@@ -888,7 +1090,7 @@ export default function AdminWorkspace({
                             </h4>
                             <p className="mt-1 text-sm text-slate-600">
                               {formatMontant(prestation.prixUnitaire)} ·{" "}
-                              {prestation.unite}
+                              {prestation.unite} · TVA {prestation.tvaTaux ?? 21}%
                             </p>
                             <p className="mt-2 break-words text-sm text-slate-500">
                               {prestation.description || "Aucune description"}

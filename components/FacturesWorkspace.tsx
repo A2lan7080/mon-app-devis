@@ -1,21 +1,39 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
+import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { auth, db } from "../lib/firebase";
 import {
   calculerTotalHt,
   calculerTotalTvac,
   formatMontant,
+  normaliserLignesDevis,
 } from "../lib/devis-helpers";
+import {
+  arrondirMontant,
+  calculerTotauxDepuisFacture,
+  calculerTotauxFacture,
+  convertirLignesFactureFormEnLignes,
+  convertirNombre,
+  creerLigneFactureFormVide,
+  genererIdLigneFacture,
+  genererReferenceFactureDepuisConfig,
+  getInvoiceNumberSettings,
+  normaliserLignesFacture,
+  TAUX_TVA_FACTURE,
+  type LigneFactureFormState,
+} from "../lib/facture-helpers";
 import type { Facture, StatutFacture } from "../types/factures";
+import type { Chantier } from "../types/chantiers";
+import type { Client, TypeClient } from "../types/clients";
 
 type FiltreArchivage = "actifs" | "archives" | "tous";
 type FiltreStatut = "Tous" | StatutFacture;
@@ -39,6 +57,13 @@ type FactureFormState = {
   tvaTaux: string;
   acompteDeduit: string;
   notes: string;
+  lignes: LigneFactureFormState[];
+  nouveauClientNom: string;
+  nouveauClientType: TypeClient;
+  nouveauClientEmail: string;
+  nouveauClientTelephone: string;
+  nouveauChantierTitre: string;
+  nouveauChantierAdresse: string;
 };
 
 const STATUTS_FACTURE: StatutFacture[] = [
@@ -62,6 +87,13 @@ const creerFormulaireVide = (): FactureFormState => ({
   tvaTaux: "21",
   acompteDeduit: "0",
   notes: "",
+  lignes: [creerLigneFactureFormVide(21)],
+  nouveauClientNom: "",
+  nouveauClientType: "Particulier",
+  nouveauClientEmail: "",
+  nouveauClientTelephone: "",
+  nouveauChantierTitre: "",
+  nouveauChantierAdresse: "",
 });
 
 const champFormulaireClasses =
@@ -79,52 +111,30 @@ const styleDateMobile = {
   appearance: "none",
 } as const;
 
-function genererReferenceFacture(factures: Facture[]) {
-  const plusGrandNumero = factures.reduce((max, facture) => {
-    const match = facture.reference?.match(/FA-(\d+)/);
+function calculerNetAPayer(facture: Facture) {
+  return calculerTotauxDepuisFacture(facture).netAPayer;
+}
+
+function genererReferenceClient(clients: Client[]) {
+  const plusGrandNumero = clients.reduce((max, client) => {
+    const match = client.reference?.match(/CLI-(\d+)/);
     if (!match) return max;
     const numero = Number(match[1]);
     return Number.isNaN(numero) ? max : Math.max(max, numero);
   }, 0);
 
-  return `FA-${String(plusGrandNumero + 1).padStart(4, "0")}`;
+  return `CLI-${String(plusGrandNumero + 1).padStart(4, "0")}`;
 }
 
-function convertirNombre(valeur: string) {
-  const normalisee = valeur.replace(",", ".");
-  const nombre = Number(normalisee);
+function genererReferenceChantier(chantiers: Chantier[]) {
+  const plusGrandNumero = chantiers.reduce((max, chantier) => {
+    const match = chantier.reference?.match(/CH-(\d+)/);
+    if (!match) return max;
+    const numero = Number(match[1]);
+    return Number.isNaN(numero) ? max : Math.max(max, numero);
+  }, 0);
 
-  if (!Number.isFinite(nombre)) {
-    return 0;
-  }
-
-  return nombre;
-}
-
-function arrondirMontant(valeur: number) {
-  return Math.round((valeur + Number.EPSILON) * 100) / 100;
-}
-
-function calculerMontantTva(facture: {
-  montantHt: number;
-  tvaTaux: number;
-}) {
-  return facture.montantHt * (facture.tvaTaux / 100);
-}
-
-function calculerTotalTtc(facture: {
-  montantHt: number;
-  tvaTaux: number;
-}) {
-  return facture.montantHt + calculerMontantTva(facture);
-}
-
-function calculerNetAPayer(facture: {
-  montantHt: number;
-  tvaTaux: number;
-  acompteDeduit: number;
-}) {
-  return calculerTotalTtc(facture) - facture.acompteDeduit;
+  return `CH-${String(plusGrandNumero + 1).padStart(4, "0")}`;
 }
 
 function getStatutClasses(statut: StatutFacture) {
@@ -164,6 +174,9 @@ export default function FacturesWorkspace({
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [recherchePrestation, setRecherchePrestation] = useState("");
+  const [bibliothequePrestationsOuverte, setBibliothequePrestationsOuverte] =
+    useState(false);
   const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
     useState(false);
   const [formulaire, setFormulaire] = useState<FactureFormState>(
@@ -204,6 +217,14 @@ export default function FacturesWorkspace({
     authChargee: true,
   });
 
+  const { prestations, chargement: chargementPrestations } =
+    useEntreprisePrestations({
+      authChargee: true,
+      userId: createdByUid ?? null,
+      entrepriseIdCourante: entrepriseId ?? null,
+      estAdmin: true,
+    });
+
   const clientsActifs = useMemo(
     () => clients.filter((client) => !client.archive),
     [clients]
@@ -218,6 +239,31 @@ export default function FacturesWorkspace({
     () => devis.filter((item) => !item.archive),
     [devis]
   );
+
+  const prestationsActives = useMemo(
+    () => prestations.filter((prestation) => !prestation.archive),
+    [prestations]
+  );
+
+  const prestationsFiltrees = useMemo(() => {
+    const recherche = recherchePrestation.trim().toLowerCase();
+
+    if (!recherche) return prestationsActives;
+
+    return prestationsActives.filter((prestation) => {
+      const designation = prestation.designation?.toLowerCase() ?? "";
+      const description = prestation.description?.toLowerCase() ?? "";
+      const unite = prestation.unite?.toLowerCase() ?? "";
+      const prix = String(prestation.prixUnitaire ?? "").toLowerCase();
+
+      return (
+        designation.includes(recherche) ||
+        description.includes(recherche) ||
+        unite.includes(recherche) ||
+        prix.includes(recherche)
+      );
+    });
+  }, [prestationsActives, recherchePrestation]);
 
   const trouverClientDuDevis = (devisId: string) => {
     const devisSelectionne = devisActifs.find((item) => item.id === devisId);
@@ -275,6 +321,40 @@ export default function FacturesWorkspace({
     return devisActifs;
   }, [devisActifs, formulaire.chantierId, formulaire.clientId]);
 
+  const creerLignesDepuisDevis = (devisId: string): LigneFactureFormState[] => {
+    const devisSelectionne = devisActifs.find((item) => item.id === devisId);
+
+    if (!devisSelectionne?.lignes?.length) {
+      return [creerLigneFactureFormVide()];
+    }
+
+    return normaliserLignesDevis(devisSelectionne).map((ligne) => ({
+      id: genererIdLigneFacture(),
+      description: ligne.designation,
+      quantite: String(ligne.quantite),
+      unite: ligne.unite,
+      prixUnitaireHt: String(ligne.prixUnitaire),
+      tvaTaux: String(ligne.tvaTaux ?? devisSelectionne.tvaTaux ?? 21),
+    }));
+  };
+
+  const creerLignesDepuisFacture = (facture: Facture): LigneFactureFormState[] => {
+    const lignes = normaliserLignesFacture(facture);
+
+    if (lignes.length === 0) {
+      return [creerLigneFactureFormVide(facture.tvaTaux ?? 21)];
+    }
+
+    return lignes.map((ligne) => ({
+      id: ligne.id || genererIdLigneFacture(),
+      description: ligne.description,
+      quantite: String(ligne.quantite),
+      unite: ligne.unite,
+      prixUnitaireHt: String(ligne.prixUnitaireHt),
+      tvaTaux: String(ligne.tvaTaux),
+    }));
+  };
+
   const appliquerDevisAuFormulaire = (
     devisId: string,
     options?: { forcerObjet?: boolean }
@@ -316,6 +396,7 @@ export default function FacturesWorkspace({
       tvaTaux: String(devisSelectionne.tvaTaux),
       acompteDeduit: String(acompte),
       notes: devisSelectionne.conditions ?? prev.notes,
+      lignes: creerLignesDepuisDevis(devisSelectionne.id),
     }));
   };
 
@@ -353,6 +434,9 @@ export default function FacturesWorkspace({
       clientId,
       chantierId: chantierUnique?.id ?? "",
       devisId: devisUnique?.id ?? "",
+      nouveauClientNom: "",
+      nouveauClientEmail: "",
+      nouveauClientTelephone: "",
       objet:
         devisUnique && !prev.objet.trim()
           ? `Facture - ${devisUnique.id}`
@@ -370,6 +454,7 @@ export default function FacturesWorkspace({
           )
         : prev.acompteDeduit,
       notes: devisUnique?.conditions ?? prev.notes,
+      lignes: devisUnique ? creerLignesDepuisDevis(devisUnique.id) : prev.lignes,
     }));
   };
 
@@ -406,12 +491,15 @@ export default function FacturesWorkspace({
         ...prev,
         chantierId: chantier.id,
         clientId: chantier.clientId ?? prev.clientId,
+        nouveauChantierTitre: "",
+        nouveauChantierAdresse: "",
         devisId: devisAssocie.id,
         objet: `Facture - ${devisAssocie.id}`,
         montantHt: String(arrondirMontant(calculerTotalHt(devisAssocie))),
         tvaTaux: String(devisAssocie.tvaTaux),
         acompteDeduit: String(acompte),
         notes: devisAssocie.conditions ?? prev.notes,
+        lignes: creerLignesDepuisDevis(devisAssocie.id),
       }));
 
       return;
@@ -421,6 +509,8 @@ export default function FacturesWorkspace({
       ...prev,
       chantierId: chantier.id,
       clientId: chantier.clientId ?? prev.clientId,
+      nouveauChantierTitre: "",
+      nouveauChantierAdresse: "",
       devisId: "",
       objet: prev.objet.trim() ? prev.objet : `Facture - ${chantier.titre}`,
     }));
@@ -499,6 +589,8 @@ export default function FacturesWorkspace({
 
   const resetFormulaire = () => {
     setFormulaire(creerFormulaireVide());
+    setRecherchePrestation("");
+    setBibliothequePrestationsOuverte(false);
   };
 
   const ouvrirCreation = () => {
@@ -538,6 +630,13 @@ export default function FacturesWorkspace({
       tvaTaux: String(factureSelectionnee.tvaTaux),
       acompteDeduit: String(factureSelectionnee.acompteDeduit),
       notes: factureSelectionnee.notes,
+      lignes: creerLignesDepuisFacture(factureSelectionnee),
+      nouveauClientNom: "",
+      nouveauClientType: "Particulier",
+      nouveauClientEmail: "",
+      nouveauClientTelephone: "",
+      nouveauChantierTitre: "",
+      nouveauChantierAdresse: "",
     });
 
     setModeEdition(true);
@@ -570,8 +669,8 @@ export default function FacturesWorkspace({
       return;
     }
 
-    if (!formulaire.clientId) {
-      alert("Sélectionne un client.");
+    if (!formulaire.clientId && !formulaire.nouveauClientNom.trim()) {
+      alert("Sélectionne un client ou saisis un nouveau client.");
       return;
     }
 
@@ -580,12 +679,57 @@ export default function FacturesWorkspace({
       return;
     }
 
+    const clientExistantSimple =
+      !formulaire.clientId && formulaire.nouveauClientNom.trim()
+        ? clientsActifs.find((client) => {
+            const memeNom =
+              client.nom.trim().toLowerCase() ===
+              formulaire.nouveauClientNom.trim().toLowerCase();
+            const memeEmail =
+              formulaire.nouveauClientEmail.trim() &&
+              client.email.trim().toLowerCase() ===
+                formulaire.nouveauClientEmail.trim().toLowerCase();
+
+            return memeNom || Boolean(memeEmail);
+          }) ?? null
+        : null;
+
     const clientAssocie =
       clientsActifs.find((client) => client.id === formulaire.clientId) ??
-      null;
+      clientExistantSimple;
 
-    if (!clientAssocie) {
+    if (!clientAssocie && !formulaire.nouveauClientNom.trim()) {
       alert("Le client sélectionné est introuvable.");
+      return;
+    }
+
+    const maintenant = Date.now();
+    const clientCree: Client | null = clientAssocie
+      ? null
+      : {
+          id: `${entrepriseId}-cli-${maintenant}`,
+          reference: genererReferenceClient(clients),
+          nom: formulaire.nouveauClientNom.trim(),
+          typeClient: formulaire.nouveauClientType,
+          societe: "",
+          email: formulaire.nouveauClientEmail.trim(),
+          telephone: formulaire.nouveauClientTelephone.trim(),
+          adresse: formulaire.nouveauChantierAdresse.trim(),
+          codePostal: "",
+          ville: "",
+          pays: "Belgique",
+          tva: "",
+          notes: "",
+          entrepriseId,
+          createdByUid,
+          archive: false,
+          createdAt: maintenant,
+          updatedAt: maintenant,
+        };
+    const clientFinal = clientAssocie ?? clientCree;
+
+    if (!clientFinal) {
+      alert("Impossible de préparer le client de la facture.");
       return;
     }
 
@@ -603,37 +747,89 @@ export default function FacturesWorkspace({
             (chantier) => chantier.id === devisAssocie.chantierId
           ) ?? null
         : null);
+    const chantierExistantSimple =
+      !chantierAssocieFinal && formulaire.nouveauChantierTitre.trim()
+        ? chantiersActifs.find(
+            (chantier) =>
+              chantier.clientId === clientFinal.id &&
+              chantier.titre.trim().toLowerCase() ===
+                formulaire.nouveauChantierTitre.trim().toLowerCase()
+          ) ?? null
+        : null;
+    const chantierCree: Chantier | null =
+      !chantierAssocieFinal &&
+      !chantierExistantSimple &&
+      formulaire.nouveauChantierTitre.trim()
+        ? {
+            id: `${entrepriseId}-ch-${maintenant}`,
+            reference: genererReferenceChantier(chantiers),
+            titre: formulaire.nouveauChantierTitre.trim(),
+            clientId: clientFinal.id,
+            clientNom: clientFinal.nom,
+            adresse: formulaire.nouveauChantierAdresse.trim(),
+            codePostal: "",
+            ville: "",
+            dateDebut: "",
+            dateFin: "",
+            statut: "À planifier",
+            description: "",
+            notes: "",
+            entrepriseId,
+            createdByUid,
+            archive: false,
+            createdAt: maintenant,
+            updatedAt: maintenant,
+          }
+        : null;
+    const chantierFinal =
+      chantierAssocieFinal ?? chantierExistantSimple ?? chantierCree;
 
-    const montantHt = arrondirMontant(convertirNombre(formulaire.montantHt));
-    const tvaTaux = arrondirMontant(convertirNombre(formulaire.tvaTaux));
+    const lignes = convertirLignesFactureFormEnLignes(formulaire.lignes);
     const acompteDeduit = arrondirMontant(
       convertirNombre(formulaire.acompteDeduit)
     );
+    const totaux = calculerTotauxFacture(lignes, acompteDeduit);
+    const montantHt = totaux.montantHt;
+    const tvaTaux =
+      totaux.detailTva.length === 1
+        ? totaux.detailTva[0].taux
+        : arrondirMontant(convertirNombre(formulaire.tvaTaux));
+
+    if (lignes.length === 0) {
+      alert("Ajoute au moins une ligne de facture valide.");
+      return;
+    }
 
     if (montantHt < 0 || tvaTaux < 0 || acompteDeduit < 0) {
       alert("Les montants doivent être valides.");
       return;
     }
 
-    const maintenant = Date.now();
-
     try {
       setSauvegardeEnCours(true);
 
       if (modeEdition && factureSelectionnee) {
+        if (clientCree) {
+          await setDoc(doc(db, "clients", clientCree.id), clientCree);
+        }
+
+        if (chantierCree) {
+          await setDoc(doc(db, "chantiers", chantierCree.id), chantierCree);
+        }
+
         await updateDoc(doc(db, "factures", factureSelectionnee.id), {
           ...factureSelectionnee,
           objet: formulaire.objet.trim(),
-          clientId: clientAssocie.id,
-          clientNom: clientAssocie.nom,
-          clientAdresse: clientAssocie.adresse ?? "",
-          clientCodePostal: clientAssocie.codePostal ?? "",
-          clientVille: clientAssocie.ville ?? "",
-          clientEmail: clientAssocie.email ?? "",
-          clientTelephone: clientAssocie.telephone ?? "",
-          chantierId: chantierAssocieFinal?.id ?? devisAssocie?.chantierId ?? "",
+          clientId: clientFinal.id,
+          clientNom: clientFinal.nom,
+          clientAdresse: clientFinal.adresse ?? "",
+          clientCodePostal: clientFinal.codePostal ?? "",
+          clientVille: clientFinal.ville ?? "",
+          clientEmail: clientFinal.email ?? "",
+          clientTelephone: clientFinal.telephone ?? "",
+          chantierId: chantierFinal?.id ?? devisAssocie?.chantierId ?? "",
           chantierTitre:
-            chantierAssocieFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
+            chantierFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
           devisId: devisAssocie?.id ?? "",
           devisReference: devisAssocie?.id ?? "",
           dateEmission: formulaire.dateEmission,
@@ -642,6 +838,11 @@ export default function FacturesWorkspace({
           statut: formulaire.statut,
           montantHt,
           tvaTaux,
+          lignes,
+          detailTva: totaux.detailTva,
+          totalTva: totaux.totalTva,
+          totalTtc: totaux.totalTtc,
+          typeFacture: devisAssocie ? "depuis_devis" : "libre",
           acompteDeduit,
           notes: formulaire.notes.trim(),
           updatedAt: maintenant,
@@ -654,40 +855,108 @@ export default function FacturesWorkspace({
       }
 
       const nouvelId = `${entrepriseId}-fa-${maintenant}`;
-      const reference = genererReferenceFacture(factures);
+      const factureRef = doc(db, "factures", nouvelId);
+      const entrepriseRef = doc(db, "entreprises", entrepriseId);
+      let reference = "";
 
-      const nouvelleFacture: Facture = {
-        id: nouvelId,
-        reference,
-        objet: formulaire.objet.trim(),
-        clientId: clientAssocie.id,
-        clientNom: clientAssocie.nom,
-        clientAdresse: clientAssocie.adresse ?? "",
-        clientCodePostal: clientAssocie.codePostal ?? "",
-        clientVille: clientAssocie.ville ?? "",
-        clientEmail: clientAssocie.email ?? "",
-        clientTelephone: clientAssocie.telephone ?? "",
-        chantierId: chantierAssocieFinal?.id ?? devisAssocie?.chantierId ?? "",
-        chantierTitre:
-          chantierAssocieFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
-        devisId: devisAssocie?.id ?? "",
-        devisReference: devisAssocie?.id ?? "",
-        dateEmission: formulaire.dateEmission,
-        dateEcheance: formulaire.dateEcheance,
-        datePaiement: formulaire.datePaiement,
-        statut: formulaire.statut,
-        montantHt,
-        tvaTaux,
-        acompteDeduit,
-        notes: formulaire.notes.trim(),
-        entrepriseId,
-        createdByUid,
-        archive: false,
-        createdAt: maintenant,
-        updatedAt: maintenant,
-      };
+      await runTransaction(db, async (transaction) => {
+        const entrepriseSnap = await transaction.get(entrepriseRef);
+        const entrepriseData = entrepriseSnap.exists() ? entrepriseSnap.data() : {};
+        const config = getInvoiceNumberSettings({
+          ...entrepriseSettings,
+          ...entrepriseData,
+        });
+        const annee = new Date().getFullYear();
+        let numero =
+          config.invoiceResetYearly && config.invoiceLastYear !== annee
+            ? 1
+            : config.invoiceNextNumber;
+        const plusGrandNumeroExistant = factures.reduce((max, facture) => {
+          const match = facture.reference?.match(/(\d+)(?!.*\d)/);
+          if (!match) return max;
 
-      await setDoc(doc(db, "factures", nouvelId), nouvelleFacture);
+          const numeroExistant = Number(match[1]);
+          return Number.isFinite(numeroExistant)
+            ? Math.max(max, numeroExistant)
+            : max;
+        }, 0);
+
+        numero = Math.max(numero, plusGrandNumeroExistant + 1);
+
+        do {
+          reference = genererReferenceFactureDepuisConfig(
+            {
+              ...config,
+              invoiceNextNumber: numero,
+              invoiceLastYear: annee,
+            },
+            new Date()
+          );
+          numero += 1;
+        } while (factures.some((facture) => facture.reference === reference));
+
+        const nouvelleFacture: Facture = {
+          id: nouvelId,
+          reference,
+          objet: formulaire.objet.trim(),
+          clientId: clientFinal.id,
+          clientNom: clientFinal.nom,
+          clientAdresse: clientFinal.adresse ?? "",
+          clientCodePostal: clientFinal.codePostal ?? "",
+          clientVille: clientFinal.ville ?? "",
+          clientEmail: clientFinal.email ?? "",
+          clientTelephone: clientFinal.telephone ?? "",
+          chantierId:
+            chantierFinal?.id ?? devisAssocie?.chantierId ?? "",
+          chantierTitre:
+            chantierFinal?.titre ?? devisAssocie?.chantierTitre ?? "",
+          devisId: devisAssocie?.id ?? "",
+          devisReference: devisAssocie?.id ?? "",
+          dateEmission: formulaire.dateEmission,
+          dateEcheance: formulaire.dateEcheance,
+          datePaiement: formulaire.datePaiement,
+          statut: formulaire.statut,
+          montantHt,
+          tvaTaux,
+          lignes,
+          detailTva: totaux.detailTva,
+          totalTva: totaux.totalTva,
+          totalTtc: totaux.totalTtc,
+          typeFacture: devisAssocie ? "depuis_devis" : "libre",
+          acompteDeduit,
+          notes: formulaire.notes.trim(),
+          entrepriseId,
+          createdByUid,
+          archive: false,
+          createdAt: maintenant,
+          updatedAt: maintenant,
+        };
+
+        if (clientCree) {
+          transaction.set(doc(db, "clients", clientCree.id), clientCree);
+        }
+
+        if (chantierCree) {
+          transaction.set(doc(db, "chantiers", chantierCree.id), chantierCree);
+        }
+
+        transaction.set(factureRef, nouvelleFacture);
+        transaction.set(
+          entrepriseRef,
+          {
+            entrepriseId,
+            invoiceNumberPrefix: config.invoiceNumberPrefix,
+            invoiceNumberPadding: config.invoiceNumberPadding,
+            invoiceNumberFormat: config.invoiceNumberFormat,
+            invoiceResetYearly: config.invoiceResetYearly,
+            invoiceNextNumber: numero,
+            invoiceLastYear: annee,
+            updatedAt: maintenant,
+            updatedByUid: createdByUid,
+          },
+          { merge: true }
+        );
+      });
 
       setFactureSelectionneeId(nouvelId);
       setAfficherFormulaire(false);
@@ -829,17 +1098,104 @@ export default function FacturesWorkspace({
     }
   };
 
+  const lignesFormulaireCalculees = useMemo(
+    () => convertirLignesFactureFormEnLignes(formulaire.lignes),
+    [formulaire.lignes]
+  );
+  const acompteFormulaire = useMemo(
+    () => arrondirMontant(convertirNombre(formulaire.acompteDeduit)),
+    [formulaire.acompteDeduit]
+  );
+  const totauxFormulaire = useMemo(
+    () => calculerTotauxFacture(lignesFormulaireCalculees, acompteFormulaire),
+    [lignesFormulaireCalculees, acompteFormulaire]
+  );
+
+  const ajouterLigneFacture = () => {
+    setFormulaire((prev) => ({
+      ...prev,
+      lignes: [
+        ...prev.lignes,
+        creerLigneFactureFormVide(convertirNombre(prev.tvaTaux) || 21),
+      ],
+    }));
+  };
+
+  const ajouterPrestationFacture = (prestationId: string) => {
+    const prestation =
+      prestationsActives.find((item) => item.id === prestationId) ?? null;
+
+    if (!prestation) return;
+
+    const prestationAvecChampsOptionnels = prestation as typeof prestation & {
+      quantite?: number;
+      tvaTaux?: number;
+    };
+    const tvaTaux =
+      typeof prestationAvecChampsOptionnels.tvaTaux === "number" &&
+      Number.isFinite(prestationAvecChampsOptionnels.tvaTaux)
+        ? prestationAvecChampsOptionnels.tvaTaux
+        : convertirNombre(formulaire.tvaTaux) || 21;
+    const description = prestation.description?.trim()
+      ? `${prestation.designation} - ${prestation.description.trim()}`
+      : prestation.designation;
+
+    setFormulaire((prev) => ({
+      ...prev,
+      lignes: [
+        ...prev.lignes,
+        {
+          id: genererIdLigneFacture(),
+          description,
+          quantite: String(prestationAvecChampsOptionnels.quantite ?? 1),
+          unite: prestation.unite || "forfait",
+          prixUnitaireHt: String(prestation.prixUnitaire ?? 0),
+          tvaTaux: String(tvaTaux),
+        },
+      ],
+    }));
+  };
+
+  const modifierLigneFacture = (
+    ligneId: string,
+    champ: keyof LigneFactureFormState,
+    valeur: string
+  ) => {
+    setFormulaire((prev) => ({
+      ...prev,
+      lignes: prev.lignes.map((ligne) =>
+        ligne.id === ligneId ? { ...ligne, [champ]: valeur } : ligne
+      ),
+    }));
+  };
+
+  const supprimerLigneFacture = (ligneId: string) => {
+    setFormulaire((prev) => ({
+      ...prev,
+      lignes:
+        prev.lignes.length > 1
+          ? prev.lignes.filter((ligne) => ligne.id !== ligneId)
+          : prev.lignes,
+    }));
+  };
+
   const afficherFormulaireFacture = afficherFormulaire || modeEdition;
 
   const totalTvaSelectionnee = factureSelectionnee
-    ? calculerMontantTva(factureSelectionnee)
+    ? calculerTotauxDepuisFacture(factureSelectionnee).totalTva
     : 0;
   const totalTtcSelectionnee = factureSelectionnee
-    ? calculerTotalTtc(factureSelectionnee)
+    ? calculerTotauxDepuisFacture(factureSelectionnee).totalTtc
     : 0;
   const netAPayerSelectionnee = factureSelectionnee
     ? calculerNetAPayer(factureSelectionnee)
     : 0;
+  const detailTvaSelectionnee = factureSelectionnee
+    ? calculerTotauxDepuisFacture(factureSelectionnee).detailTva
+    : [];
+  const lignesSelectionnee = factureSelectionnee
+    ? normaliserLignesFacture(factureSelectionnee)
+    : [];
   const ibanEntreprise = entrepriseSettings.iban.trim();
   const mentionsLegalesFacture =
     entrepriseSettings.mentionsLegalesFacture.trim();
@@ -914,6 +1270,90 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
+        {!formulaire.clientId && (
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+            <p className="text-sm font-semibold text-slate-800">
+              Nouveau client
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Si le client n’existe pas encore, il sera créé automatiquement à
+              l’enregistrement.
+            </p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Nom
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientNom}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientNom: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Type
+                </label>
+                <select
+                  value={formulaire.nouveauClientType}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientType: e.target.value as TypeClient,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                >
+                  <option value="Particulier">Particulier</option>
+                  <option value="Professionnel">Professionnel</option>
+                </select>
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formulaire.nouveauClientEmail}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientEmail: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Téléphone
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientTelephone}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientTelephone: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier lié
@@ -933,6 +1373,53 @@ export default function FacturesWorkspace({
             ))}
           </select>
         </div>
+
+        {!formulaire.chantierId && (
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+            <p className="text-sm font-semibold text-slate-800">
+              Nouveau chantier
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Optionnel. Le chantier sera lié au client de la facture.
+            </p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Nom chantier
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauChantierTitre}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierTitre: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Adresse
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauChantierAdresse}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierAdresse: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="min-w-0 overflow-hidden md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -1032,26 +1519,21 @@ export default function FacturesWorkspace({
 
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Montant HT
+            Montant HT calculé
           </label>
           <input
             data-testid="facture-montant-ht"
             type="number"
             step="0.01"
-            value={formulaire.montantHt}
-            onChange={(e) =>
-              setFormulaire((prev) => ({
-                ...prev,
-                montantHt: e.target.value,
-              }))
-            }
+            value={totauxFormulaire.montantHt}
+            readOnly
             className={champFormulaireClasses}
           />
         </div>
 
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            TVA (%)
+            TVA par défaut (%)
           </label>
           <input
             data-testid="facture-tva-taux"
@@ -1066,6 +1548,296 @@ export default function FacturesWorkspace({
             }
             className={champFormulaireClasses}
           />
+        </div>
+
+        <div className="min-w-0 overflow-hidden md:col-span-2">
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">
+                  Lignes de facture
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Chaque ligne peut avoir son propre taux de TVA.
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:flex sm:items-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBibliothequePrestationsOuverte((prev) => !prev)
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+                >
+                  Ajouter depuis la bibliothèque
+                </button>
+
+                <button
+                  type="button"
+                  onClick={ajouterLigneFacture}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+                >
+                  Ajouter une ligne
+                </button>
+              </div>
+            </div>
+
+            {bibliothequePrestationsOuverte && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800">
+                      Bibliothèque de prestations
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Ajoute rapidement une prestation enregistrée, puis ajuste
+                      la quantité ou la TVA si besoin.
+                    </p>
+                  </div>
+
+                  <div className="min-w-0 md:w-80">
+                    <label className="mb-2 block text-xs font-medium text-slate-500">
+                      Rechercher une prestation
+                    </label>
+                    <input
+                      type="search"
+                      value={recherchePrestation}
+                      onChange={(e) => setRecherchePrestation(e.target.value)}
+                      placeholder="Ex. pose, déplacement, forfait..."
+                      className={champFormulaireClasses}
+                    />
+                  </div>
+                </div>
+
+                {chargementPrestations ? (
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                    Chargement des prestations...
+                  </div>
+                ) : prestationsActives.length === 0 ? (
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                    Aucune prestation enregistrée dans la bibliothèque.
+                  </div>
+                ) : prestationsFiltrees.length === 0 ? (
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                    Aucune prestation ne correspond à cette recherche.
+                  </div>
+                ) : (
+                  <div className="mt-3 grid max-h-72 gap-3 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+                    {prestationsFiltrees.map((prestation) => (
+                      <button
+                        key={prestation.id}
+                        type="button"
+                        onClick={() => ajouterPrestationFacture(prestation.id)}
+                        className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:border-slate-300 hover:bg-slate-100"
+                      >
+                        <span className="block break-words text-sm font-semibold text-slate-900">
+                          {prestation.designation}
+                        </span>
+                        <span className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+                          <span className="rounded-full bg-white px-2.5 py-1 font-medium">
+                            {formatMontant(prestation.prixUnitaire)} HT
+                          </span>
+                          <span className="rounded-full bg-white px-2.5 py-1 font-medium">
+                            {prestation.unite}
+                          </span>
+                          <span className="rounded-full bg-white px-2.5 py-1 font-medium">
+                            TVA {(prestation.tvaTaux ?? convertirNombre(formulaire.tvaTaux)) || 21}%
+                          </span>
+                        </span>
+                        {prestation.description && (
+                          <span className="mt-2 block line-clamp-2 text-xs leading-5 text-slate-500">
+                            {prestation.description}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {formulaire.lignes.map((ligne, index) => {
+                const ligneCalculee =
+                  lignesFormulaireCalculees.find(
+                    (item) => item.id === ligne.id
+                  ) ?? null;
+
+                return (
+                  <div
+                    key={ligne.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-3"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">
+                        Ligne {index + 1}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => supprimerLigneFacture(ligne.id)}
+                        disabled={formulaire.lignes.length === 1}
+                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-6">
+                      <div className="min-w-0 md:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          value={ligne.description}
+                          onChange={(e) =>
+                            modifierLigneFacture(
+                              ligne.id,
+                              "description",
+                              e.target.value
+                            )
+                          }
+                          className={champFormulaireClasses}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                          Quantité
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={ligne.quantite}
+                          onChange={(e) =>
+                            modifierLigneFacture(
+                              ligne.id,
+                              "quantite",
+                              e.target.value
+                            )
+                          }
+                          className={champFormulaireClasses}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                          Unité
+                        </label>
+                        <input
+                          type="text"
+                          value={ligne.unite}
+                          onChange={(e) =>
+                            modifierLigneFacture(
+                              ligne.id,
+                              "unite",
+                              e.target.value
+                            )
+                          }
+                          className={champFormulaireClasses}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                          PU HT
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={ligne.prixUnitaireHt}
+                          onChange={(e) =>
+                            modifierLigneFacture(
+                              ligne.id,
+                              "prixUnitaireHt",
+                              e.target.value
+                            )
+                          }
+                          className={champFormulaireClasses}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                          TVA
+                        </label>
+                        <select
+                          value={ligne.tvaTaux}
+                          onChange={(e) =>
+                            modifierLigneFacture(
+                              ligne.id,
+                              "tvaTaux",
+                              e.target.value
+                            )
+                          }
+                          className={champFormulaireClasses}
+                        >
+                          {TAUX_TVA_FACTURE.map((taux) => (
+                            <option key={taux} value={taux}>
+                              {taux}%
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
+                      <p>HT : {formatMontant(ligneCalculee?.totalHt ?? 0)}</p>
+                      <p>
+                        TVA : {formatMontant(ligneCalculee?.montantTva ?? 0)}
+                      </p>
+                      <p>
+                        TTC : {formatMontant(ligneCalculee?.totalTtc ?? 0)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-3 rounded-2xl bg-white p-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-xs text-slate-500">Total HT</p>
+                <p className="font-semibold">
+                  {formatMontant(totauxFormulaire.montantHt)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Total TVA</p>
+                <p className="font-semibold">
+                  {formatMontant(totauxFormulaire.totalTva)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Total TTC</p>
+                <p className="font-semibold">
+                  {formatMontant(totauxFormulaire.totalTtc)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Net à payer</p>
+                <p className="font-semibold">
+                  {formatMontant(totauxFormulaire.netAPayer)}
+                </p>
+              </div>
+            </div>
+
+            {totauxFormulaire.detailTva.length > 0 && (
+              <div className="rounded-2xl bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Récapitulatif TVA
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  {totauxFormulaire.detailTva.map((ligne) => (
+                    <p key={ligne.taux} className="text-sm text-slate-700">
+                      TVA {ligne.taux}% : {formatMontant(ligne.montantTva)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs">
@@ -1317,6 +2089,38 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
+        {lignesSelectionnee.length > 0 && (
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-800">
+              Lignes de facture
+            </p>
+            <div className="mt-3 space-y-3">
+              {lignesSelectionnee.map((ligne) => (
+                <div
+                  key={ligne.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-3"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-semibold text-slate-900">
+                        {ligne.description}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {ligne.quantite} {ligne.unite} x{" "}
+                        {formatMontant(ligne.prixUnitaireHt)} HT - TVA{" "}
+                        {ligne.tvaTaux}%
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-slate-900">
+                      {formatMontant(ligne.totalTtc)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Montant HT</p>
@@ -1327,7 +2131,7 @@ export default function FacturesWorkspace({
 
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">
-              TVA ({factureSelectionnee.tvaTaux}%)
+              TVA totale
             </p>
             <p className="mt-1 break-words font-semibold">
               {formatMontant(totalTvaSelectionnee)}
@@ -1348,6 +2152,19 @@ export default function FacturesWorkspace({
             </p>
           </div>
         </div>
+
+        {detailTvaSelectionnee.length > 0 && (
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Détail TVA par taux</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {detailTvaSelectionnee.map((ligne) => (
+                <p key={ligne.taux} className="text-sm font-semibold">
+                  TVA {ligne.taux}% : {formatMontant(ligne.montantTva)}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl bg-slate-50 p-4">
           <p className="text-sm text-slate-500">Acompte déduit</p>

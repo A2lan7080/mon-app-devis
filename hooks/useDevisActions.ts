@@ -53,6 +53,7 @@ export type PrestationEdition = {
   designation: string;
   unite: string;
   prixUnitaire: number | string;
+  tvaTaux?: number | string;
 };
 
 type UseDevisActionsParams = {
@@ -184,6 +185,7 @@ export function useDevisActions({
         quantite: String(ligne.quantite),
         unite: ligne.unite,
         prixUnitaire: String(ligne.prixUnitaire),
+        tvaTaux: String(ligne.tvaTaux ?? devisSelectionne.tvaTaux ?? TVA_PAR_DEFAUT),
       }))
     );
 
@@ -203,6 +205,7 @@ export function useDevisActions({
         quantite: "1",
         unite: "forfait",
         prixUnitaire: "0",
+        tvaTaux: editForm.tvaTaux || String(TVA_PAR_DEFAUT),
       },
     ]);
   };
@@ -215,6 +218,7 @@ export function useDevisActions({
         quantite: "1",
         unite: prestation.unite,
         prixUnitaire: String(prestation.prixUnitaire),
+        tvaTaux: String(prestation.tvaTaux ?? editForm.tvaTaux ?? TVA_PAR_DEFAUT),
       },
     ]);
   };

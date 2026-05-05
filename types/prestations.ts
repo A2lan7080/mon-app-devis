@@ -12,6 +12,7 @@ export type PrestationBibliotheque = {
   designation: string;
   unite: UnitePrestation;
   prixUnitaire: number;
+  tvaTaux?: number;
   description: string;
   entrepriseId: string;
   createdByUid: string;

@@ -448,7 +448,7 @@ export default function AdminShell({
                       Entreprise à compléter
                     </p>
                     <p className="mt-1 text-sm leading-6 text-amber-800">
-                      Ajoute le nom, les coordonnées, la TVA et l&apos;IBAN pour que
+                      Ajoute le nom, les coordonnées, la TVA et l’IBAN pour que
                       les devis, factures, PDF et emails soient prêts.
                     </p>
                   </div>

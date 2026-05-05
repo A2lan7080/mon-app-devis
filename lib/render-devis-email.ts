@@ -1,10 +1,9 @@
 import { entreprise as entrepriseParDefaut } from "./devis-constants";
 import {
+  calculerTotauxDevis,
   calculerValiditeDevis,
-  calculerMontantTva,
-  calculerTotalHt,
-  calculerTotalTvac,
   formatMontant,
+  normaliserLignesDevis,
 } from "./devis-helpers";
 import { formatNumeroDevisPourAffichage } from "./format-numero-devis";
 import type { Devis, Entreprise } from "../types/devis";
@@ -223,9 +222,9 @@ export function renderDevisEmailHtml(
   entreprise: EntrepriseSettings = entrepriseParDefaut,
   acceptanceUrl?: string
 ) {
-  const totalHt = calculerTotalHt(devis);
-  const montantTva = calculerMontantTva(devis);
-  const totalTvac = calculerTotalTvac(devis);
+  const totauxDevis = calculerTotauxDevis(devis);
+  const totalHt = totauxDevis.totalHt;
+  const totalTvac = totauxDevis.totalTtc;
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
@@ -239,7 +238,7 @@ export function renderDevisEmailHtml(
     afficherLogo
   );
 
-  const lignesHtml = devis.lignes
+  const lignesHtml = normaliserLignesDevis(devis)
     .map((ligne) => {
       const sousTotal = ligne.quantite * ligne.prixUnitaire;
 
@@ -257,12 +256,25 @@ export function renderDevisEmailHtml(
           <td align="right" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
             ${formatMontant(ligne.prixUnitaire)}
           </td>
+          <td align="right" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
+            ${ligne.tvaTaux}%
+          </td>
           <td align="right" style="padding:10px 0; font-size:14px; line-height:22px; font-weight:700; color:#0f172a;">
             ${formatMontant(sousTotal)}
           </td>
         </tr>
       `;
     })
+    .join("");
+  const detailTvaHtml = totauxDevis.detailTva
+    .map(
+      (ligne) => `
+        <tr>
+          <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA ${ligne.taux}%</td>
+          <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(ligne.montantTva)}</td>
+        </tr>
+      `
+    )
     .join("");
 
   return `
@@ -395,6 +407,7 @@ export function renderDevisEmailHtml(
                                 <td align="center" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Qté</td>
                                 <td align="center" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Unité</td>
                                 <td align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">PU</td>
+                                <td align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">TVA</td>
                                 <td align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Total</td>
                               </tr>
 
@@ -409,12 +422,7 @@ export function renderDevisEmailHtml(
                                 )}</td>
                               </tr>
 
-                              <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA (${devis.tvaTaux}%)</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(
-                                  montantTva
-                                )}</td>
-                              </tr>
+                              ${detailTvaHtml}
 
                               <tr>
                                 <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Total TVAC</td>
@@ -488,13 +496,16 @@ export function renderDevisEmailText(
   entreprise: EntrepriseSettings = entrepriseParDefaut,
   acceptanceUrl?: string
 ) {
-  const totalHt = calculerTotalHt(devis);
-  const montantTva = calculerMontantTva(devis);
-  const totalTvac = calculerTotalTvac(devis);
+  const totauxDevis = calculerTotauxDevis(devis);
+  const totalHt = totauxDevis.totalHt;
+  const totalTvac = totauxDevis.totalTtc;
   const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
   const soldeRestant = totalTvac - montantAcompte;
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
   const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
+  const detailTvaTexte = totauxDevis.detailTva
+    .map((ligne) => `TVA ${ligne.taux}% : ${formatMontant(ligne.montantTva)}`)
+    .join("\n");
 
   const codePostalVille = [entreprise.codePostal, entreprise.ville]
     .filter(Boolean)
@@ -536,7 +547,7 @@ Email : ${devis.email || "-"}
 Téléphone : ${devis.telephone || "-"}
 
 Total HT : ${formatMontant(totalHt)}
-TVA (${devis.tvaTaux}%) : ${formatMontant(montantTva)}
+${detailTvaTexte}
 Total TVAC : ${formatMontant(totalTvac)}
 Acompte (${devis.acomptePourcentage}%) : ${formatMontant(montantAcompte)}
 Solde à la livraison : ${formatMontant(soldeRestant)}

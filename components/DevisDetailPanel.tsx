@@ -4,11 +4,10 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import {
+  calculerTotauxDevis,
   calculerValiditeDevis,
-  calculerMontantTva,
-  calculerTotalHt,
-  calculerTotalTvac,
   formatMontant,
+  normaliserLignesDevis,
 } from "../lib/devis-helpers";
 import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type { PrestationEdition } from "../hooks/useDevisActions";
@@ -202,9 +201,11 @@ export default function DevisDetailPanel({
     );
   }
 
-  const totalHtSelectionne = calculerTotalHt(devisSelectionne);
-  const totalTvaSelectionne = calculerMontantTva(devisSelectionne);
-  const totalTvacSelectionne = calculerTotalTvac(devisSelectionne);
+  const totauxSelectionne = calculerTotauxDevis(devisSelectionne);
+  const lignesSelectionnees = normaliserLignesDevis(devisSelectionne);
+  const totalHtSelectionne = totauxSelectionne.totalHt;
+  const totalTvaSelectionne = totauxSelectionne.totalTva;
+  const totalTvacSelectionne = totauxSelectionne.totalTtc;
   const acompteSelectionne =
     totalTvacSelectionne * (devisSelectionne.acomptePourcentage / 100);
   const devisEstAccepte = devisSelectionne.statut === "Accepté";
@@ -223,15 +224,20 @@ export default function DevisDetailPanel({
   const numeroDevisAffiche = formatNumeroDevisPourAffichage(
     devisSelectionne.id
   );
-  const totalHtEdition = editLignes.reduce(
-    (total, ligne) =>
-      total +
-      (Number(ligne.quantite) || 0) * (Number(ligne.prixUnitaire) || 0),
-    0
-  );
-  const totalTvaEdition =
-    totalHtEdition * ((Number(editForm.tvaTaux) || 0) / 100);
-  const totalTvacEdition = totalHtEdition + totalTvaEdition;
+  const totauxEdition = calculerTotauxDevis({
+    tvaTaux: Number(editForm.tvaTaux) || 21,
+    lignes: editLignes.map((ligne, index) => ({
+      id: `edition-${index}`,
+      designation: ligne.designation,
+      quantite: Number(ligne.quantite) || 0,
+      unite: ligne.unite,
+      prixUnitaire: Number(ligne.prixUnitaire) || 0,
+      tvaTaux: Number(ligne.tvaTaux) || Number(editForm.tvaTaux) || 21,
+    })),
+  });
+  const totalHtEdition = totauxEdition.totalHt;
+  const totalTvaEdition = totauxEdition.totalTva;
+  const totalTvacEdition = totauxEdition.totalTtc;
   const acompteEdition =
     totalTvacEdition * ((Number(editForm.acomptePourcentage) || 0) / 100);
   const lignesEditionRenseignees = editLignes.filter((ligne) =>
@@ -581,7 +587,7 @@ export default function DevisDetailPanel({
             {devisSelectionne.acceptedAt && (
               <>
                 <p className="text-sm font-semibold text-emerald-700">
-                  Preuve d&apos;acceptation
+                  Preuve d’acceptation
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
                   Accepté par {devisSelectionne.acceptedByName || "Client"} (
@@ -664,7 +670,7 @@ export default function DevisDetailPanel({
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">TVA</p>
+              <p className="text-sm text-slate-500">TVA par défaut</p>
               <p className="mt-1 font-semibold">{devisSelectionne.tvaTaux}%</p>
             </div>
 
@@ -689,13 +695,13 @@ export default function DevisDetailPanel({
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">Prestations</p>
               <p className="text-sm font-semibold text-slate-700">
-                {devisSelectionne.lignes.length} ligne
-                {devisSelectionne.lignes.length > 1 ? "s" : ""}
+                {lignesSelectionnees.length} ligne
+                {lignesSelectionnees.length > 1 ? "s" : ""}
               </p>
             </div>
 
             <div className="mt-4 space-y-3 md:hidden">
-              {devisSelectionne.lignes.map((ligne) => {
+              {lignesSelectionnees.map((ligne) => {
                 const totalLigne = ligne.quantite * ligne.prixUnitaire;
 
                 return (
@@ -737,7 +743,16 @@ export default function DevisDetailPanel({
 
                       <div>
                         <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                          Total
+                          TVA
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-slate-700">
+                          {ligne.tvaTaux}%
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                          Total HT
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-900">
                           {formatMontant(totalLigne)}
@@ -757,11 +772,12 @@ export default function DevisDetailPanel({
                     <th className="px-3 py-3 font-medium">Qté</th>
                     <th className="px-3 py-3 font-medium">Unité</th>
                     <th className="px-3 py-3 font-medium">PU</th>
-                    <th className="px-3 py-3 font-medium">Total</th>
+                    <th className="px-3 py-3 font-medium">TVA</th>
+                    <th className="px-3 py-3 font-medium">Total HT</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {devisSelectionne.lignes.map((ligne) => {
+                  {lignesSelectionnees.map((ligne) => {
                     const totalLigne = ligne.quantite * ligne.prixUnitaire;
 
                     return (
@@ -776,6 +792,9 @@ export default function DevisDetailPanel({
                         <td className="px-3 py-3 text-sm">{ligne.unite}</td>
                         <td className="px-3 py-3 text-sm whitespace-nowrap">
                           {formatMontant(ligne.prixUnitaire)}
+                        </td>
+                        <td className="px-3 py-3 text-sm whitespace-nowrap">
+                          {ligne.tvaTaux}%
                         </td>
                         <td className="px-3 py-3 text-sm font-semibold whitespace-nowrap">
                           {formatMontant(totalLigne)}
@@ -800,9 +819,7 @@ export default function DevisDetailPanel({
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">
-                TVA ({devisSelectionne.tvaTaux}%)
-              </p>
+              <p className="text-sm text-slate-500">TVA totale</p>
               <p
                 data-testid="devis-total-tva"
                 className="mt-1 wrap-break-word font-semibold"
@@ -828,6 +845,19 @@ export default function DevisDetailPanel({
               </p>
             </div>
           </div>
+
+          {totauxSelectionne.detailTva.length > 0 && (
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Détail TVA par taux</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                {totauxSelectionne.detailTva.map((ligne) => (
+                  <p key={ligne.taux} className="text-sm font-semibold">
+                    TVA {ligne.taux}% : {formatMontant(ligne.montantTva)}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Conditions</p>
@@ -1270,7 +1300,7 @@ export default function DevisDetailPanel({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
                   <div className="order-1 min-w-0 overflow-hidden sm:order-none">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       Qté
@@ -1325,9 +1355,28 @@ export default function DevisDetailPanel({
                     />
                   </div>
 
+                  <div className="order-5 min-w-0 overflow-hidden sm:order-none">
+                    <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                      TVA
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={ligne.tvaTaux}
+                      onChange={(e) =>
+                        mettreAJourLigneEdition(
+                          index,
+                          "tvaTaux",
+                          e.target.value
+                        )
+                      }
+                      className={champFormulaireClasses}
+                    />
+                  </div>
+
                   <div className="order-3 flex min-w-0 flex-col justify-end overflow-hidden sm:order-none">
                     <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-                      Total
+                      Total HT
                       <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">
                         {formatMontant(
                           (Number(ligne.quantite) || 0) *
@@ -1411,7 +1460,8 @@ export default function DevisDetailPanel({
                           {formatMontant(
                             Number(prestation.prixUnitaire) || 0
                           )}{" "}
-                          HT · {prestation.unite}
+                          HT · {prestation.unite} · TVA{" "}
+                          {(prestation.tvaTaux ?? Number(editForm.tvaTaux)) || 21}%
                         </p>
                       </div>
 
@@ -1422,6 +1472,7 @@ export default function DevisDetailPanel({
                             designation: prestation.designation,
                             unite: prestation.unite,
                             prixUnitaire: prestation.prixUnitaire,
+                            tvaTaux: prestation.tvaTaux ?? editForm.tvaTaux,
                           })
                         }
                         className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"

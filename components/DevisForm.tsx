@@ -11,6 +11,7 @@ import {
   TVA_PAR_DEFAUT,
 } from "../lib/devis-constants";
 import {
+  calculerTotauxDevis,
   convertirLignesFormStateEnLignesMetier,
   formatMontant,
   formaterDate,
@@ -109,6 +110,7 @@ function creerLigneVideAvecUnite(): NouvelleLigneState {
   return {
     ...creerLigneVide(),
     unite: "forfait",
+    tvaTaux: String(TVA_PAR_DEFAUT),
   };
 }
 
@@ -274,6 +276,7 @@ export default function DevisForm({
         quantite: "1",
         unite: prestation.unite,
         prixUnitaire: String(prestation.prixUnitaire),
+        tvaTaux: String(prestation.tvaTaux ?? nouveauDevis.tvaTaux ?? TVA_PAR_DEFAUT),
       },
     ]);
   };
@@ -577,19 +580,24 @@ export default function DevisForm({
     }
   };
 
-  const totalHtSaisie = useMemo(
+  const totauxSaisie = useMemo(
     () =>
-      lignes.reduce(
-        (total, ligne) =>
-          total +
-          (Number(ligne.quantite) || 0) * (Number(ligne.prixUnitaire) || 0),
-        0
-      ),
-    [lignes]
+      calculerTotauxDevis({
+        tvaTaux: Number(nouveauDevis.tvaTaux) || TVA_PAR_DEFAUT,
+        lignes: lignes.map((ligne, index) => ({
+          id: `preview-${index}`,
+          designation: ligne.designation,
+          quantite: Number(ligne.quantite) || 0,
+          unite: ligne.unite,
+          prixUnitaire: Number(ligne.prixUnitaire) || 0,
+          tvaTaux: Number(ligne.tvaTaux) || Number(nouveauDevis.tvaTaux) || TVA_PAR_DEFAUT,
+        })),
+      }),
+    [lignes, nouveauDevis.tvaTaux]
   );
-  const tauxTvaSaisi = Number(nouveauDevis.tvaTaux) || 0;
-  const totalTvaSaisie = totalHtSaisie * (tauxTvaSaisi / 100);
-  const totalTtcSaisie = totalHtSaisie + totalTvaSaisie;
+  const totalHtSaisie = totauxSaisie.totalHt;
+  const totalTvaSaisie = totauxSaisie.totalTva;
+  const totalTtcSaisie = totauxSaisie.totalTtc;
   const acompteSaisi =
     totalTtcSaisie * ((Number(nouveauDevis.acomptePourcentage) || 0) / 100);
   const lignesRenseignees = lignes.filter((ligne) =>
@@ -633,6 +641,13 @@ export default function DevisForm({
             <p className="mt-1 font-semibold text-slate-900">
               {formatMontant(totalTvaSaisie)}
             </p>
+            {totauxSaisie.detailTva.length > 1 && (
+              <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                {totauxSaisie.detailTva
+                  .map((ligne) => `${ligne.taux}%`)
+                  .join(" / ")}
+              </p>
+            )}
           </div>
           <div>
             <p className="text-xs text-slate-500">TTC</p>
@@ -919,7 +934,7 @@ export default function DevisForm({
 
         <div className="min-w-0 overflow-hidden">
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            TVA (%)
+            TVA par défaut (%)
           </label>
           <input
             data-testid="devis-tva-taux"
@@ -1135,7 +1150,7 @@ export default function DevisForm({
                 )}
               </div>
 
-              <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div className="col-span-2 min-w-0 overflow-hidden xl:col-span-1">
                   <label className="mb-1 block text-xs font-medium text-slate-500 sm:mb-2">
                     Désignation
@@ -1203,15 +1218,35 @@ export default function DevisForm({
                     className={champFormulaireClasses}
                   />
                 </div>
+
+                <div className="order-5 min-w-0 overflow-hidden sm:order-none">
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    TVA
+                  </label>
+                  <input
+                    data-testid={`devis-line-${index}-tva`}
+                    type="number"
+                    step="0.01"
+                    placeholder={nouveauDevis.tvaTaux}
+                    value={ligne.tvaTaux}
+                    onChange={(e) =>
+                      mettreAJourLigne(index, "tvaTaux", e.target.value)
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
               </div>
 
               <div className="mt-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 sm:mt-4 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm">
-                Total :{" "}
+                Total HT :{" "}
                 <span className="font-semibold text-slate-900">
                   {formatMontant(
                     (Number(ligne.quantite) || 0) *
                       (Number(ligne.prixUnitaire) || 0)
                   )}
+                </span>
+                <span className="ml-3 text-slate-500">
+                  TVA {Number(ligne.tvaTaux) || Number(nouveauDevis.tvaTaux) || TVA_PAR_DEFAUT}%
                 </span>
               </div>
             </div>
@@ -1288,6 +1323,9 @@ export default function DevisForm({
                       </span>
                       <span className="rounded-full bg-white px-3 py-1 font-medium">
                         {prestation.unite}
+                      </span>
+                      <span className="rounded-full bg-white px-3 py-1 font-medium">
+                        TVA {(prestation.tvaTaux ?? Number(nouveauDevis.tvaTaux)) || TVA_PAR_DEFAUT}%
                       </span>
                     </div>
                   </div>

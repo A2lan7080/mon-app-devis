@@ -32,6 +32,11 @@ function creerEntrepriseDefaut(): EntrepriseSettings {
     logoUrl: "",
     logoStoragePath: "",
     logoRemplaceNomEntreprise: false,
+    invoiceNumberPrefix: "FA",
+    invoiceNumberPadding: 4,
+    invoiceNextNumber: 1,
+    invoiceNumberFormat: "{prefix}-{year}-{number}",
+    invoiceResetYearly: false,
   };
 }
 
@@ -110,6 +115,30 @@ export function useEntrepriseSettings({
             typeof data.logoRemplaceNomEntreprise === "boolean"
               ? data.logoRemplaceNomEntreprise
               : false,
+          invoiceNumberPrefix:
+            typeof data.invoiceNumberPrefix === "string"
+              ? data.invoiceNumberPrefix
+              : "FA",
+          invoiceNumberPadding:
+            typeof data.invoiceNumberPadding === "number"
+              ? data.invoiceNumberPadding
+              : 4,
+          invoiceNextNumber:
+            typeof data.invoiceNextNumber === "number"
+              ? data.invoiceNextNumber
+              : 1,
+          invoiceNumberFormat:
+            typeof data.invoiceNumberFormat === "string"
+              ? data.invoiceNumberFormat
+              : "{prefix}-{year}-{number}",
+          invoiceResetYearly:
+            typeof data.invoiceResetYearly === "boolean"
+              ? data.invoiceResetYearly
+              : false,
+          invoiceLastYear:
+            typeof data.invoiceLastYear === "number"
+              ? data.invoiceLastYear
+              : undefined,
           createdAt:
             typeof data.createdAt === "number" ? data.createdAt : undefined,
           updatedAt:
@@ -160,6 +189,25 @@ export function useEntrepriseSettings({
           logoStoragePath: entrepriseSettings.logoStoragePath ?? "",
           logoRemplaceNomEntreprise:
             entrepriseSettings.logoRemplaceNomEntreprise === true,
+          invoiceNumberPrefix:
+            entrepriseSettings.invoiceNumberPrefix?.trim() || "FA",
+          invoiceNumberPadding:
+            typeof entrepriseSettings.invoiceNumberPadding === "number"
+              ? Math.max(1, Math.floor(entrepriseSettings.invoiceNumberPadding))
+              : 4,
+          invoiceNextNumber:
+            typeof entrepriseSettings.invoiceNextNumber === "number"
+              ? Math.max(1, Math.floor(entrepriseSettings.invoiceNextNumber))
+              : 1,
+          invoiceNumberFormat:
+            entrepriseSettings.invoiceNumberFormat?.trim() ||
+            "{prefix}-{year}-{number}",
+          invoiceResetYearly:
+            entrepriseSettings.invoiceResetYearly === true,
+          invoiceLastYear:
+            typeof entrepriseSettings.invoiceLastYear === "number"
+              ? entrepriseSettings.invoiceLastYear
+              : new Date().getFullYear(),
           updatedAt: maintenant,
           createdAt: entrepriseSettings.createdAt ?? maintenant,
           updatedByUid: userId,
