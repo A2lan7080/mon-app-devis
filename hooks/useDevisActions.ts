@@ -9,7 +9,7 @@ import {
   updateDoc,
   type DocumentReference,
 } from "firebase/firestore";
-import { TVA_PAR_DEFAUT } from "../lib/devis-constants";
+import { TAUX_TVA_AUTORISES, TVA_PAR_DEFAUT } from "../lib/devis-constants";
 import { exporterDevisPdf } from "../lib/export-devis-pdf";
 import {
   convertirDateVersInput,
@@ -198,6 +198,8 @@ export function useDevisActions({
   };
 
   const ajouterLigneEdition = () => {
+    const tauxParDefaut = Number(editForm.tvaTaux);
+
     setEditLignes((prev) => [
       ...prev,
       {
@@ -205,12 +207,19 @@ export function useDevisActions({
         quantite: "1",
         unite: "forfait",
         prixUnitaire: "0",
-        tvaTaux: editForm.tvaTaux || String(TVA_PAR_DEFAUT),
+        tvaTaux: String(
+          TAUX_TVA_AUTORISES.includes(tauxParDefaut)
+            ? tauxParDefaut
+            : TVA_PAR_DEFAUT
+        ),
       },
     ]);
   };
 
   const ajouterPrestationEdition = (prestation: PrestationEdition) => {
+    const tauxPrestation = Number(prestation.tvaTaux);
+    const tauxParDefaut = Number(editForm.tvaTaux);
+
     setEditLignes((prev) => [
       ...prev,
       {
@@ -218,7 +227,13 @@ export function useDevisActions({
         quantite: "1",
         unite: prestation.unite,
         prixUnitaire: String(prestation.prixUnitaire),
-        tvaTaux: String(prestation.tvaTaux ?? editForm.tvaTaux ?? TVA_PAR_DEFAUT),
+        tvaTaux: String(
+          TAUX_TVA_AUTORISES.includes(tauxPrestation)
+            ? tauxPrestation
+            : TAUX_TVA_AUTORISES.includes(tauxParDefaut)
+            ? tauxParDefaut
+            : TVA_PAR_DEFAUT
+        ),
       },
     ]);
   };

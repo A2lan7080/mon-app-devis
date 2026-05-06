@@ -2,7 +2,11 @@
 
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
-import { STATUTS_DEVIS } from "../lib/devis-constants";
+import {
+  obtenirOptionsTvaAvecValeur,
+  STATUTS_DEVIS,
+  TAUX_TVA_AUTORISES,
+} from "../lib/devis-constants";
 import {
   calculerTotauxDevis,
   calculerValiditeDevis,
@@ -1158,8 +1162,7 @@ export default function DevisDetailPanel({
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA (%)
           </label>
-          <input
-            type="number"
+          <select
             value={editForm.tvaTaux}
             onChange={(e) =>
               setEditForm((prev) => ({
@@ -1168,7 +1171,13 @@ export default function DevisDetailPanel({
               }))
             }
             className={champFormulaireClasses}
-          />
+          >
+            {obtenirOptionsTvaAvecValeur(editForm.tvaTaux).map((taux) => (
+              <option key={taux} value={taux}>
+                {taux}%
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="min-w-0 overflow-hidden">
@@ -1250,7 +1259,7 @@ export default function DevisDetailPanel({
             onClick={ajouterLigneEdition}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
-            + Ligne
+            Ajouter une ligne
           </button>
         </div>
 
@@ -1359,9 +1368,7 @@ export default function DevisDetailPanel({
                     <label className="mb-1.5 block text-xs font-medium text-slate-500">
                       TVA
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <select
                       value={ligne.tvaTaux}
                       onChange={(e) =>
                         mettreAJourLigneEdition(
@@ -1371,7 +1378,13 @@ export default function DevisDetailPanel({
                         )
                       }
                       className={champFormulaireClasses}
-                    />
+                    >
+                      {obtenirOptionsTvaAvecValeur(ligne.tvaTaux).map((taux) => (
+                        <option key={taux} value={taux}>
+                          {taux}%
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="order-3 flex min-w-0 flex-col justify-end overflow-hidden sm:order-none">
@@ -1396,7 +1409,7 @@ export default function DevisDetailPanel({
           onClick={ajouterLigneEdition}
           className="mt-2.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:mt-4 sm:w-auto sm:px-4 sm:py-3"
         >
-          + Ligne
+          Ajouter une ligne
         </button>
 
         <div className="mt-2.5 rounded-xl border border-slate-200 bg-white p-2.5 sm:mt-6 sm:rounded-2xl sm:p-4">
@@ -1461,7 +1474,11 @@ export default function DevisDetailPanel({
                             Number(prestation.prixUnitaire) || 0
                           )}{" "}
                           HT · {prestation.unite} · TVA{" "}
-                          {(prestation.tvaTaux ?? Number(editForm.tvaTaux)) || 21}%
+                          {TAUX_TVA_AUTORISES.includes(
+                            Number(prestation.tvaTaux)
+                          )
+                            ? prestation.tvaTaux
+                            : Number(editForm.tvaTaux) || 21}%
                         </p>
                       </div>
 
@@ -1472,7 +1489,11 @@ export default function DevisDetailPanel({
                             designation: prestation.designation,
                             unite: prestation.unite,
                             prixUnitaire: prestation.prixUnitaire,
-                            tvaTaux: prestation.tvaTaux ?? editForm.tvaTaux,
+                            tvaTaux: TAUX_TVA_AUTORISES.includes(
+                              Number(prestation.tvaTaux)
+                            )
+                              ? prestation.tvaTaux
+                              : editForm.tvaTaux,
                           })
                         }
                         className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"

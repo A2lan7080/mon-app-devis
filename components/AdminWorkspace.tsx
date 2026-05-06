@@ -9,6 +9,7 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { formatMontant } from "../lib/devis-helpers";
+import { obtenirOptionsTvaAvecValeur } from "../lib/devis-constants";
 import {
   genererReferenceFactureDepuisConfig,
   getInvoiceNumberSettings,
@@ -1006,9 +1007,7 @@ export default function AdminWorkspace({
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     TVA par défaut (%)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <select
                     value={formulairePrestation.tvaTaux}
                     onChange={(e) =>
                       setFormulairePrestation((prev) => ({
@@ -1017,7 +1016,15 @@ export default function AdminWorkspace({
                       }))
                     }
                     className={champFormulaireClasses}
-                  />
+                  >
+                    {obtenirOptionsTvaAvecValeur(
+                      formulairePrestation.tvaTaux
+                    ).map((taux) => (
+                      <option key={taux} value={taux}>
+                        {taux}%
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="min-w-0 md:col-span-2">

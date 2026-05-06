@@ -7,7 +7,9 @@ import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import {
   creerLigneVide,
+  obtenirOptionsTvaAvecValeur,
   STATUTS_DEVIS,
+  TAUX_TVA_AUTORISES,
   TVA_PAR_DEFAUT,
 } from "../lib/devis-constants";
 import {
@@ -276,7 +278,11 @@ export default function DevisForm({
         quantite: "1",
         unite: prestation.unite,
         prixUnitaire: String(prestation.prixUnitaire),
-        tvaTaux: String(prestation.tvaTaux ?? nouveauDevis.tvaTaux ?? TVA_PAR_DEFAUT),
+        tvaTaux: String(
+          TAUX_TVA_AUTORISES.includes(Number(prestation.tvaTaux))
+            ? prestation.tvaTaux
+            : nouveauDevis.tvaTaux || TVA_PAR_DEFAUT
+        ),
       },
     ]);
   };
@@ -936,9 +942,8 @@ export default function DevisForm({
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA par défaut (%)
           </label>
-          <input
+          <select
             data-testid="devis-tva-taux"
-            type="number"
             value={nouveauDevis.tvaTaux}
             onChange={(e) =>
               setNouveauDevis((prev) => ({
@@ -947,7 +952,13 @@ export default function DevisForm({
               }))
             }
             className={champFormulaireClasses}
-          />
+          >
+            {obtenirOptionsTvaAvecValeur(nouveauDevis.tvaTaux).map((taux) => (
+              <option key={taux} value={taux}>
+                {taux}%
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="min-w-0 overflow-hidden md:col-span-2">
@@ -1123,7 +1134,7 @@ export default function DevisForm({
             onClick={ajouterLigne}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
-            + Ligne
+            Ajouter une ligne
           </button>
         </div>
 
@@ -1223,17 +1234,20 @@ export default function DevisForm({
                   <label className="mb-2 block text-xs font-medium text-slate-500">
                     TVA
                   </label>
-                  <input
+                  <select
                     data-testid={`devis-line-${index}-tva`}
-                    type="number"
-                    step="0.01"
-                    placeholder={nouveauDevis.tvaTaux}
                     value={ligne.tvaTaux}
                     onChange={(e) =>
                       mettreAJourLigne(index, "tvaTaux", e.target.value)
                     }
                     className={champFormulaireClasses}
-                  />
+                  >
+                    {obtenirOptionsTvaAvecValeur(ligne.tvaTaux).map((taux) => (
+                      <option key={taux} value={taux}>
+                        {taux}%
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1259,7 +1273,7 @@ export default function DevisForm({
           onClick={ajouterLigne}
           className="mt-2.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:mt-4 sm:w-auto sm:px-4 sm:py-3"
         >
-          + Ligne
+          Ajouter une ligne
         </button>
 
         <div className="mt-2.5 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5 sm:mt-6 sm:rounded-2xl sm:p-4">
@@ -1325,7 +1339,11 @@ export default function DevisForm({
                         {prestation.unite}
                       </span>
                       <span className="rounded-full bg-white px-3 py-1 font-medium">
-                        TVA {(prestation.tvaTaux ?? Number(nouveauDevis.tvaTaux)) || TVA_PAR_DEFAUT}%
+                        TVA {TAUX_TVA_AUTORISES.includes(
+                          Number(prestation.tvaTaux)
+                        )
+                          ? prestation.tvaTaux
+                          : Number(nouveauDevis.tvaTaux) || TVA_PAR_DEFAUT}%
                       </span>
                     </div>
                   </div>

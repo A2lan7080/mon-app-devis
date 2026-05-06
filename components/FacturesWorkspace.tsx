@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { deleteDoc, doc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
+import DevisPreviewModal from "./DevisPreviewModal";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
@@ -11,6 +12,7 @@ import { useEntrepriseDevis } from "../hooks/useEntrepriseDevis";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { exporterFacturePdf } from "../lib/export-facture-pdf";
 import { auth, db } from "../lib/firebase";
+import { obtenirOptionsTvaAvecValeur } from "../lib/devis-constants";
 import {
   calculerTotalHt,
   calculerTotalTvac,
@@ -32,11 +34,18 @@ import {
   type LigneFactureFormState,
 } from "../lib/facture-helpers";
 import type { Facture, StatutFacture } from "../types/factures";
-import type { Chantier } from "../types/chantiers";
+import type { Chantier, StatutChantier } from "../types/chantiers";
 import type { Client, TypeClient } from "../types/clients";
 
 type FiltreArchivage = "actifs" | "archives" | "tous";
 type FiltreStatut = "Tous" | StatutFacture;
+type FactureFormSectionKey =
+  | "informations"
+  | "client"
+  | "chantier"
+  | "lignes"
+  | "bibliotheque"
+  | "totaux";
 
 type Props = {
   entrepriseId?: string;
@@ -60,10 +69,21 @@ type FactureFormState = {
   lignes: LigneFactureFormState[];
   nouveauClientNom: string;
   nouveauClientType: TypeClient;
+  nouveauClientSociete: string;
+  nouveauClientTva: string;
   nouveauClientEmail: string;
   nouveauClientTelephone: string;
+  nouveauClientAdresse: string;
+  nouveauClientCodePostal: string;
+  nouveauClientVille: string;
+  nouveauClientPays: string;
   nouveauChantierTitre: string;
   nouveauChantierAdresse: string;
+  nouveauChantierCodePostal: string;
+  nouveauChantierVille: string;
+  nouveauChantierDateDebut: string;
+  nouveauChantierDateFin: string;
+  nouveauChantierStatut: StatutChantier;
 };
 
 const STATUTS_FACTURE: StatutFacture[] = [
@@ -73,6 +93,24 @@ const STATUTS_FACTURE: StatutFacture[] = [
   "En retard",
   "Annulée",
 ];
+
+const STATUTS_CHANTIER: StatutChantier[] = [
+  "À planifier",
+  "Planifié",
+  "En cours",
+  "Terminé",
+  "Suspendu",
+];
+
+const PAYS_CLIENT_PAR_DEFAUT = "Belgique";
+const SECTIONS_FACTURE_DEFAUT: Record<FactureFormSectionKey, boolean> = {
+  informations: true,
+  client: true,
+  chantier: false,
+  lignes: true,
+  bibliotheque: false,
+  totaux: true,
+};
 
 const creerFormulaireVide = (): FactureFormState => ({
   devisId: "",
@@ -90,10 +128,21 @@ const creerFormulaireVide = (): FactureFormState => ({
   lignes: [creerLigneFactureFormVide(21)],
   nouveauClientNom: "",
   nouveauClientType: "Particulier",
+  nouveauClientSociete: "",
+  nouveauClientTva: "",
   nouveauClientEmail: "",
   nouveauClientTelephone: "",
+  nouveauClientAdresse: "",
+  nouveauClientCodePostal: "",
+  nouveauClientVille: "",
+  nouveauClientPays: PAYS_CLIENT_PAR_DEFAUT,
   nouveauChantierTitre: "",
   nouveauChantierAdresse: "",
+  nouveauChantierCodePostal: "",
+  nouveauChantierVille: "",
+  nouveauChantierDateDebut: "",
+  nouveauChantierDateFin: "",
+  nouveauChantierStatut: "À planifier",
 });
 
 const champFormulaireClasses =
@@ -110,6 +159,51 @@ const styleDateMobile = {
   WebkitAppearance: "none",
   appearance: "none",
 } as const;
+
+function FactureFormSection({
+  title,
+  subtitle,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 sm:px-5"
+        aria-expanded={open}
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-slate-900">
+            {title}
+          </span>
+          {subtitle && (
+            <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+              {subtitle}
+            </span>
+          )}
+        </span>
+        <span className="shrink-0 text-lg font-semibold text-slate-500">
+          {open ? "-" : "+"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-4 py-4 sm:px-5">
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function calculerNetAPayer(facture: Facture) {
   return calculerTotauxDepuisFacture(facture).netAPayer;
@@ -175,10 +269,11 @@ export default function FacturesWorkspace({
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [recherchePrestation, setRecherchePrestation] = useState("");
-  const [bibliothequePrestationsOuverte, setBibliothequePrestationsOuverte] =
-    useState(false);
   const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
     useState(false);
+  const [sectionsFactureOuvertes, setSectionsFactureOuvertes] = useState(
+    SECTIONS_FACTURE_DEFAUT
+  );
   const [formulaire, setFormulaire] = useState<FactureFormState>(
     creerFormulaireVide()
   );
@@ -435,8 +530,26 @@ export default function FacturesWorkspace({
       chantierId: chantierUnique?.id ?? "",
       devisId: devisUnique?.id ?? "",
       nouveauClientNom: "",
+      nouveauClientType: "Particulier",
+      nouveauClientSociete: "",
+      nouveauClientTva: "",
       nouveauClientEmail: "",
       nouveauClientTelephone: "",
+      nouveauClientAdresse: "",
+      nouveauClientCodePostal: "",
+      nouveauClientVille: "",
+      nouveauClientPays: PAYS_CLIENT_PAR_DEFAUT,
+      ...(chantierUnique
+        ? {
+            nouveauChantierTitre: "",
+            nouveauChantierAdresse: "",
+            nouveauChantierCodePostal: "",
+            nouveauChantierVille: "",
+            nouveauChantierDateDebut: "",
+            nouveauChantierDateFin: "",
+            nouveauChantierStatut: "À planifier" as StatutChantier,
+          }
+        : {}),
       objet:
         devisUnique && !prev.objet.trim()
           ? `Facture - ${devisUnique.id}`
@@ -491,8 +604,23 @@ export default function FacturesWorkspace({
         ...prev,
         chantierId: chantier.id,
         clientId: chantier.clientId ?? prev.clientId,
+        nouveauClientNom: "",
+        nouveauClientType: "Particulier",
+        nouveauClientSociete: "",
+        nouveauClientTva: "",
+        nouveauClientEmail: "",
+        nouveauClientTelephone: "",
+        nouveauClientAdresse: "",
+        nouveauClientCodePostal: "",
+        nouveauClientVille: "",
+        nouveauClientPays: PAYS_CLIENT_PAR_DEFAUT,
         nouveauChantierTitre: "",
         nouveauChantierAdresse: "",
+        nouveauChantierCodePostal: "",
+        nouveauChantierVille: "",
+        nouveauChantierDateDebut: "",
+        nouveauChantierDateFin: "",
+        nouveauChantierStatut: "À planifier",
         devisId: devisAssocie.id,
         objet: `Facture - ${devisAssocie.id}`,
         montantHt: String(arrondirMontant(calculerTotalHt(devisAssocie))),
@@ -509,8 +637,23 @@ export default function FacturesWorkspace({
       ...prev,
       chantierId: chantier.id,
       clientId: chantier.clientId ?? prev.clientId,
+      nouveauClientNom: "",
+      nouveauClientType: "Particulier",
+      nouveauClientSociete: "",
+      nouveauClientTva: "",
+      nouveauClientEmail: "",
+      nouveauClientTelephone: "",
+      nouveauClientAdresse: "",
+      nouveauClientCodePostal: "",
+      nouveauClientVille: "",
+      nouveauClientPays: PAYS_CLIENT_PAR_DEFAUT,
       nouveauChantierTitre: "",
       nouveauChantierAdresse: "",
+      nouveauChantierCodePostal: "",
+      nouveauChantierVille: "",
+      nouveauChantierDateDebut: "",
+      nouveauChantierDateFin: "",
+      nouveauChantierStatut: "À planifier",
       devisId: "",
       objet: prev.objet.trim() ? prev.objet : `Facture - ${chantier.titre}`,
     }));
@@ -590,11 +733,57 @@ export default function FacturesWorkspace({
   const resetFormulaire = () => {
     setFormulaire(creerFormulaireVide());
     setRecherchePrestation("");
-    setBibliothequePrestationsOuverte(false);
   };
+
+  const formulaireFactureContientSaisie = useMemo(
+    () =>
+      modeEdition ||
+      [
+        formulaire.devisId,
+        formulaire.objet,
+        formulaire.clientId,
+        formulaire.chantierId,
+        formulaire.dateEmission,
+        formulaire.dateEcheance,
+        formulaire.datePaiement,
+        formulaire.notes,
+        formulaire.nouveauClientNom,
+        formulaire.nouveauClientSociete,
+        formulaire.nouveauClientTva,
+        formulaire.nouveauClientEmail,
+        formulaire.nouveauClientTelephone,
+        formulaire.nouveauClientAdresse,
+        formulaire.nouveauClientCodePostal,
+        formulaire.nouveauClientVille,
+        formulaire.nouveauChantierTitre,
+        formulaire.nouveauChantierAdresse,
+        formulaire.nouveauChantierCodePostal,
+        formulaire.nouveauChantierVille,
+        formulaire.nouveauChantierDateDebut,
+        formulaire.nouveauChantierDateFin,
+      ].some((valeur) => valeur.trim()) ||
+      formulaire.statut !== "Brouillon" ||
+      formulaire.tvaTaux !== "21" ||
+      formulaire.acompteDeduit !== "0" ||
+      formulaire.nouveauClientType !== "Particulier" ||
+      formulaire.nouveauClientPays !== PAYS_CLIENT_PAR_DEFAUT ||
+      formulaire.nouveauChantierStatut !== "À planifier" ||
+      formulaire.lignes.length > 1 ||
+      formulaire.lignes.some(
+        (ligne) =>
+          ligne.description.trim() ||
+          ligne.prixUnitaireHt.trim() ||
+          ligne.quantite !== "1" ||
+          ligne.unite !== "forfait" ||
+          ligne.tvaTaux !== "21"
+      ),
+    [formulaire, modeEdition]
+  );
 
   const ouvrirCreation = () => {
     resetFormulaire();
+    setSectionsFactureOuvertes(SECTIONS_FACTURE_DEFAUT);
+    setFactureSelectionneeId(null);
     setAfficherActionsFactureMobile(false);
     setAfficherFormulaire(true);
     setModeEdition(false);
@@ -607,10 +796,39 @@ export default function FacturesWorkspace({
     resetFormulaire();
   };
 
+  const demanderFermetureFormulaire = () => {
+    if (
+      !sauvegardeEnCours &&
+      formulaireFactureContientSaisie &&
+      !window.confirm("Fermer la facture en cours sans enregistrer ?")
+    ) {
+      return;
+    }
+
+    fermerFormulaire();
+  };
+
   const fermerDetailMobile = () => {
     setAfficherActionsFactureMobile(false);
     setModeEdition(false);
     setFactureSelectionneeId(null);
+  };
+
+  const selectionnerFacture = (factureId: string) => {
+    if (afficherFormulaireFacture && formulaireFactureContientSaisie) {
+      const fermerSansEnregistrer = window.confirm(
+        "Fermer la facture en cours sans enregistrer ?"
+      );
+
+      if (!fermerSansEnregistrer) return;
+
+      resetFormulaire();
+    }
+
+    setAfficherActionsFactureMobile(false);
+    setFactureSelectionneeId(factureId);
+    setModeEdition(false);
+    setAfficherFormulaire(false);
   };
 
   const ouvrirEdition = () => {
@@ -633,12 +851,28 @@ export default function FacturesWorkspace({
       lignes: creerLignesDepuisFacture(factureSelectionnee),
       nouveauClientNom: "",
       nouveauClientType: "Particulier",
+      nouveauClientSociete: "",
+      nouveauClientTva: "",
       nouveauClientEmail: "",
       nouveauClientTelephone: "",
+      nouveauClientAdresse: "",
+      nouveauClientCodePostal: "",
+      nouveauClientVille: "",
+      nouveauClientPays: PAYS_CLIENT_PAR_DEFAUT,
       nouveauChantierTitre: "",
       nouveauChantierAdresse: "",
+      nouveauChantierCodePostal: "",
+      nouveauChantierVille: "",
+      nouveauChantierDateDebut: "",
+      nouveauChantierDateFin: "",
+      nouveauChantierStatut: "À planifier",
     });
 
+    setSectionsFactureOuvertes({
+      ...SECTIONS_FACTURE_DEFAUT,
+      chantier: Boolean(factureSelectionnee.chantierId),
+      totaux: true,
+    });
     setModeEdition(true);
     setAfficherFormulaire(false);
   };
@@ -665,16 +899,19 @@ export default function FacturesWorkspace({
     }
 
     if (!formulaire.objet.trim()) {
+      setSectionsFactureOuvertes((prev) => ({ ...prev, informations: true }));
       alert("L’objet de la facture est obligatoire.");
       return;
     }
 
     if (!formulaire.clientId && !formulaire.nouveauClientNom.trim()) {
+      setSectionsFactureOuvertes((prev) => ({ ...prev, client: true }));
       alert("Sélectionne un client ou saisis un nouveau client.");
       return;
     }
 
     if (!formulaire.dateEmission) {
+      setSectionsFactureOuvertes((prev) => ({ ...prev, informations: true }));
       alert("La date d’émission est obligatoire.");
       return;
     }
@@ -711,14 +948,15 @@ export default function FacturesWorkspace({
           reference: genererReferenceClient(clients),
           nom: formulaire.nouveauClientNom.trim(),
           typeClient: formulaire.nouveauClientType,
-          societe: "",
+          societe: formulaire.nouveauClientSociete.trim(),
           email: formulaire.nouveauClientEmail.trim(),
           telephone: formulaire.nouveauClientTelephone.trim(),
-          adresse: formulaire.nouveauChantierAdresse.trim(),
-          codePostal: "",
-          ville: "",
-          pays: "Belgique",
-          tva: "",
+          adresse: formulaire.nouveauClientAdresse.trim(),
+          codePostal: formulaire.nouveauClientCodePostal.trim(),
+          ville: formulaire.nouveauClientVille.trim(),
+          pays:
+            formulaire.nouveauClientPays.trim() || PAYS_CLIENT_PAR_DEFAUT,
+          tva: formulaire.nouveauClientTva.trim(),
           notes: "",
           entrepriseId,
           createdByUid,
@@ -766,12 +1004,21 @@ export default function FacturesWorkspace({
             titre: formulaire.nouveauChantierTitre.trim(),
             clientId: clientFinal.id,
             clientNom: clientFinal.nom,
-            adresse: formulaire.nouveauChantierAdresse.trim(),
-            codePostal: "",
-            ville: "",
-            dateDebut: "",
-            dateFin: "",
-            statut: "À planifier",
+            adresse:
+              formulaire.nouveauChantierAdresse.trim() ||
+              clientFinal.adresse ||
+              "",
+            codePostal:
+              formulaire.nouveauChantierCodePostal.trim() ||
+              clientFinal.codePostal ||
+              "",
+            ville:
+              formulaire.nouveauChantierVille.trim() ||
+              clientFinal.ville ||
+              "",
+            dateDebut: formulaire.nouveauChantierDateDebut,
+            dateFin: formulaire.nouveauChantierDateFin,
+            statut: formulaire.nouveauChantierStatut,
             description: "",
             notes: "",
             entrepriseId,
@@ -796,6 +1043,7 @@ export default function FacturesWorkspace({
         : arrondirMontant(convertirNombre(formulaire.tvaTaux));
 
     if (lignes.length === 0) {
+      setSectionsFactureOuvertes((prev) => ({ ...prev, lignes: true }));
       alert("Ajoute au moins une ligne de facture valide.");
       return;
     }
@@ -1116,7 +1364,11 @@ export default function FacturesWorkspace({
       ...prev,
       lignes: [
         ...prev.lignes,
-        creerLigneFactureFormVide(convertirNombre(prev.tvaTaux) || 21),
+        creerLigneFactureFormVide(
+          TAUX_TVA_FACTURE.includes(convertirNombre(prev.tvaTaux))
+            ? convertirNombre(prev.tvaTaux)
+            : 21
+        ),
       ],
     }));
   };
@@ -1135,7 +1387,9 @@ export default function FacturesWorkspace({
       typeof prestationAvecChampsOptionnels.tvaTaux === "number" &&
       Number.isFinite(prestationAvecChampsOptionnels.tvaTaux)
         ? prestationAvecChampsOptionnels.tvaTaux
-        : convertirNombre(formulaire.tvaTaux) || 21;
+        : TAUX_TVA_FACTURE.includes(convertirNombre(formulaire.tvaTaux))
+        ? convertirNombre(formulaire.tvaTaux)
+        : 21;
     const description = prestation.description?.trim()
       ? `${prestation.designation} - ${prestation.description.trim()}`
       : prestation.designation;
@@ -1150,7 +1404,13 @@ export default function FacturesWorkspace({
           quantite: String(prestationAvecChampsOptionnels.quantite ?? 1),
           unite: prestation.unite || "forfait",
           prixUnitaireHt: String(prestation.prixUnitaire ?? 0),
-          tvaTaux: String(tvaTaux),
+          tvaTaux: String(
+            TAUX_TVA_FACTURE.includes(tvaTaux)
+              ? tvaTaux
+              : TAUX_TVA_FACTURE.includes(convertirNombre(formulaire.tvaTaux))
+              ? convertirNombre(formulaire.tvaTaux)
+              : 21
+          ),
         },
       ],
     }));
@@ -1208,8 +1468,15 @@ export default function FacturesWorkspace({
       ? "Aucune facture pour le moment."
       : "Aucune facture ne correspond à cette recherche.";
 
+  const toggleSectionFacture = (section: FactureFormSectionKey) => {
+    setSectionsFactureOuvertes((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   const contenuFormulaire = (
-    <div data-testid="facture-form" className="max-w-full overflow-hidden">
+    <div data-testid="facture-form" className="max-w-full overflow-hidden pb-28 md:pb-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
@@ -1223,15 +1490,29 @@ export default function FacturesWorkspace({
         </div>
 
         <button
-          onClick={fermerFormulaire}
+          onClick={demanderFermetureFormulaire}
           className="bf-button-secondary w-full sm:w-auto"
         >
           Fermer
         </button>
       </div>
 
-      <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
-        <div className="min-w-0 overflow-hidden md:col-span-2">
+      <div className="mt-6 grid min-w-0 max-w-full gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] xl:items-start">
+        <div className="order-1 min-w-0 md:col-span-2 xl:col-span-1 xl:col-start-1">
+          <button
+            type="button"
+            onClick={() => toggleSectionFacture("informations")}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900"
+            aria-expanded={sectionsFactureOuvertes.informations}
+          >
+            <span>Informations</span>
+            <span className="text-lg text-slate-500">
+              {sectionsFactureOuvertes.informations ? "-" : "+"}
+            </span>
+          </button>
+        </div>
+
+        <div className={`order-2 min-w-0 overflow-hidden md:col-span-2 xl:col-span-1 xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Devis lié
           </label>
@@ -1251,7 +1532,21 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className="order-9 min-w-0 xl:col-start-1">
+          <button
+            type="button"
+            onClick={() => toggleSectionFacture("client")}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900"
+            aria-expanded={sectionsFactureOuvertes.client}
+          >
+            <span>Client</span>
+            <span className="text-lg text-slate-500">
+              {sectionsFactureOuvertes.client ? "-" : "+"}
+            </span>
+          </button>
+        </div>
+
+        <div className={`order-10 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.client ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Client
           </label>
@@ -1261,17 +1556,18 @@ export default function FacturesWorkspace({
             onChange={(e) => handleSelectionClient(e.target.value)}
             className={champFormulaireClasses}
           >
-            <option value="">Sélectionner un client</option>
+            <option value="">Créer un nouveau client depuis cette facture</option>
             {clientsActifs.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.nom}
+                {client.societe ? ` — ${client.societe}` : ""}
               </option>
             ))}
           </select>
         </div>
 
         {!formulaire.clientId && (
-          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+          <div className={`order-11 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3 md:col-span-2 xl:col-span-1 xl:col-start-1 ${sectionsFactureOuvertes.client ? "" : "hidden"}`}>
             <p className="text-sm font-semibold text-slate-800">
               Nouveau client
             </p>
@@ -1283,7 +1579,7 @@ export default function FacturesWorkspace({
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="min-w-0">
                 <label className="mb-2 block text-xs font-medium text-slate-500">
-                  Nom
+                  Nom / raison sociale
                 </label>
                 <input
                   type="text"
@@ -1300,7 +1596,7 @@ export default function FacturesWorkspace({
 
               <div className="min-w-0">
                 <label className="mb-2 block text-xs font-medium text-slate-500">
-                  Type
+                  Type de client
                 </label>
                 <select
                   value={formulaire.nouveauClientType}
@@ -1308,6 +1604,10 @@ export default function FacturesWorkspace({
                     setFormulaire((prev) => ({
                       ...prev,
                       nouveauClientType: e.target.value as TypeClient,
+                      nouveauClientTva:
+                        e.target.value === "Professionnel"
+                          ? prev.nouveauClientTva
+                          : "",
                     }))
                   }
                   className={champFormulaireClasses}
@@ -1316,6 +1616,42 @@ export default function FacturesWorkspace({
                   <option value="Professionnel">Professionnel</option>
                 </select>
               </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Société
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientSociete}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientSociete: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              {formulaire.nouveauClientType === "Professionnel" && (
+                <div className="min-w-0">
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    TVA client
+                  </label>
+                  <input
+                    type="text"
+                    value={formulaire.nouveauClientTva}
+                    onChange={(e) =>
+                      setFormulaire((prev) => ({
+                        ...prev,
+                        nouveauClientTva: e.target.value,
+                      }))
+                    }
+                    className={champFormulaireClasses}
+                  />
+                </div>
+              )}
 
               <div className="min-w-0">
                 <label className="mb-2 block text-xs font-medium text-slate-500">
@@ -1350,11 +1686,100 @@ export default function FacturesWorkspace({
                   className={champFormulaireClasses}
                 />
               </div>
+
+              <details className="min-w-0 md:col-span-2">
+                <summary className="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                  Coordonnees completes
+                </summary>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="min-w-0 md:col-span-2">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Adresse
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientAdresse}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientAdresse: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Code postal
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientCodePostal}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientCodePostal: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Ville / commune
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientVille}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientVille: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Pays
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauClientPays}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauClientPays: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+                </div>
+              </details>
             </div>
           </div>
         )}
 
-        <div className="min-w-0 overflow-hidden">
+        <div className="order-12 min-w-0 xl:col-start-1">
+          <button
+            type="button"
+            onClick={() => toggleSectionFacture("chantier")}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900"
+            aria-expanded={sectionsFactureOuvertes.chantier}
+          >
+            <span>Chantier</span>
+            <span className="text-lg text-slate-500">
+              {sectionsFactureOuvertes.chantier ? "-" : "+"}
+            </span>
+          </button>
+        </div>
+
+        <div className={`order-13 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.chantier ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Chantier lié
           </label>
@@ -1364,7 +1789,7 @@ export default function FacturesWorkspace({
             onChange={(e) => handleSelectionChantier(e.target.value)}
             className={champFormulaireClasses}
           >
-            <option value="">Aucun chantier lié</option>
+            <option value="">Créer un nouveau chantier depuis cette facture</option>
             {chantiersDisponibles.map((chantier) => (
               <option key={chantier.id} value={chantier.id}>
                 {chantier.titre}
@@ -1375,7 +1800,7 @@ export default function FacturesWorkspace({
         </div>
 
         {!formulaire.chantierId && (
-          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+          <div className={`order-14 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3 md:col-span-2 xl:col-span-1 xl:col-start-1 ${sectionsFactureOuvertes.chantier ? "" : "hidden"}`}>
             <p className="text-sm font-semibold text-slate-800">
               Nouveau chantier
             </p>
@@ -1417,11 +1842,110 @@ export default function FacturesWorkspace({
                   className={champFormulaireClasses}
                 />
               </div>
+
+              <details className="min-w-0 md:col-span-2">
+                <summary className="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                  Details chantier
+                </summary>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Code postal
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauChantierCodePostal}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierCodePostal: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Ville / commune
+                </label>
+                <input
+                  type="text"
+                  value={formulaire.nouveauChantierVille}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierVille: e.target.value,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Statut du chantier
+                </label>
+                <select
+                  value={formulaire.nouveauChantierStatut}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierStatut: e.target.value as StatutChantier,
+                    }))
+                  }
+                  className={champFormulaireClasses}
+                >
+                  {STATUTS_CHANTIER.map((statut) => (
+                    <option key={statut} value={statut}>
+                      {statut}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Date début chantier
+                </label>
+                <input
+                  type="date"
+                  value={formulaire.nouveauChantierDateDebut}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierDateDebut: e.target.value,
+                    }))
+                  }
+                  className={champDateClasses}
+                  style={styleDateMobile}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-medium text-slate-500">
+                  Date fin chantier
+                </label>
+                <input
+                  type="date"
+                  value={formulaire.nouveauChantierDateFin}
+                  onChange={(e) =>
+                    setFormulaire((prev) => ({
+                      ...prev,
+                      nouveauChantierDateFin: e.target.value,
+                    }))
+                  }
+                  className={champDateClasses}
+                  style={styleDateMobile}
+                />
+              </div>
+                </div>
+              </details>
             </div>
           </div>
         )}
 
-        <div className="min-w-0 overflow-hidden md:col-span-2">
+        <div className={`order-2 min-w-0 overflow-hidden md:col-span-2 xl:col-span-1 xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Objet
           </label>
@@ -1439,7 +1963,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-3 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date émission
           </label>
@@ -1458,7 +1982,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-4 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date échéance
           </label>
@@ -1477,7 +2001,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-5 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Date paiement
           </label>
@@ -1495,7 +2019,7 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-6 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Statut
           </label>
@@ -1517,7 +2041,7 @@ export default function FacturesWorkspace({
           </select>
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-7 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.totaux ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Montant HT calculé
           </label>
@@ -1531,14 +2055,12 @@ export default function FacturesWorkspace({
           />
         </div>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className={`order-8 min-w-0 overflow-hidden xl:col-start-1 ${sectionsFactureOuvertes.informations ? "" : "hidden"}`}>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             TVA par défaut (%)
           </label>
-          <input
+          <select
             data-testid="facture-tva-taux"
-            type="number"
-            step="0.01"
             value={formulaire.tvaTaux}
             onChange={(e) =>
               setFormulaire((prev) => ({
@@ -1547,11 +2069,31 @@ export default function FacturesWorkspace({
               }))
             }
             className={champFormulaireClasses}
-          />
+          >
+            {obtenirOptionsTvaAvecValeur(formulaire.tvaTaux).map((taux) => (
+              <option key={taux} value={taux}>
+                {taux}%
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="min-w-0 overflow-hidden md:col-span-2">
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="order-15 min-w-0 md:col-span-2 xl:hidden">
+          <button
+            type="button"
+            onClick={() => toggleSectionFacture("lignes")}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900"
+            aria-expanded={sectionsFactureOuvertes.lignes}
+          >
+            <span>Lignes</span>
+            <span className="text-lg text-slate-500">
+              {sectionsFactureOuvertes.lignes ? "-" : "+"}
+            </span>
+          </button>
+        </div>
+
+        <div className={`order-16 min-w-0 overflow-hidden md:col-span-2 xl:order-1 xl:col-start-2 xl:row-span-[16] xl:row-start-1 ${sectionsFactureOuvertes.lignes ? "" : "hidden xl:block"}`}>
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 xl:sticky xl:top-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-800">
@@ -1565,9 +2107,7 @@ export default function FacturesWorkspace({
               <div className="grid gap-2 sm:flex sm:items-center">
                 <button
                   type="button"
-                  onClick={() =>
-                    setBibliothequePrestationsOuverte((prev) => !prev)
-                  }
+                  onClick={() => toggleSectionFacture("bibliotheque")}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
                 >
                   Ajouter depuis la bibliothèque
@@ -1583,8 +2123,13 @@ export default function FacturesWorkspace({
               </div>
             </div>
 
-            {bibliothequePrestationsOuverte && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <FactureFormSection
+              title="Bibliotheque"
+              subtitle="Prestations enregistrees"
+              open={sectionsFactureOuvertes.bibliotheque}
+              onToggle={() => toggleSectionFacture("bibliotheque")}
+            >
+              <div>
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-800">
@@ -1642,7 +2187,15 @@ export default function FacturesWorkspace({
                             {prestation.unite}
                           </span>
                           <span className="rounded-full bg-white px-2.5 py-1 font-medium">
-                            TVA {(prestation.tvaTaux ?? convertirNombre(formulaire.tvaTaux)) || 21}%
+                            TVA {TAUX_TVA_FACTURE.includes(
+                              Number(prestation.tvaTaux)
+                            )
+                              ? prestation.tvaTaux
+                              : TAUX_TVA_FACTURE.includes(
+                                  convertirNombre(formulaire.tvaTaux)
+                                )
+                              ? convertirNombre(formulaire.tvaTaux)
+                              : 21}%
                           </span>
                         </span>
                         {prestation.description && (
@@ -1655,7 +2208,7 @@ export default function FacturesWorkspace({
                   </div>
                 )}
               </div>
-            )}
+            </FactureFormSection>
 
             <div className="space-y-3">
               {formulaire.lignes.map((ligne, index) => {
@@ -1773,7 +2326,7 @@ export default function FacturesWorkspace({
                           }
                           className={champFormulaireClasses}
                         >
-                          {TAUX_TVA_FACTURE.map((taux) => (
+                          {obtenirOptionsTvaAvecValeur(ligne.tvaTaux).map((taux) => (
                             <option key={taux} value={taux}>
                               {taux}%
                             </option>
@@ -1795,6 +2348,14 @@ export default function FacturesWorkspace({
                 );
               })}
             </div>
+
+            <button
+              type="button"
+              onClick={ajouterLigneFacture}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
+            >
+              Ajouter une ligne
+            </button>
 
             <div className="grid gap-3 rounded-2xl bg-white p-3 sm:grid-cols-2 lg:grid-cols-4">
               <div>
@@ -1840,7 +2401,7 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
-        <div className="min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs">
+        <div className="order-14 min-w-0 overflow-hidden md:col-span-2 lg:max-w-xs xl:col-span-1 xl:col-start-1">
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Acompte déduit
           </label>
@@ -1877,12 +2438,24 @@ export default function FacturesWorkspace({
         />
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] md:sticky md:inset-x-auto md:bottom-0 md:z-20 md:mt-6 md:flex md:flex-col md:gap-3 md:rounded-2xl md:border md:bg-white/95 md:px-4 md:py-3 md:shadow-[0_-8px_20px_rgba(15,23,42,0.10)] md:backdrop-blur xl:flex-row">
+        <div className="mb-2 flex items-center justify-between gap-3 md:mb-0 md:flex-1">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase text-slate-500">
+              Net à payer
+            </p>
+            <p className="break-words text-lg font-bold leading-tight text-slate-950 md:text-base">
+              {formatMontant(totauxFormulaire.netAPayer)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 md:flex md:shrink-0">
         <button
           data-testid="facture-save"
           onClick={enregistrerFacture}
           disabled={sauvegardeEnCours}
-          className="bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
         >
           {sauvegardeEnCours
             ? "Enregistrement..."
@@ -1892,12 +2465,13 @@ export default function FacturesWorkspace({
         </button>
 
         <button
-          onClick={fermerFormulaire}
+          onClick={demanderFermetureFormulaire}
           disabled={sauvegardeEnCours}
-          className="bf-button-secondary w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="bf-button-secondary w-full disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
         >
           Annuler
         </button>
+        </div>
       </div>
     </div>
   );
@@ -2207,13 +2781,42 @@ export default function FacturesWorkspace({
       </div>
     </>
   ) : null;
+  const actionsFormulaireDesktop = (
+    <button
+      type="button"
+      onClick={enregistrerFacture}
+      disabled={sauvegardeEnCours}
+      className="bf-button-primary disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {sauvegardeEnCours ? "Enregistrement..." : "Enregistrer"}
+    </button>
+  );
+  const actionsDetailDesktop = factureSelectionnee ? (
+    <>
+      <button
+        type="button"
+        onClick={handleExporterPdf}
+        className="bf-button-primary"
+      >
+        PDF
+      </button>
+      <button
+        type="button"
+        onClick={handleEnvoyerParMail}
+        disabled={envoiEnCours}
+        className="bf-button-soft disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {envoiEnCours ? "Envoi..." : libelleEnvoiFacture}
+      </button>
+    </>
+  ) : null;
 
   return (
     <>
       <MobileFullscreenModal
         open={afficherFormulaireFacture}
         title={modeEdition ? "Modifier la facture" : "Nouvelle facture"}
-        onClose={fermerFormulaire}
+        onClose={demanderFermetureFormulaire}
       >
         {contenuFormulaire}
       </MobileFullscreenModal>
@@ -2229,6 +2832,30 @@ export default function FacturesWorkspace({
       >
         {contenuDetailFacture}
       </MobileFullscreenModal>
+
+      <DevisPreviewModal
+        open={afficherFormulaireFacture}
+        title={modeEdition ? "Modifier la facture" : "Nouvelle facture"}
+        eyebrow={modeEdition ? "Modification facture" : "Creation facture"}
+        actions={actionsFormulaireDesktop}
+        onClose={demanderFermetureFormulaire}
+      >
+        {contenuFormulaire}
+      </DevisPreviewModal>
+
+      <DevisPreviewModal
+        open={!afficherFormulaireFacture && factureSelectionnee !== null}
+        title={
+          factureSelectionnee
+            ? `Facture ${factureSelectionnee.reference}`
+            : "Detail facture"
+        }
+        eyebrow="Consultation facture"
+        actions={actionsDetailDesktop}
+        onClose={fermerDetailMobile}
+      >
+        {contenuDetailFacture}
+      </DevisPreviewModal>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
         <div className="bf-card overflow-hidden p-4 sm:p-5">
@@ -2312,8 +2939,27 @@ export default function FacturesWorkspace({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="grid gap-4 lg:gap-6">
         <div className="bf-card min-w-0 overflow-hidden p-4 sm:p-5 md:p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Factures
+              </p>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">
+                Suivi et édition
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              onClick={ouvrirCreation}
+              className="bf-button-primary w-full sm:w-auto"
+            >
+              Nouvelle facture
+            </button>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
             <input
               type="text"
@@ -2379,12 +3025,7 @@ export default function FacturesWorkspace({
                 <button
                   key={facture.id}
                   data-testid="facture-list-item"
-                  onClick={() => {
-                    setAfficherActionsFactureMobile(false);
-                    setFactureSelectionneeId(facture.id);
-                    setModeEdition(false);
-                    setAfficherFormulaire(false);
-                  }}
+                  onClick={() => selectionnerFacture(facture.id)}
                   className={`block w-full min-w-0 overflow-hidden rounded-xl border p-3 text-left transition sm:p-4 md:grid md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_8rem_8rem] md:items-center md:gap-3 md:rounded-none md:border-x-0 md:border-t-0 md:px-4 md:py-3 ${
                     factureSelectionnee?.id === facture.id
                       ? "border-slate-900 bg-slate-50 shadow-sm"
@@ -2476,7 +3117,7 @@ export default function FacturesWorkspace({
           </div>
         </div>
 
-        <div className="bf-card hidden min-w-0 overflow-hidden p-4 sm:p-5 md:block md:p-6">
+        <div className="hidden">
           {chargement ? (
             <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">
               Chargement des factures...

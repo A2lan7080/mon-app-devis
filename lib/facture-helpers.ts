@@ -1,4 +1,5 @@
 import { formatMontant } from "./devis-helpers";
+import { TAUX_TVA_AUTORISES } from "./devis-constants";
 import type { Facture, LigneFacture } from "../types/factures";
 
 export type LigneFactureFormState = {
@@ -19,7 +20,7 @@ export type InvoiceNumberSettings = {
   invoiceLastYear?: number;
 };
 
-export const TAUX_TVA_FACTURE = [0, 6, 12, 21];
+export const TAUX_TVA_FACTURE = TAUX_TVA_AUTORISES;
 
 export const arrondirMontant = (valeur: number) =>
   Math.round((valeur + Number.EPSILON) * 100) / 100;
