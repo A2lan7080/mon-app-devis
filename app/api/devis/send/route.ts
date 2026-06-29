@@ -40,6 +40,7 @@ type Payload = {
 
 type ProfilUtilisateurEmail = {
   actif?: boolean;
+  active?: boolean;
   role?: string;
   entrepriseId?: string;
 };
@@ -114,9 +115,17 @@ async function verifierAdminEmail(
       .get();
 
     if (!profilSnap.exists) {
+      console.warn("[devis.send] Profil utilisateur refusé", {
+        uid: decodedToken.uid,
+        actif: undefined,
+        active: undefined,
+        role: undefined,
+        entrepriseId: undefined,
+      });
+
       return {
         response: NextResponse.json(
-          { error: "Accès refusé." },
+          { error: "Profil utilisateur introuvable." },
           { status: 403 }
         ),
       };
@@ -124,11 +133,47 @@ async function verifierAdminEmail(
 
     const profil = profilSnap.data() as ProfilUtilisateurEmail;
     const entrepriseId = profil.entrepriseId?.trim();
+    const utilisateurActif =
+      profil.actif === true || profil.active === true;
 
-    if (profil.actif !== true || profil.role !== "admin" || !entrepriseId) {
+    const journaliserProfilRefuse = () => {
+      console.warn("[devis.send] Profil utilisateur refusé", {
+        uid: decodedToken.uid,
+        actif: profil.actif,
+        active: profil.active,
+        role: profil.role,
+        entrepriseId,
+      });
+    };
+
+    if (!utilisateurActif) {
+      journaliserProfilRefuse();
+
       return {
         response: NextResponse.json(
-          { error: "Accès refusé." },
+          { error: "Utilisateur inactif." },
+          { status: 403 }
+        ),
+      };
+    }
+
+    if (profil.role !== "admin") {
+      journaliserProfilRefuse();
+
+      return {
+        response: NextResponse.json(
+          { error: "Seul un administrateur peut envoyer un devis." },
+          { status: 403 }
+        ),
+      };
+    }
+
+    if (!entrepriseId) {
+      journaliserProfilRefuse();
+
+      return {
+        response: NextResponse.json(
+          { error: "Entreprise non définie." },
           { status: 403 }
         ),
       };
@@ -167,12 +212,17 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.BATIFLOW_FROM_EMAIL) {
+    const fromEmail = process.env.BATIFLOW_FROM_EMAIL?.trim();
+    const fromName = process.env.BATIFLOW_FROM_NAME?.trim() || "BatiFlow";
+
+    if (!fromEmail || !normaliserEmail(fromEmail)) {
       return NextResponse.json(
-        { error: "BATIFLOW_FROM_EMAIL est manquante." },
+        { error: "BATIFLOW_FROM_EMAIL est invalide." },
         { status: 500 }
       );
     }
+
+    const from = `${fromName} <${fromEmail}>`;
 
     const devisId = body.devisId?.trim();
     const toEmail = normaliserEmail(body.toEmail);
@@ -250,7 +300,7 @@ export async function POST(request: Request) {
 
     // TODO: joindre le PDF genere cote serveur quand le pipeline PDF serveur sera securise.
     const { data, error } = await resend.emails.send({
-      from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
+      from,
       to: [toEmail],
       subject,
       ...(replyTo ? { replyTo } : {}),
