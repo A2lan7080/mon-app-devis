@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import AccessDeniedState from "../../components/AccessDeniedState";
 import AdminShell from "../../components/AdminShell";
@@ -20,7 +20,6 @@ import { useDevisPageUi } from "../../hooks/useDevisPageUi";
 import { useEntrepriseDevis } from "../../hooks/useEntrepriseDevis";
 import { useEntrepriseSettings } from "../../hooks/useEntrepriseSettings";
 import { useSessionNavigation } from "../../hooks/useSessionNavigation";
-import { getEntrepriseSettings } from "../../lib/get-entreprise-settings";
 import { db } from "../../lib/firebase";
 import type { StatutDevis } from "../../types/devis";
 
@@ -178,9 +177,6 @@ export default function Home() {
     try {
       setEnvoiDevisEnCours(true);
 
-      const entreprisePourMail = await getEntrepriseSettings(
-        entrepriseIdCourante
-      );
       const idToken = await user?.getIdToken(true);
 
       if (!idToken) {
@@ -194,9 +190,8 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          devis: devisSelectionne,
+          devisId: devisSelectionne.id,
           toEmail: emailClient,
-          entreprise: entreprisePourMail,
         }),
       });
 
@@ -209,15 +204,7 @@ export default function Home() {
         throw new Error(data.error || "Impossible d'envoyer le devis.");
       }
 
-      if (
-        devisSelectionne.statut !== "Envoyé" &&
-        devisSelectionne.statut !== "Accepté"
-      ) {
-        await updateDoc(getDevisDocRef(devisSelectionne.id), {
-          statut: "Envoyé",
-        });
-      }
-
+      router.refresh();
       afficherFeedback(`Devis envoyé à ${emailClient}.`);
     } catch (error) {
       console.error("Erreur envoi devis :", error);

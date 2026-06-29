@@ -17,6 +17,10 @@ export function getAcceptanceBaseUrl(request: Request) {
     return configuredUrl.replace(/\/+$/, "");
   }
 
+  if (process.env.NODE_ENV === "production") {
+    return "https://batiflowapp.com";
+  }
+
   return new URL(request.url).origin;
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { FieldValue } from "firebase-admin/firestore";
 import {
   renderDevisEmailHtml,
   renderDevisEmailText,
@@ -28,16 +29,17 @@ type DevisBusiness = Devis & {
 
 type EntrepriseSettings = Entreprise & {
   logoUrl?: string;
+  logoRemplaceNomEntreprise?: boolean;
 };
 
 type Payload = {
-  devis?: DevisBusiness;
+  devisId?: string;
   toEmail?: string;
-  entreprise?: EntrepriseSettings;
+  message?: string;
 };
 
 type ProfilUtilisateurEmail = {
-  active?: boolean;
+  actif?: boolean;
   role?: string;
   entrepriseId?: string;
 };
@@ -51,6 +53,13 @@ type VerificationSecuriteEmail =
       response: NextResponse;
     };
 
+type LogContexteEnvoi = {
+  devisId?: string;
+  entrepriseId?: string;
+  toEmail?: string;
+  resendEmailId?: string | null;
+};
+
 function getBearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
 
@@ -61,6 +70,26 @@ function getBearerToken(request: Request) {
   const token = authorization.slice("Bearer ".length).trim();
 
   return token || null;
+}
+
+function normaliserEmail(email?: string) {
+  const emailNettoye = email?.trim().toLowerCase() ?? "";
+
+  if (!emailNettoye) {
+    return null;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNettoye)) {
+    return null;
+  }
+
+  return emailNettoye.slice(0, 254);
+}
+
+function normaliserMessage(message?: string) {
+  const messageNettoye = message?.trim() ?? "";
+
+  return messageNettoye ? messageNettoye.slice(0, 2000) : undefined;
 }
 
 async function verifierAdminEmail(
@@ -79,7 +108,10 @@ async function verifierAdminEmail(
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
-    const profilSnap = await adminDb.collection("users").doc(decodedToken.uid).get();
+    const profilSnap = await adminDb
+      .collection("users")
+      .doc(decodedToken.uid)
+      .get();
 
     if (!profilSnap.exists) {
       return {
@@ -93,7 +125,7 @@ async function verifierAdminEmail(
     const profil = profilSnap.data() as ProfilUtilisateurEmail;
     const entrepriseId = profil.entrepriseId?.trim();
 
-    if (profil.active !== true || profil.role !== "admin" || !entrepriseId) {
+    if (profil.actif !== true || profil.role !== "admin" || !entrepriseId) {
       return {
         response: NextResponse.json(
           { error: "Accès refusé." },
@@ -117,6 +149,8 @@ async function verifierAdminEmail(
 }
 
 export async function POST(request: Request) {
+  let logContexte: LogContexteEnvoi = {};
+
   try {
     const securiteEmail = await verifierAdminEmail(request);
 
@@ -140,15 +174,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const devis = body.devis;
-    const toEmail = body.toEmail?.trim();
-    const entreprise = body.entreprise;
+    const devisId = body.devisId?.trim();
+    const toEmail = normaliserEmail(body.toEmail);
+    const message = normaliserMessage(body.message);
 
-    if (!devis) {
-      return NextResponse.json({ error: "Devis manquant." }, { status: 400 });
-    }
+    logContexte = {
+      devisId,
+      entrepriseId: securiteEmail.entrepriseId,
+      toEmail: toEmail ?? body.toEmail?.trim(),
+    };
 
-    if (!devis.id) {
+    if (!devisId) {
       return NextResponse.json(
         { error: "Identifiant devis manquant." },
         { status: 400 }
@@ -157,26 +193,18 @@ export async function POST(request: Request) {
 
     if (!toEmail) {
       return NextResponse.json(
-        { error: "Email destinataire manquant." },
+        { error: "Email destinataire invalide." },
         { status: 400 }
       );
     }
 
-    if (!entreprise) {
-      return NextResponse.json(
-        { error: "Informations entreprise manquantes." },
-        { status: 400 }
-      );
-    }
-
-    const devisRef = adminDb.collection("devis").doc(devis.id);
+    const devisRef = adminDb.collection("devis").doc(devisId);
     const devisSnap = await devisRef.get();
     const devisFirestore = devisSnap.data() as
-      | {
-          entrepriseId?: string;
+      | (DevisBusiness & {
           acceptanceTokenHash?: string;
           acceptanceTokenCreatedAt?: number;
-        }
+        })
       | undefined;
 
     if (
@@ -186,6 +214,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
     }
 
+    const entrepriseSnap = await adminDb
+      .collection("entreprises")
+      .doc(securiteEmail.entrepriseId)
+      .get();
+
+    if (!entrepriseSnap.exists) {
+      return NextResponse.json(
+        { error: "Entreprise introuvable." },
+        { status: 404 }
+      );
+    }
+
+    const entreprise = entrepriseSnap.data() as EntrepriseSettings;
+    const devis = {
+      ...devisFirestore,
+      id: devisId,
+    } as DevisBusiness;
+    const replyTo = normaliserEmail(entreprise.email);
     const acceptanceToken = generateAcceptanceToken();
     const acceptanceTokenHash = hashAcceptanceToken(acceptanceToken);
     const acceptanceUrl = buildAcceptanceUrl(
@@ -193,13 +239,61 @@ export async function POST(request: Request) {
       acceptanceToken
     );
     const maintenant = Date.now();
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const subject = `Devis ${formatNumeroDevisPourAffichage(devis.id)} - ${
+      entreprise.nom || "Batiflow"
+    }`;
+    const devisPourEmail: DevisBusiness = {
+      ...devis,
+      statut: "Envoyé",
+    };
+
+    // TODO: joindre le PDF genere cote serveur quand le pipeline PDF serveur sera securise.
+    const { data, error } = await resend.emails.send({
+      from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
+      to: [toEmail],
+      subject,
+      ...(replyTo ? { replyTo } : {}),
+      html: renderDevisEmailHtml(
+        devisPourEmail,
+        entreprise,
+        acceptanceUrl,
+        message
+      ),
+      text: renderDevisEmailText(
+        devisPourEmail,
+        entreprise,
+        acceptanceUrl,
+        message
+      ),
+    });
+
+    if (error) {
+      console.error("Erreur Resend envoi devis :", {
+        ...logContexte,
+        resendEmailId: null,
+        erreurResend: error,
+      });
+
+      return NextResponse.json(
+        { error: error.message || "Erreur Resend." },
+        { status: 500 }
+      );
+    }
+
+    const resendEmailId = data?.id ?? null;
+    logContexte = {
+      ...logContexte,
+      resendEmailId,
+    };
+
     const acceptanceLinkRef = adminDb
       .collection("devisAcceptanceLinks")
       .doc(acceptanceTokenHash);
     const batch = adminDb.batch();
 
     if (
-      devisFirestore?.acceptanceTokenHash &&
+      devisFirestore.acceptanceTokenHash &&
       devisFirestore.acceptanceTokenHash !== acceptanceTokenHash
     ) {
       batch.delete(
@@ -210,51 +304,36 @@ export async function POST(request: Request) {
     }
 
     batch.set(acceptanceLinkRef, {
-      devisId: devis.id,
+      devisId,
       entrepriseId: securiteEmail.entrepriseId,
       createdAt: maintenant,
       sentToEmail: toEmail,
     });
 
     batch.update(devisRef, {
+      statut: "Envoyé",
+      dateEnvoi: FieldValue.serverTimestamp(),
+      emailDestinataire: toEmail,
+      resendEmailId,
       acceptanceTokenHash,
       acceptanceTokenCreatedAt:
-        devisFirestore?.acceptanceTokenCreatedAt ?? maintenant,
+        devisFirestore.acceptanceTokenCreatedAt ?? maintenant,
       acceptanceTokenLastSentAt: maintenant,
     });
 
     await batch.commit();
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const subject = `Devis ${formatNumeroDevisPourAffichage(devis.id)} - ${
-      entreprise.nom
-    }`;
-    const devisPourEmail: DevisBusiness = {
-      ...devis,
-      statut: "Envoyé",
-    };
-
-    const { data, error } = await resend.emails.send({
-      from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
-      to: [toEmail],
-      subject,
-      html: renderDevisEmailHtml(devisPourEmail, entreprise, acceptanceUrl),
-      text: renderDevisEmailText(devisPourEmail, entreprise, acceptanceUrl),
-    });
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message || "Erreur Resend." },
-        { status: 500 }
-      );
-    }
+    console.info("Devis envoye via Resend :", logContexte);
 
     return NextResponse.json({
       success: true,
-      emailId: data?.id ?? null,
+      emailId: resendEmailId,
     });
   } catch (error) {
-    console.error("Erreur route envoi devis :", error);
+    console.error("Erreur route envoi devis :", {
+      ...logContexte,
+      erreurResend: error,
+    });
 
     return NextResponse.json(
       { error: "Impossible d’envoyer le devis." },
