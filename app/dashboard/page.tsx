@@ -162,7 +162,14 @@ export default function Home() {
       return;
     }
 
+    const devisId = devisSelectionne.id?.trim();
     const emailClient = devisSelectionne.email?.trim();
+    const message: string | undefined = undefined;
+
+    if (!devisId) {
+      alert("Identifiant du devis introuvable.");
+      return;
+    }
 
     if (!emailClient) {
       alert("Ce client n'a pas d'adresse email renseignée.");
@@ -183,16 +190,25 @@ export default function Home() {
         throw new Error("Authentification requise.");
       }
 
+      const payload = {
+        devisId,
+        toEmail: emailClient,
+        message,
+      };
+
+      console.log("[devis.send] Payload front", {
+        devisId: payload.devisId,
+        toEmail: payload.toEmail,
+        message: payload.message ? "présent" : "absent",
+      });
+
       const response = await fetch("/api/devis/send", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          devisId: devisSelectionne.id,
-          toEmail: emailClient,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = (await response.json()) as {
