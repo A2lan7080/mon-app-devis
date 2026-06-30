@@ -51,7 +51,7 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
     await devisForm.getByTestId("devis-ville").fill("Bruxelles");
     await devisForm.getByTestId("devis-email").fill(clientEmail);
     await devisForm.getByTestId("devis-telephone").fill("+32 2 111 22 33");
-    await devisForm.getByTestId("devis-tva-taux").fill("21");
+    await devisForm.getByTestId("devis-tva-taux").selectOption("21");
 
     await devisForm
       .getByTestId("devis-line-0-designation")
@@ -84,6 +84,25 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
     await expect(page.getByTestId("devis-total-tvac").first()).toContainText(
       /544,50/
     );
+
+    await page.locator('[data-testid="devis-send-email"]:visible').click();
+    await expect(page.getByTestId("devis-send-modal")).toBeVisible();
+    await expect(page.getByTestId("devis-send-recipient")).toHaveValue(
+      clientEmail
+    );
+    await expect(page.getByTestId("devis-send-subject")).toHaveValue(
+      /Votre devis DEV-/
+    );
+    await expect(page.getByTestId("devis-send-message")).toHaveValue(
+      /Suite à notre rendez-vous/
+    );
+    await page
+      .getByTestId("devis-send-subject")
+      .fill("Proposition personnalisée E2E");
+    await expect(page.getByTestId("devis-send-subject")).toHaveValue(
+      "Proposition personnalisée E2E"
+    );
+    await page.getByRole("button", { name: "Annuler", exact: true }).click();
 
     const acceptanceToken = await mockSendDevisByEmail({
       devisId,

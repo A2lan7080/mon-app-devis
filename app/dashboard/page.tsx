@@ -13,6 +13,7 @@ import EmptyAuthState from "../../components/EmptyAuthState";
 import FacturesWorkspace from "../../components/FacturesWorkspace";
 import OuvrierDashboard from "../../components/OuvrierDashboard";
 import PageLoadingState from "../../components/PageLoadingState";
+import type { DevisSendValues } from "../../components/DevisSendModal";
 import { useAuthenticatedProfile } from "../../hooks/useAuthenticatedProfile";
 import { useDevisActions } from "../../hooks/useDevisActions";
 import { useDevisAnalytics } from "../../hooks/useDevisAnalytics";
@@ -154,31 +155,34 @@ export default function Home() {
     setFiltreArchivage,
   });
 
-  const handleEnvoyerDevisParMail = async () => {
-    if (!devisSelectionne) return;
+  const handleEnvoyerDevisParMail = async ({
+    toEmail,
+    subject,
+    message,
+  }: DevisSendValues) => {
+    if (!devisSelectionne) return false;
 
     if (devisSelectionne.statut === "Refusé") {
       alert("Ce devis est refusé et ne peut plus être renvoyé.");
-      return;
+      return false;
     }
 
     const devisId = devisSelectionne.id?.trim();
-    const emailClient = devisSelectionne.email?.trim();
-    const message: string | undefined = undefined;
+    const emailClient = toEmail.trim();
 
     if (!devisId) {
       alert("Identifiant du devis introuvable.");
-      return;
+      return false;
     }
 
     if (!emailClient) {
       alert("Ce client n'a pas d'adresse email renseignée.");
-      return;
+      return false;
     }
 
     if (!entrepriseIdCourante) {
       alert("Impossible d'identifier l'entreprise active.");
-      return;
+      return false;
     }
 
     try {
@@ -193,12 +197,14 @@ export default function Home() {
       const payload = {
         devisId,
         toEmail: emailClient,
+        subject,
         message,
       };
 
       console.log("[devis.send] Payload front", {
         devisId: payload.devisId,
         toEmail: payload.toEmail,
+        subject: payload.subject ? "personnalisé" : "par défaut",
         message: payload.message ? "présent" : "absent",
       });
 
@@ -222,6 +228,7 @@ export default function Home() {
 
       router.refresh();
       afficherFeedback(`Devis envoyé à ${emailClient}.`);
+      return true;
     } catch (error) {
       console.error("Erreur envoi devis :", error);
       alert(
@@ -229,6 +236,7 @@ export default function Home() {
           ? error.message
           : "Impossible d'envoyer le devis."
       );
+      return false;
     } finally {
       setEnvoiDevisEnCours(false);
     }
@@ -327,6 +335,7 @@ export default function Home() {
           devisFiltres={devisFiltres}
           devisSelectionne={devisSelectionne}
           entrepriseId={entrepriseIdCourante ?? undefined}
+          entrepriseNom={entrepriseSettings.nom}
           createdByUid={user?.uid}
           afficherFormulaire={afficherFormulaire}
           recherche={recherche}

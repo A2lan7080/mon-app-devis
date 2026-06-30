@@ -5,6 +5,7 @@ import {
   renderDevisEmailHtml,
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
+import { buildDevisEmailSubject } from "../../../../lib/devis-email-defaults";
 import { formatNumeroDevisPourAffichage } from "../../../../lib/format-numero-devis";
 import { generateServerDevisPdf } from "../../../../lib/pdf/generate-server-devis-pdf";
 import {
@@ -37,6 +38,7 @@ type EntrepriseSettings = Entreprise & {
 type Payload = {
   devisId?: string;
   toEmail?: string;
+  subject?: string;
   message?: string;
 };
 
@@ -92,7 +94,13 @@ function normaliserEmail(email?: string) {
 function normaliserMessage(message?: string) {
   const messageNettoye = message?.trim() ?? "";
 
-  return messageNettoye ? messageNettoye.slice(0, 2000) : undefined;
+  return messageNettoye ? messageNettoye.slice(0, 4000) : undefined;
+}
+
+function normaliserObjet(subject?: string) {
+  const objetNettoye = subject?.replaceAll(/[\r\n]+/g, " ").trim() ?? "";
+
+  return objetNettoye ? objetNettoye.slice(0, 180) : undefined;
 }
 
 async function verifierAdminEmail(
@@ -229,6 +237,7 @@ export async function POST(request: Request) {
     const devisId = body.devisId?.trim();
     const toEmail = normaliserEmail(body.toEmail);
     const message = normaliserMessage(body.message);
+    const subjectPersonnalise = normaliserObjet(body.subject);
 
     logContexte = {
       devisId,
@@ -292,9 +301,12 @@ export async function POST(request: Request) {
     );
     const maintenant = Date.now();
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const subject = `Devis ${formatNumeroDevisPourAffichage(devis.id)} - ${
-      entreprise.nom || "Batiflow"
-    }`;
+    const subject =
+      subjectPersonnalise ??
+      buildDevisEmailSubject(
+        formatNumeroDevisPourAffichage(devis.id),
+        entreprise.nom || "BatiFlow"
+      );
     const devisPourEmail: DevisBusiness = {
       ...devis,
       statut: "Envoyé",

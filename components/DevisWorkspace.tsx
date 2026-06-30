@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import DevisDetailPanel from "./DevisDetailPanel";
 import DevisForm from "./DevisForm";
@@ -8,6 +8,7 @@ import DevisKpiCards from "./DevisKpiCards";
 import DevisList from "./DevisList";
 import DevisPreviewModal from "./DevisPreviewModal";
 import DevisSearch from "./DevisSearch";
+import DevisSendModal, { type DevisSendValues } from "./DevisSendModal";
 import MobileFullscreenModal from "./MobileFullscreenModal";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
@@ -41,6 +42,7 @@ type Props = {
   devisFiltres: DevisBusiness[];
   devisSelectionne: DevisBusiness | null;
   entrepriseId?: string;
+  entrepriseNom: string;
   createdByUid?: string;
   afficherFormulaire: boolean;
   recherche: string;
@@ -76,7 +78,7 @@ type Props = {
   archiverDevis: () => void;
   restaurerDevis: () => void;
   handleExporterPdf: () => void;
-  handleEnvoyerParMail: () => void;
+  handleEnvoyerParMail: (values: DevisSendValues) => Promise<boolean>;
   envoiEnCours: boolean;
   handleChangerStatut: (statut: StatutDevis) => void;
   onCreateFirstDevis: () => void;
@@ -89,6 +91,7 @@ export default function DevisWorkspace({
   devisFiltres,
   devisSelectionne,
   entrepriseId,
+  entrepriseNom,
   createdByUid,
   afficherFormulaire,
   recherche,
@@ -127,6 +130,7 @@ export default function DevisWorkspace({
   onDevisCree,
   onCloseFormulaire,
 }: Props) {
+  const [fenetreEnvoiOuverte, setFenetreEnvoiOuverte] = useState(false);
   const titreMobile = useMemo(() => {
     if (afficherFormulaire) return "Nouveau devis";
     if (!devisSelectionne) return "Détail devis";
@@ -149,6 +153,7 @@ export default function DevisWorkspace({
     devisSelectionne && devisADejaEteEnvoye(devisSelectionne)
       ? "Renvoyer"
       : "Envoyer";
+  const ouvrirFenetreEnvoi = () => setFenetreEnvoiOuverte(true);
   const actionsCreationDesktop = (
     <button
       type="submit"
@@ -180,7 +185,7 @@ export default function DevisWorkspace({
       {!devisEstVerrouille && (
         <button
           type="button"
-          onClick={handleEnvoyerParMail}
+          onClick={ouvrirFenetreEnvoi}
           disabled={envoiEnCours}
           className="bf-button-soft disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -303,7 +308,7 @@ export default function DevisWorkspace({
           archiverDevis={archiverDevis}
           restaurerDevis={restaurerDevis}
           handleExporterPdf={handleExporterPdf}
-          handleEnvoyerParMail={handleEnvoyerParMail}
+          handleEnvoyerParMail={ouvrirFenetreEnvoi}
           envoiEnCours={envoiEnCours}
           handleChangerStatut={handleChangerStatut}
           onClose={fermerDetail}
@@ -357,12 +362,24 @@ export default function DevisWorkspace({
           archiverDevis={archiverDevis}
           restaurerDevis={restaurerDevis}
           handleExporterPdf={handleExporterPdf}
-          handleEnvoyerParMail={handleEnvoyerParMail}
+          handleEnvoyerParMail={ouvrirFenetreEnvoi}
           envoiEnCours={envoiEnCours}
           handleChangerStatut={handleChangerStatut}
           onClose={fermerDetail}
         />
       </DevisPreviewModal>
+
+      {fenetreEnvoiOuverte && devisSelectionne && (
+        <DevisSendModal
+          open
+          numeroDevis={formatNumeroDevisPourAffichage(devisSelectionne.id)}
+          nomEntreprise={entrepriseNom}
+          emailInitial={devisSelectionne.email}
+          envoiEnCours={envoiEnCours}
+          onClose={() => setFenetreEnvoiOuverte(false)}
+          onSubmit={handleEnvoyerParMail}
+        />
+      )}
     </>
   );
 }
