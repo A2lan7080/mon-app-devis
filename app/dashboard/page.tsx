@@ -21,7 +21,7 @@ import { useDevisPageUi } from "../../hooks/useDevisPageUi";
 import { useEntrepriseDevis } from "../../hooks/useEntrepriseDevis";
 import { useEntrepriseSettings } from "../../hooks/useEntrepriseSettings";
 import { useSessionNavigation } from "../../hooks/useSessionNavigation";
-import { db } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import type { StatutDevis } from "../../types/devis";
 
 type FiltreStatut = "Tous" | StatutDevis;
@@ -188,12 +188,6 @@ export default function Home() {
     try {
       setEnvoiDevisEnCours(true);
 
-      const idToken = await user?.getIdToken(true);
-
-      if (!idToken) {
-        throw new Error("Authentification requise.");
-      }
-
       const payload = {
         devisId,
         toEmail: emailClient,
@@ -207,6 +201,18 @@ export default function Home() {
         subject: payload.subject ? "personnalisé" : "par défaut",
         message: payload.message ? "présent" : "absent",
       });
+
+      const currentUser = auth.currentUser ?? user;
+
+      if (!currentUser) {
+        throw new Error("Session expirée. Veuillez vous reconnecter.");
+      }
+
+      const idToken = await currentUser.getIdToken();
+
+      if (!idToken) {
+        throw new Error("Session expirée. Veuillez vous reconnecter.");
+      }
 
       const response = await fetch("/api/devis/send", {
         method: "POST",
