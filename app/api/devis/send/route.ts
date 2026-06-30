@@ -6,6 +6,7 @@ import {
   renderDevisEmailText,
 } from "../../../../lib/render-devis-email";
 import { formatNumeroDevisPourAffichage } from "../../../../lib/format-numero-devis";
+import { generateServerDevisPdf } from "../../../../lib/pdf/generate-server-devis-pdf";
 import {
   buildAcceptanceUrl,
   generateAcceptanceToken,
@@ -16,6 +17,7 @@ import { adminAuth, adminDb } from "../../../../lib/firebase-admin";
 import type { Devis, Entreprise } from "../../../../types/devis";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -297,8 +299,12 @@ export async function POST(request: Request) {
       ...devis,
       statut: "Envoyé",
     };
+    const numeroDevis = formatNumeroDevisPourAffichage(devis.id);
+    const pdfDevis = await generateServerDevisPdf(
+      devisPourEmail,
+      entreprise
+    );
 
-    // TODO: joindre le PDF genere cote serveur quand le pipeline PDF serveur sera securise.
     const { data, error } = await resend.emails.send({
       from,
       to: [toEmail],
@@ -316,6 +322,13 @@ export async function POST(request: Request) {
         acceptanceUrl,
         message
       ),
+      attachments: [
+        {
+          content: pdfDevis,
+          filename: `${numeroDevis}.pdf`,
+          contentType: "application/pdf",
+        },
+      ],
     });
 
     if (error) {
