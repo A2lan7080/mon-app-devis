@@ -4,8 +4,9 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import type { User } from "firebase/auth";
 import {
   deleteDoc,
+  doc,
   getDoc,
-  setDoc,
+  runTransaction,
   updateDoc,
   type DocumentReference,
 } from "firebase/firestore";
@@ -15,8 +16,8 @@ import {
   convertirDateVersInput,
   convertirLignesFormStateEnLignesMetier,
   formaterDate,
-  genererNumeroDevis,
 } from "../lib/devis-helpers";
+import { db } from "../lib/firebase";
 import type { Devis, NouvelleLigneState, StatutDevis } from "../types/devis";
 
 export type DevisBusiness = Devis & {
@@ -337,57 +338,106 @@ export function useDevisActions({
     if (!devisSelectionne || !user || !entrepriseIdCourante || !estAdmin)
       return;
 
-    let numeroBase = genererNumeroDevis(devis);
-    let nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
-    let tentative = 0;
-
-    while (devis.some((item) => item.id === nouveauId)) {
-      tentative += 1;
-      numeroBase = genererNumeroDevis([
-        ...devis,
-        {
-          ...devisSelectionne,
-          id: `${entrepriseIdCourante}-DEV-2026-${String(
-            devis.length + tentative
-          ).padStart(3, "0")}`,
-        },
-      ]);
-      nouveauId = `${entrepriseIdCourante}-${numeroBase}`;
-    }
-
-    const copie: DevisBusiness = {
-      id: nouveauId,
-      client: devisSelectionne.client,
-      statut: "Brouillon",
-      date: devisSelectionne.date,
-      adresse: devisSelectionne.adresse,
-      codePostal: devisSelectionne.codePostal,
-      ville: devisSelectionne.ville,
-      email: devisSelectionne.email,
-      telephone: devisSelectionne.telephone,
-      typeClient: devisSelectionne.typeClient,
-      societe: devisSelectionne.societe,
-      tvaClient: devisSelectionne.tvaClient,
-      chantierId: devisSelectionne.chantierId,
-      chantierTitre: devisSelectionne.chantierTitre,
-      tvaTaux: devisSelectionne.tvaTaux,
-      acomptePourcentage: devisSelectionne.acomptePourcentage,
-      validiteJours: devisSelectionne.validiteJours,
-      conditions: devisSelectionne.conditions,
-      archive: false,
-      createdAt: Date.now(),
-      createdByUid: user.uid,
-      entrepriseId: entrepriseIdCourante,
-      lignes: devisSelectionne.lignes.map((ligne, index) => ({
-        ...ligne,
-        id: `${nouveauId}-L-${index + 1}`,
-      })),
-    };
-
     try {
       setSauvegardeEnCours(true);
-      await setDoc(withRef(copie.id, resolver), copie);
-      setDevisSelectionneId(copie.id);
+      const entrepriseRef = doc(
+        db,
+        "entreprises",
+        entrepriseIdCourante
+      );
+      const maintenant = Date.now();
+      const nouveauId = await runTransaction(db, async (transaction) => {
+        const entrepriseSnap = await transaction.get(entrepriseRef);
+
+        if (!entrepriseSnap.exists()) {
+          throw new Error("Entreprise introuvable.");
+        }
+
+        const entrepriseData = entrepriseSnap.data() as {
+          devisNextNumber?: number;
+          devisLastYear?: number;
+        };
+        const annee = new Date().getFullYear();
+        const plusGrandNumeroExistant = devis.reduce((max, item) => {
+          const match = item.id?.match(
+            new RegExp(`-DEV-${annee}-(\\d+)$`)
+          );
+
+          if (!match) return max;
+
+          const numeroExistant = Number(match[1]);
+          return Number.isFinite(numeroExistant)
+            ? Math.max(max, numeroExistant)
+            : max;
+        }, 0);
+        let numero =
+          entrepriseData.devisLastYear === annee &&
+          typeof entrepriseData.devisNextNumber === "number" &&
+          Number.isFinite(entrepriseData.devisNextNumber)
+            ? Math.max(1, Math.floor(entrepriseData.devisNextNumber))
+            : 1;
+
+        numero = Math.max(numero, plusGrandNumeroExistant + 1);
+
+        let devisId = "";
+        let copieRef = withRef("_", resolver);
+        let copieSnap;
+
+        do {
+          devisId = `${entrepriseIdCourante}-DEV-${annee}-${String(
+            numero
+          ).padStart(3, "0")}`;
+          copieRef = withRef(devisId, resolver);
+          copieSnap = await transaction.get(copieRef);
+          numero += 1;
+        } while (copieSnap.exists());
+
+        const copie: DevisBusiness = {
+          id: devisId,
+          client: devisSelectionne.client,
+          statut: "Brouillon",
+          date: devisSelectionne.date,
+          adresse: devisSelectionne.adresse,
+          codePostal: devisSelectionne.codePostal,
+          ville: devisSelectionne.ville,
+          email: devisSelectionne.email,
+          telephone: devisSelectionne.telephone,
+          typeClient: devisSelectionne.typeClient,
+          societe: devisSelectionne.societe,
+          tvaClient: devisSelectionne.tvaClient,
+          chantierId: devisSelectionne.chantierId,
+          chantierTitre: devisSelectionne.chantierTitre,
+          tvaTaux: devisSelectionne.tvaTaux,
+          acomptePourcentage: devisSelectionne.acomptePourcentage,
+          validiteJours: devisSelectionne.validiteJours,
+          conditions: devisSelectionne.conditions,
+          archive: false,
+          createdAt: maintenant,
+          createdByUid: user.uid,
+          entrepriseId: entrepriseIdCourante,
+          lignes: devisSelectionne.lignes.map((ligne, index) => ({
+            ...ligne,
+            id: `${devisId}-L-${index + 1}`,
+          })),
+        };
+
+        transaction.set(copieRef, copie);
+        transaction.set(
+          entrepriseRef,
+          {
+            entrepriseId: entrepriseIdCourante,
+            devisNextNumber: numero,
+            devisLastYear: annee,
+            updatedAt: maintenant,
+            updatedByUid: user.uid,
+          },
+          { merge: true }
+        );
+
+        return devisId;
+      });
+
+      setDevisSelectionneId(nouveauId);
       setFiltreArchivage("actifs");
       setModeEdition(false);
     } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, runTransaction } from "firebase/firestore";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
@@ -17,7 +17,6 @@ import {
   convertirLignesFormStateEnLignesMetier,
   formatMontant,
   formaterDate,
-  genererNumeroDevis,
 } from "../lib/devis-helpers";
 import { auth, db } from "../lib/firebase";
 import type { Chantier, StatutChantier } from "../types/chantiers";
@@ -456,8 +455,6 @@ export default function DevisForm({
       return;
     }
 
-    const numeroBase = genererNumeroDevis(devis);
-    const nouveauId = `${entrepriseId}-${numeroBase}`;
     const maintenant = Date.now();
 
     try {
@@ -470,7 +467,7 @@ export default function DevisForm({
         const referenceClient = genererReferenceClient(clients);
 
         const nouveauClient: Client = {
-          id: `${entrepriseId}-cli-${maintenant}`,
+          id: `${entrepriseId}-cli-${crypto.randomUUID()}`,
           reference: referenceClient,
           nom: nouveauDevis.client.trim(),
           typeClient: nouveauDevis.typeClient,
@@ -490,7 +487,6 @@ export default function DevisForm({
           updatedAt: maintenant,
         };
 
-        await setDoc(doc(db, "clients", nouveauClient.id), nouveauClient);
         finalClientId = nouveauClient.id;
         finalClientNom = nouveauClient.nom;
       }
@@ -502,7 +498,7 @@ export default function DevisForm({
         const referenceChantier = genererReferenceChantier(chantiers);
 
         const nouveauChantier: Chantier = {
-          id: `${entrepriseId}-ch-${maintenant}`,
+          id: `${entrepriseId}-ch-${crypto.randomUUID()}`,
           reference: referenceChantier,
           titre: nouveauDevis.chantierTitre.trim(),
           clientId: finalClientId,
@@ -522,39 +518,151 @@ export default function DevisForm({
           updatedAt: maintenant,
         };
 
-        await setDoc(doc(db, "chantiers", nouveauChantier.id), nouveauChantier);
         finalChantierId = nouveauChantier.id;
         finalChantierTitre = nouveauChantier.titre;
       }
 
-      const devisCree: DevisBusiness = {
-        id: nouveauId,
-        entrepriseId,
-        createdByUid: uidCreateur,
-        client: nouveauDevis.client.trim(),
-        statut: nouveauDevis.statut,
-        date: formaterDate(nouveauDevis.date),
-        adresse: nouveauDevis.adresse.trim(),
-        codePostal: nouveauDevis.codePostal.trim(),
-        ville: nouveauDevis.ville.trim(),
-        email: nouveauDevis.email.trim(),
-        telephone: nouveauDevis.telephone.trim(),
-        typeClient: nouveauDevis.typeClient,
-        societe: nouveauDevis.societe.trim(),
-        tvaClient: nouveauDevis.tvaClient.trim(),
-        chantierId: finalChantierId,
-        chantierTitre: finalChantierTitre,
-        tvaTaux,
-        lignes: lignesValides,
-        acomptePourcentage,
-        validiteJours,
-        conditions: nouveauDevis.conditions.trim(),
-        archive: false,
-        createdAt: maintenant,
-      };
+      const entrepriseRef = doc(db, "entreprises", entrepriseId);
+      const nouveauId = await runTransaction(db, async (transaction) => {
+        const entrepriseSnap = await transaction.get(entrepriseRef);
 
-      await setDoc(doc(db, "devis", devisCree.id), devisCree);
-      onDevisCree(devisCree.id);
+        if (!entrepriseSnap.exists()) {
+          throw new Error("Entreprise introuvable.");
+        }
+
+        const entrepriseData = entrepriseSnap.data() as {
+          devisNextNumber?: number;
+          devisLastYear?: number;
+        };
+        const annee = new Date().getFullYear();
+        const plusGrandNumeroExistant = devis.reduce((max, item) => {
+          const match = item.id?.match(
+            new RegExp(`-DEV-${annee}-(\\d+)$`)
+          );
+
+          if (!match) return max;
+
+          const numero = Number(match[1]);
+          return Number.isFinite(numero) ? Math.max(max, numero) : max;
+        }, 0);
+        let numero =
+          entrepriseData.devisLastYear === annee &&
+          typeof entrepriseData.devisNextNumber === "number" &&
+          Number.isFinite(entrepriseData.devisNextNumber)
+            ? Math.max(1, Math.floor(entrepriseData.devisNextNumber))
+            : 1;
+
+        numero = Math.max(numero, plusGrandNumeroExistant + 1);
+
+        let devisId = "";
+        let devisRef = doc(db, "devis", "_");
+        let devisSnap;
+
+        do {
+          devisId = `${entrepriseId}-DEV-${annee}-${String(numero).padStart(
+            3,
+            "0"
+          )}`;
+          devisRef = doc(db, "devis", devisId);
+          devisSnap = await transaction.get(devisRef);
+          numero += 1;
+        } while (devisSnap.exists());
+
+        const devisCree: DevisBusiness = {
+          id: devisId,
+          entrepriseId,
+          createdByUid: uidCreateur,
+          client: nouveauDevis.client.trim(),
+          statut: "Brouillon",
+          date: formaterDate(nouveauDevis.date),
+          adresse: nouveauDevis.adresse.trim(),
+          codePostal: nouveauDevis.codePostal.trim(),
+          ville: nouveauDevis.ville.trim(),
+          email: nouveauDevis.email.trim(),
+          telephone: nouveauDevis.telephone.trim(),
+          typeClient: nouveauDevis.typeClient,
+          societe: nouveauDevis.societe.trim(),
+          tvaClient: nouveauDevis.tvaClient.trim(),
+          chantierId: finalChantierId,
+          chantierTitre: finalChantierTitre,
+          tvaTaux,
+          lignes: lignesValides,
+          acomptePourcentage,
+          validiteJours,
+          conditions: nouveauDevis.conditions.trim(),
+          archive: false,
+          createdAt: maintenant,
+        };
+
+        if (!clientSelectionneId) {
+          transaction.set(
+            doc(db, "clients", finalClientId),
+            {
+              id: finalClientId,
+              reference: genererReferenceClient(clients),
+              nom: nouveauDevis.client.trim(),
+              typeClient: nouveauDevis.typeClient,
+              societe: nouveauDevis.societe.trim(),
+              email: nouveauDevis.email.trim(),
+              telephone: nouveauDevis.telephone.trim(),
+              adresse: nouveauDevis.adresse.trim(),
+              codePostal: nouveauDevis.codePostal.trim(),
+              ville: nouveauDevis.ville.trim(),
+              pays: "Belgique",
+              tva: nouveauDevis.tvaClient.trim(),
+              notes: "",
+              entrepriseId,
+              createdByUid: uidCreateur,
+              archive: false,
+              createdAt: maintenant,
+              updatedAt: maintenant,
+            } satisfies Client
+          );
+        }
+
+        if (!chantierSelectionneId && nouveauDevis.chantierTitre.trim()) {
+          transaction.set(
+            doc(db, "chantiers", finalChantierId),
+            {
+              id: finalChantierId,
+              reference: genererReferenceChantier(chantiers),
+              titre: nouveauDevis.chantierTitre.trim(),
+              clientId: finalClientId,
+              clientNom: finalClientNom,
+              adresse: nouveauDevis.adresse.trim(),
+              codePostal: nouveauDevis.codePostal.trim(),
+              ville: nouveauDevis.ville.trim(),
+              dateDebut: nouveauChantierDateDebut,
+              dateFin: nouveauChantierDateFin,
+              statut: nouveauChantierStatut,
+              description: "",
+              notes: "",
+              entrepriseId,
+              createdByUid: uidCreateur,
+              archive: false,
+              createdAt: maintenant,
+              updatedAt: maintenant,
+            } satisfies Chantier
+          );
+        }
+
+        transaction.set(devisRef, devisCree);
+        transaction.set(
+          entrepriseRef,
+          {
+            entrepriseId,
+            devisNextNumber: numero,
+            devisLastYear: annee,
+            updatedAt: maintenant,
+            updatedByUid: uidCreateur,
+          },
+          { merge: true }
+        );
+
+        return devisId;
+      });
+
+      onDevisCree(nouveauId);
       reinitialiserFormulaire();
       onClose();
     } catch (error: unknown) {

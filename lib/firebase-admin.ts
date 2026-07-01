@@ -1,6 +1,7 @@
 import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 function getFirebaseAdminCredentials() {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -46,7 +47,11 @@ const firebaseAdminApp =
     projectId:
       process.env.FIREBASE_ADMIN_PROJECT_ID ??
       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket:
+      process.env.FIREBASE_ADMIN_STORAGE_BUCKET ??
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   });
 
 export const adminAuth = getAuth(firebaseAdminApp);
 export const adminDb = getFirestore(firebaseAdminApp);
+export const adminStorage = getStorage(firebaseAdminApp);

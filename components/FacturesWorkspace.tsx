@@ -936,7 +936,7 @@ export default function FacturesWorkspace({
     const clientCree: Client | null = clientAssocie
       ? null
       : {
-          id: `${entrepriseId}-cli-${maintenant}`,
+          id: `${entrepriseId}-cli-${crypto.randomUUID()}`,
           reference: genererReferenceClient(clients),
           nom: formulaire.nouveauClientNom.trim(),
           typeClient: formulaire.nouveauClientType,
@@ -991,7 +991,7 @@ export default function FacturesWorkspace({
       !chantierExistantSimple &&
       formulaire.nouveauChantierTitre.trim()
         ? {
-            id: `${entrepriseId}-ch-${maintenant}`,
+            id: `${entrepriseId}-ch-${crypto.randomUUID()}`,
             reference: genererReferenceChantier(chantiers),
             titre: formulaire.nouveauChantierTitre.trim(),
             clientId: clientFinal.id,
@@ -1045,6 +1045,18 @@ export default function FacturesWorkspace({
       return;
     }
 
+    if (
+      devisAssocie &&
+      factures.some(
+        (facture) =>
+          facture.devisId === devisAssocie.id &&
+          facture.id !== factureSelectionnee?.id
+      )
+    ) {
+      alert("Ce devis est déjà lié à une facture.");
+      return;
+    }
+
     try {
       setSauvegardeEnCours(true);
 
@@ -1094,13 +1106,51 @@ export default function FacturesWorkspace({
         return;
       }
 
-      const nouvelId = `${entrepriseId}-fa-${maintenant}`;
+      const nouvelId = `${entrepriseId}-fa-${crypto.randomUUID()}`;
       const factureRef = doc(db, "factures", nouvelId);
       const entrepriseRef = doc(db, "entreprises", entrepriseId);
+      const devisRef = devisAssocie
+        ? doc(db, "devis", devisAssocie.id)
+        : null;
       let reference = "";
 
       await runTransaction(db, async (transaction) => {
         const entrepriseSnap = await transaction.get(entrepriseRef);
+        const factureSnap = await transaction.get(factureRef);
+        const devisSnap = devisRef ? await transaction.get(devisRef) : null;
+
+        if (!entrepriseSnap.exists()) {
+          throw new Error("Entreprise introuvable.");
+        }
+
+        if (factureSnap.exists()) {
+          throw new Error("Collision d'identifiant facture.");
+        }
+
+        if (devisRef) {
+          const devisData = devisSnap?.data() as
+            | {
+                entrepriseId?: string;
+                statut?: string;
+                factureId?: string;
+              }
+            | undefined;
+
+          if (
+            !devisSnap?.exists() ||
+            devisData?.entrepriseId !== entrepriseId ||
+            devisData.statut !== "Accepté"
+          ) {
+            throw new Error(
+              "Seul un devis accepté de cette entreprise peut être facturé."
+            );
+          }
+
+          if (devisData.factureId) {
+            throw new Error("Ce devis est déjà lié à une facture.");
+          }
+        }
+
         const entrepriseData = entrepriseSnap.exists() ? entrepriseSnap.data() : {};
         const config = getInvoiceNumberSettings({
           ...entrepriseSettings,
@@ -1155,7 +1205,7 @@ export default function FacturesWorkspace({
           dateEmission: formulaire.dateEmission,
           dateEcheance: formulaire.dateEcheance,
           datePaiement: formulaire.datePaiement,
-          statut: formulaire.statut,
+          statut: "Brouillon",
           montantHt,
           tvaTaux,
           lignes,
@@ -1178,6 +1228,12 @@ export default function FacturesWorkspace({
 
         if (chantierCree) {
           transaction.set(doc(db, "chantiers", chantierCree.id), chantierCree);
+        }
+
+        if (devisRef) {
+          transaction.update(devisRef, {
+            factureId: nouvelId,
+          });
         }
 
         transaction.set(factureRef, nouvelleFacture);
@@ -1296,9 +1352,8 @@ export default function FacturesWorkspace({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          facture: factureSelectionnee,
+          factureId: factureSelectionnee.id,
           toEmail: emailClient,
-          entreprise: entrepriseSettings,
         }),
       });
 
@@ -1309,17 +1364,6 @@ export default function FacturesWorkspace({
 
       if (!response.ok || !data.success) {
         throw new Error(data.error || "Impossible d’envoyer la facture.");
-      }
-
-      if (
-        factureSelectionnee.statut !== "Payée" &&
-        factureSelectionnee.statut !== "Envoyée"
-      ) {
-        await updateDoc(doc(db, "factures", factureSelectionnee.id), {
-          ...factureSelectionnee,
-          statut: "Envoyée",
-          updatedAt: Date.now(),
-        });
       }
 
       alert(`Facture envoyée à ${emailClient}.`);

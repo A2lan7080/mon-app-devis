@@ -1,0 +1,241 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActiveUser() {
+      return isSignedIn()
+        && userProfile().active == true
+        && userProfile().entrepriseId is string
+        && userProfile().entrepriseId.size() > 0;
+    }
+
+    function isAdmin() {
+      return isActiveUser() && userProfile().role == "admin";
+    }
+
+    function belongsToCurrentEntreprise(data) {
+      return isAdmin()
+        && data.entrepriseId is string
+        && data.entrepriseId == userProfile().entrepriseId;
+    }
+
+    function hasStableTenantIdentity() {
+      return request.resource.data.entrepriseId == resource.data.entrepriseId
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdByUid == resource.data.createdByUid;
+    }
+
+    function isFinalDevisStatus(status) {
+      return status == "Accepté" || status == "Refusé";
+    }
+
+    function isAllowedFactureStatus(status) {
+      return status == "Brouillon"
+        || status == "Envoyée"
+        || status == "Payée"
+        || status == "En retard"
+        || status == "Annulée";
+    }
+
+    function isInvoiceCounterSafe() {
+      return !("invoiceNextNumber" in resource.data)
+        || !("invoiceNextNumber" in request.resource.data)
+        || request.resource.data.invoiceNextNumber >= resource.data.invoiceNextNumber
+        || (
+          request.resource.data.invoiceResetYearly == true
+          && request.resource.data.invoiceLastYear is int
+          && (
+            !("invoiceLastYear" in resource.data)
+            || request.resource.data.invoiceLastYear > resource.data.invoiceLastYear
+          )
+          && request.resource.data.invoiceNextNumber >= 1
+        );
+    }
+
+    function canBindAcceptedDevisToFacture() {
+      return resource.data.statut == "Accepté"
+        && !("factureId" in resource.data)
+        && request.resource.data.factureId is string
+        && request.resource.data.factureId.size() > 0
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["factureId"]);
+    }
+
+    function canUpdateEditableDevis() {
+      return !isFinalDevisStatus(resource.data.statut)
+        && !isFinalDevisStatus(request.resource.data.statut)
+        && !("acceptanceLockId" in resource.data)
+        && !("emailSendLockId" in resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny([
+            "acceptanceTokenHash",
+            "acceptanceTokenCreatedAt",
+            "acceptanceTokenLastSentAt",
+            "acceptedAt",
+            "acceptedByName",
+            "acceptedByEmail",
+            "acceptedPdfHash",
+            "acceptedPdfStoragePath",
+            "acceptedSnapshot",
+            "refusedAt",
+            "refusedByName",
+            "refusedByEmail"
+          ]);
+    }
+
+    function linkedAcceptedDevisIsReserved(factureId) {
+      let devisId = request.resource.data.devisId;
+      let devisPath = /databases/$(database)/documents/devis/$(devisId);
+
+      return devisId == ""
+        || (
+          devisId is string
+          && existsAfter(devisPath)
+          && getAfter(devisPath).data.entrepriseId == userProfile().entrepriseId
+          && getAfter(devisPath).data.statut == "Accepté"
+          && getAfter(devisPath).data.factureId == factureId
+        );
+    }
+
+    function canUpdateFacture() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+
+      return hasStableTenantIdentity()
+        && request.resource.data.reference == resource.data.reference
+        && request.resource.data.devisId == resource.data.devisId
+        && isAllowedFactureStatus(request.resource.data.statut)
+        && !("emailSendLockId" in resource.data)
+        && (
+          resource.data.statut == "Brouillon"
+          || changedKeys.hasOnly([
+            "statut",
+            "datePaiement",
+            "archive",
+            "updatedAt"
+          ])
+        );
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update, delete: if false;
+    }
+
+    match /entreprises/{entrepriseId} {
+      allow read: if isActiveUser()
+        && userProfile().entrepriseId == entrepriseId;
+
+      allow update: if isAdmin()
+        && userProfile().entrepriseId == entrepriseId
+        && (
+          !("entrepriseId" in resource.data)
+          || resource.data.entrepriseId == entrepriseId
+        )
+        && request.resource.data.entrepriseId == entrepriseId
+        && isInvoiceCounterSafe()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny([
+            "createdByUid",
+            "createdAt",
+            "active",
+            "actif",
+            "plan",
+            "subscriptionStatus",
+            "stripeCustomerId",
+            "stripeSubscriptionId"
+          ]);
+
+      allow create, delete: if false;
+    }
+
+    match /devis/{devisId} {
+      allow read: if belongsToCurrentEntreprise(resource.data);
+
+      allow create: if belongsToCurrentEntreprise(request.resource.data)
+        && request.resource.data.id == devisId
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.statut == "Brouillon";
+
+      allow update: if belongsToCurrentEntreprise(resource.data)
+        && belongsToCurrentEntreprise(request.resource.data)
+        && hasStableTenantIdentity()
+        && (canUpdateEditableDevis() || canBindAcceptedDevisToFacture());
+
+      allow delete: if belongsToCurrentEntreprise(resource.data)
+        && !isFinalDevisStatus(resource.data.statut)
+        && !("acceptanceLockId" in resource.data)
+        && !("emailSendLockId" in resource.data);
+    }
+
+    match /factures/{factureId} {
+      allow read: if belongsToCurrentEntreprise(resource.data);
+
+      allow create: if belongsToCurrentEntreprise(request.resource.data)
+        && request.resource.data.id == factureId
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.statut == "Brouillon"
+        && linkedAcceptedDevisIsReserved(factureId);
+
+      allow update: if belongsToCurrentEntreprise(resource.data)
+        && belongsToCurrentEntreprise(request.resource.data)
+        && canUpdateFacture();
+
+      allow delete: if belongsToCurrentEntreprise(resource.data)
+        && resource.data.statut == "Brouillon"
+        && !("emailSendLockId" in resource.data);
+    }
+
+    match /clients/{clientId} {
+      allow read: if belongsToCurrentEntreprise(resource.data);
+      allow create: if belongsToCurrentEntreprise(request.resource.data)
+        && request.resource.data.id == clientId
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update: if belongsToCurrentEntreprise(resource.data)
+        && belongsToCurrentEntreprise(request.resource.data)
+        && hasStableTenantIdentity();
+      allow delete: if belongsToCurrentEntreprise(resource.data);
+    }
+
+    match /chantiers/{chantierId} {
+      allow read: if belongsToCurrentEntreprise(resource.data);
+      allow create: if belongsToCurrentEntreprise(request.resource.data)
+        && request.resource.data.id == chantierId
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update: if belongsToCurrentEntreprise(resource.data)
+        && belongsToCurrentEntreprise(request.resource.data)
+        && hasStableTenantIdentity();
+      allow delete: if belongsToCurrentEntreprise(resource.data);
+    }
+
+    match /prestationsBibliotheque/{prestationId} {
+      allow read: if belongsToCurrentEntreprise(resource.data);
+      allow create: if belongsToCurrentEntreprise(request.resource.data)
+        && request.resource.data.id == prestationId
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update: if belongsToCurrentEntreprise(resource.data)
+        && belongsToCurrentEntreprise(request.resource.data)
+        && hasStableTenantIdentity();
+      allow delete: if belongsToCurrentEntreprise(resource.data);
+    }
+
+    match /devisAcceptanceLinks/{tokenHash} {
+      allow read, write: if false;
+    }
+
+    match /betaFeedback/{feedbackId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -307,7 +307,7 @@ export default function ChantiersWorkspace({
         return;
       }
 
-      const nouvelId = `${entrepriseId}-ch-${maintenant}`;
+      const nouvelId = `${entrepriseId}-ch-${crypto.randomUUID()}`;
       const reference = genererReferenceChantier(chantiers);
 
       const nouveauChantier: Chantier = {

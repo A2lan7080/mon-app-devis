@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { FieldValue } from "firebase-admin/firestore";
 import {
   renderFactureEmailHtml,
   renderFactureEmailText,
@@ -15,9 +16,8 @@ type EntrepriseSettings = Entreprise & {
 };
 
 type Payload = {
-  facture?: Facture;
+  factureId?: string;
   toEmail?: string;
-  entreprise?: EntrepriseSettings;
 };
 
 type ProfilUtilisateurEmail = {
@@ -35,6 +35,13 @@ type VerificationSecuriteEmail =
       response: NextResponse;
     };
 
+type FactureEmail = Facture & {
+  emailSendLockId?: string;
+  emailSendLockAt?: number;
+};
+
+const DUREE_VERROU_ENVOI_MS = 2 * 60 * 1000;
+
 function getBearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
 
@@ -45,6 +52,40 @@ function getBearerToken(request: Request) {
   const token = authorization.slice("Bearer ".length).trim();
 
   return token || null;
+}
+
+function normaliserEmail(email?: string) {
+  const emailNettoye = email?.trim().toLowerCase() ?? "";
+
+  if (
+    !emailNettoye ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNettoye)
+  ) {
+    return null;
+  }
+
+  return emailNettoye.slice(0, 254);
+}
+
+async function libererVerrouEnvoi(
+  factureId: string,
+  lockId: string
+) {
+  const factureRef = adminDb.collection("factures").doc(factureId);
+
+  await adminDb.runTransaction(async (transaction) => {
+    const factureSnap = await transaction.get(factureRef);
+
+    if (
+      factureSnap.exists &&
+      factureSnap.data()?.emailSendLockId === lockId
+    ) {
+      transaction.update(factureRef, {
+        emailSendLockId: FieldValue.delete(),
+        emailSendLockAt: FieldValue.delete(),
+      });
+    }
+  });
 }
 
 async function verifierAdminEmail(
@@ -63,7 +104,10 @@ async function verifierAdminEmail(
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
-    const profilSnap = await adminDb.collection("users").doc(decodedToken.uid).get();
+    const profilSnap = await adminDb
+      .collection("users")
+      .doc(decodedToken.uid)
+      .get();
 
     if (!profilSnap.exists) {
       return {
@@ -101,6 +145,13 @@ async function verifierAdminEmail(
 }
 
 export async function POST(request: Request) {
+  let factureVerrouillee:
+    | {
+        factureId: string;
+        lockId: string;
+      }
+    | undefined;
+
   try {
     const securiteEmail = await verifierAdminEmail(request);
 
@@ -108,7 +159,7 @@ export async function POST(request: Request) {
       return securiteEmail.response;
     }
 
-    const body = (await request.json()) as Payload;
+    const body = (await request.json().catch(() => ({}))) as Payload;
 
     if (!process.env.RESEND_API_KEY) {
       return NextResponse.json(
@@ -117,25 +168,19 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.BATIFLOW_FROM_EMAIL) {
+    const fromEmail = normaliserEmail(process.env.BATIFLOW_FROM_EMAIL);
+
+    if (!fromEmail) {
       return NextResponse.json(
-        { error: "BATIFLOW_FROM_EMAIL est manquante." },
+        { error: "BATIFLOW_FROM_EMAIL est invalide." },
         { status: 500 }
       );
     }
 
-    const facture = body.facture;
-    const toEmail = body.toEmail?.trim();
-    const entreprise = body.entreprise;
+    const factureId = body.factureId?.trim();
+    const toEmail = normaliserEmail(body.toEmail);
 
-    if (!facture) {
-      return NextResponse.json(
-        { error: "Facture manquante." },
-        { status: 400 }
-      );
-    }
-
-    if (!facture.id) {
+    if (!factureId) {
       return NextResponse.json(
         { error: "Identifiant facture manquant." },
         { status: 400 }
@@ -144,35 +189,72 @@ export async function POST(request: Request) {
 
     if (!toEmail) {
       return NextResponse.json(
-        { error: "Email destinataire manquant." },
+        { error: "Email destinataire invalide." },
         { status: 400 }
       );
     }
 
-    if (!entreprise) {
+    const factureRef = adminDb.collection("factures").doc(factureId);
+    const lockId = crypto.randomUUID();
+    const maintenant = Date.now();
+    const facture = await adminDb.runTransaction(async (transaction) => {
+      const factureSnap = await transaction.get(factureRef);
+
+      if (!factureSnap.exists) {
+        throw new Error("FACTURE_NOT_FOUND");
+      }
+
+      const factureFirestore = factureSnap.data() as FactureEmail;
+
+      if (factureFirestore.entrepriseId !== securiteEmail.entrepriseId) {
+        throw new Error("FACTURE_FORBIDDEN");
+      }
+
+      if (
+        factureFirestore.emailSendLockId &&
+        typeof factureFirestore.emailSendLockAt === "number" &&
+        maintenant - factureFirestore.emailSendLockAt <
+          DUREE_VERROU_ENVOI_MS
+      ) {
+        throw new Error("FACTURE_SEND_LOCKED");
+      }
+
+      transaction.update(factureRef, {
+        emailSendLockId: lockId,
+        emailSendLockAt: maintenant,
+      });
+
+      return {
+        ...factureFirestore,
+        id: factureId,
+      };
+    });
+
+    factureVerrouillee = {
+      factureId,
+      lockId,
+    };
+
+    const entrepriseSnap = await adminDb
+      .collection("entreprises")
+      .doc(securiteEmail.entrepriseId)
+      .get();
+
+    if (!entrepriseSnap.exists) {
+      await libererVerrouEnvoi(factureId, lockId);
+      factureVerrouillee = undefined;
+
       return NextResponse.json(
-        { error: "Informations entreprise manquantes." },
-        { status: 400 }
+        { error: "Entreprise introuvable." },
+        { status: 404 }
       );
     }
 
-    const factureSnap = await adminDb.collection("factures").doc(facture.id).get();
-    const factureFirestore = factureSnap.data() as
-      | { entrepriseId?: string }
-      | undefined;
-
-    if (
-      !factureSnap.exists ||
-      factureFirestore?.entrepriseId !== securiteEmail.entrepriseId
-    ) {
-      return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
-    }
-
+    const entreprise = entrepriseSnap.data() as EntrepriseSettings;
     const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Facture ${facture.reference} - ${entreprise.nom}`;
-
     const { data, error } = await resend.emails.send({
-      from: `Batiflow <${process.env.BATIFLOW_FROM_EMAIL}>`,
+      from: `Batiflow <${fromEmail}>`,
       to: [toEmail],
       subject,
       html: renderFactureEmailHtml(facture, entreprise),
@@ -180,18 +262,80 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      await libererVerrouEnvoi(factureId, lockId);
+      factureVerrouillee = undefined;
+
       return NextResponse.json(
         { error: error.message || "Erreur Resend." },
         { status: 500 }
       );
     }
 
+    const emailId = data?.id ?? null;
+
+    await adminDb.runTransaction(async (transaction) => {
+      const factureSnap = await transaction.get(factureRef);
+
+      if (
+        !factureSnap.exists ||
+        factureSnap.data()?.emailSendLockId !== lockId
+      ) {
+        throw new Error("FACTURE_SEND_LOCK_LOST");
+      }
+
+      const factureActuelle = factureSnap.data() as FactureEmail;
+
+      transaction.update(factureRef, {
+        ...(factureActuelle.statut === "Payée"
+          ? {}
+          : { statut: "Envoyée" }),
+        dateEnvoi: FieldValue.serverTimestamp(),
+        emailDestinataire: toEmail,
+        resendEmailId: emailId,
+        updatedAt: Date.now(),
+        emailSendLockId: FieldValue.delete(),
+        emailSendLockAt: FieldValue.delete(),
+      });
+    });
+    factureVerrouillee = undefined;
+
     return NextResponse.json({
       success: true,
-      emailId: data?.id ?? null,
+      emailId,
     });
   } catch (error) {
     console.error("Erreur route envoi facture :", error);
+
+    if (factureVerrouillee) {
+      await libererVerrouEnvoi(
+        factureVerrouillee.factureId,
+        factureVerrouillee.lockId
+      ).catch((unlockError) => {
+        console.error(
+          "Erreur libération verrou envoi facture :",
+          unlockError
+        );
+      });
+    }
+
+    if (error instanceof Error) {
+      if (
+        error.message === "FACTURE_NOT_FOUND" ||
+        error.message === "FACTURE_FORBIDDEN"
+      ) {
+        return NextResponse.json(
+          { error: "Accès refusé." },
+          { status: 403 }
+        );
+      }
+
+      if (error.message === "FACTURE_SEND_LOCKED") {
+        return NextResponse.json(
+          { error: "Un envoi de cette facture est déjà en cours." },
+          { status: 409 }
+        );
+      }
+    }
 
     return NextResponse.json(
       { error: "Impossible d’envoyer la facture." },

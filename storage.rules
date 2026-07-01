@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isActiveAdminFor(entrepriseId) {
+      let profile = firestore.get(
+        /databases/(default)/documents/users/$(request.auth.uid)
+      ).data;
+
+      return request.auth != null
+        && profile.active == true
+        && profile.role == "admin"
+        && profile.entrepriseId == entrepriseId;
+    }
+
+    match /entreprises/{entrepriseId}/logos/{fileName} {
+      allow read: if isActiveAdminFor(entrepriseId);
+      allow create, update: if isActiveAdminFor(entrepriseId)
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches("image/.*");
+      allow delete: if isActiveAdminFor(entrepriseId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

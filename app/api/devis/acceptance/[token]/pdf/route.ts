@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "../../../../../../lib/firebase-admin";
+import { createHash } from "crypto";
+import {
+  adminDb,
+  adminStorage,
+} from "../../../../../../lib/firebase-admin";
 import { hashAcceptanceToken } from "../../../../../../lib/devis-acceptance";
 import { formatNumeroDevisPourAffichage } from "../../../../../../lib/format-numero-devis";
 import { generateServerDevisPdf } from "../../../../../../lib/pdf/generate-server-devis-pdf";
@@ -24,6 +28,8 @@ type DevisPdf = Devis & {
   validiteJours: number;
   conditions: string;
   entrepriseId?: string;
+  acceptedPdfStoragePath?: string;
+  acceptedPdfHash?: string;
 };
 
 type EntreprisePdf = Entreprise & {
@@ -88,7 +94,24 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const entreprise = entrepriseSnap.data() as EntreprisePdf;
-    const pdf = await generateServerDevisPdf(devis, entreprise);
+    const pdf =
+      devis.statut === "Accepté" && devis.acceptedPdfStoragePath
+        ? (
+            await adminStorage
+              .bucket()
+              .file(devis.acceptedPdfStoragePath)
+              .download()
+          )[0]
+        : await generateServerDevisPdf(devis, entreprise);
+
+    if (
+      devis.statut === "Accepté" &&
+      devis.acceptedPdfHash &&
+      createHash("sha256").update(pdf).digest("hex") !==
+        devis.acceptedPdfHash
+    ) {
+      return erreurPdf("Le PDF accepté est invalide.", 409);
+    }
     const numeroDevis = formatNumeroDevisPourAffichage(devis.id).replaceAll(
       /[^a-zA-Z0-9_-]/g,
       "-"

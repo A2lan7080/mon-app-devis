@@ -399,7 +399,7 @@ export default function AdminWorkspace({
         return;
       }
 
-      const nouvelId = `${entrepriseId}-pre-${maintenant}`;
+      const nouvelId = `${entrepriseId}-pre-${crypto.randomUUID()}`;
       const reference = genererReferencePrestation(prestations);
 
       const nouvellePrestation: PrestationBibliotheque = {

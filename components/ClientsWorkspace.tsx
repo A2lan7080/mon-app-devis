@@ -252,7 +252,7 @@ export default function ClientsWorkspace({
         return;
       }
 
-      const nouvelId = `${entrepriseId}-cli-${maintenant}`;
+      const nouvelId = `${entrepriseId}-cli-${crypto.randomUUID()}`;
       const reference = genererReferenceClient(clients);
 
       const nouveauClient: Client = {
