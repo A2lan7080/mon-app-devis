@@ -62,7 +62,7 @@ function getPageAccent(vue: VuePrincipale) {
       };
     case "factures":
       return {
-        dot: "bg-violet-500",
+        dot: "bg-orange-400",
         subtitle: "Gère les factures, paiements et relances.",
       };
     case "admin":
@@ -166,6 +166,8 @@ export default function AdminShell({
   const actionPrincipale = getActionPrincipale(vueAffichee, afficherFormulaire);
   const estDashboard = vueAffichee === "admin";
   const estDevis = vueAffichee === "devis";
+  const estFactures = vueAffichee === "factures";
+  const estModulePremium = estDevis || estFactures;
 
   useEffect(() => {
     if (!menuMobileOuvert) return;
@@ -262,9 +264,9 @@ export default function AdminShell({
       id: "factures",
       label: "Factures",
       icon: "🧾",
-      accent: "bg-violet-50 text-violet-700",
-      activeButton: "border-violet-200 bg-violet-50 text-violet-800 shadow-sm",
-      activeDot: "bg-violet-500",
+      accent: "bg-sky-50 text-sky-700",
+      activeButton: "border-sky-200 bg-sky-50 text-sky-800 shadow-sm",
+      activeDot: "bg-sky-500",
       onClick: onOuvrirVueFactures,
     },
     {
@@ -311,9 +313,9 @@ export default function AdminShell({
       id: "factures",
       label: "Factures",
       icon: "🧾",
-      accent: "bg-violet-50 text-violet-700",
-      activeButton: "border-violet-200 bg-violet-50 text-violet-800 shadow-sm",
-      activeDot: "bg-violet-500",
+      accent: "bg-sky-50 text-sky-700",
+      activeButton: "border-sky-200 bg-sky-50 text-sky-800 shadow-sm",
+      activeDot: "bg-sky-500",
       onClick: ouvrirVueFacturesMobile,
     },
     {
@@ -397,7 +399,7 @@ export default function AdminShell({
           className={`min-w-0 flex-1 p-4 pb-28 md:h-screen md:overflow-y-auto md:p-8 md:pb-8 ${
             estDashboard
               ? "bg-gradient-to-br from-slate-50 via-slate-100 to-sky-50/50"
-              : estDevis
+              : estModulePremium
                 ? "bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30"
                 : ""
           }`}
@@ -412,12 +414,12 @@ export default function AdminShell({
             {!estDashboard && (
               <header
                 className={`relative mb-4 overflow-hidden md:mb-8 ${
-                  estDevis
+                  estModulePremium
                     ? "rounded-[1.75rem] border border-slate-800 bg-slate-950 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]"
                     : "bf-card"
                 }`}
               >
-                {estDevis && (
+                {estModulePremium && (
                   <>
                     <span
                       aria-hidden="true"
@@ -431,7 +433,7 @@ export default function AdminShell({
                 )}
                 <div
                   className={`relative p-4 md:p-6 ${
-                    estDevis
+                    estModulePremium
                       ? ""
                       : "border-b border-slate-100 bg-gradient-to-r from-white via-slate-50 to-white"
                   }`}
@@ -442,7 +444,7 @@ export default function AdminShell({
                         {sauvegardeEnCours && (
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              estDevis
+                              estModulePremium
                                 ? "border border-white/10 bg-white/10 text-slate-200"
                                 : "bg-slate-100 text-slate-600"
                             }`}
@@ -458,7 +460,7 @@ export default function AdminShell({
                         />
                         <h2
                           className={`text-2xl font-bold tracking-tight md:text-3xl ${
-                            estDevis ? "text-white" : ""
+                            estModulePremium ? "text-white" : ""
                           }`}
                         >
                           {titre}
@@ -467,7 +469,7 @@ export default function AdminShell({
 
                       <p
                         className={`mt-2 text-sm ${
-                          estDevis ? "text-slate-300" : "text-slate-500"
+                          estModulePremium ? "text-slate-300" : "text-slate-500"
                         }`}
                       >
                         {accentPage.subtitle}
@@ -480,7 +482,7 @@ export default function AdminShell({
                           data-testid="primary-action"
                           onClick={handleActionPrincipale}
                           className={
-                            estDevis
+                            estModulePremium
                               ? "min-h-11 w-full rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(249,115,22,0.28)] transition duration-200 hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_14px_30px_rgba(249,115,22,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 motion-reduce:transform-none sm:w-auto"
                               : "bf-button-primary w-full sm:w-auto"
                           }
