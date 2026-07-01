@@ -4,6 +4,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { calculerTotalTvac, formatMontant } from "../lib/devis-helpers";
 import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type { DevisBusiness } from "../hooks/useDevisActions";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
+import EmptyState from "./ui/EmptyState";
 
 type Props = {
   devis: DevisBusiness[];
@@ -13,21 +16,6 @@ type Props = {
   setModeEdition: Dispatch<SetStateAction<boolean>>;
   onCreateFirstDevis: () => void;
 };
-
-function getStatutClasses(statut: string) {
-  switch (statut) {
-    case "Brouillon":
-      return "bg-slate-100 text-slate-700";
-    case "Envoyé":
-      return "bg-blue-100 text-blue-700";
-    case "Accepté":
-      return "bg-emerald-100 text-emerald-700";
-    case "Refusé":
-      return "bg-red-100 text-red-700";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
-}
 
 export default function DevisList({
   devis,
@@ -50,24 +38,23 @@ export default function DevisList({
   return (
     <div className="mt-4 overflow-hidden sm:mt-6">
       {devis.length === 0 ? (
-        <div className="bf-empty-state">
-          <p className="text-sm font-semibold text-slate-700">{messageVide}</p>
-          <p className="mt-1 text-xs text-slate-500">
-            {totalDevis === 0
+        <EmptyState
+          icon={<span aria-hidden="true">📄</span>}
+          title={messageVide}
+          description={
+            totalDevis === 0
               ? "Démarre avec un premier devis client, puis envoie-le par email."
-              : "Ajuste les filtres ou crée un nouveau devis depuis l'action principale."}
-          </p>
-          <button
-            type="button"
-            onClick={onCreateFirstDevis}
-            className="bf-button-primary mt-4"
-          >
-            {totalDevis === 0 ? "Créer mon premier devis" : "Nouveau devis"}
-          </button>
-        </div>
+              : "Ajuste les filtres ou crée un nouveau devis depuis l'action principale."
+          }
+          action={
+            <Button onClick={onCreateFirstDevis}>
+              {totalDevis === 0 ? "Créer mon premier devis" : "Nouveau devis"}
+            </Button>
+          }
+        />
       ) : (
         <>
-          <div className="space-y-2 md:hidden">
+          <div className="space-y-3 md:hidden">
             {devis.map((item) => {
               const estSelectionne = item.id === devisSelectionneId;
               const totalTvac = calculerTotalTvac(item);
@@ -77,9 +64,9 @@ export default function DevisList({
                   key={item.id}
                   data-testid="devis-list-item-mobile"
                   onClick={() => selectionnerDevis(item.id, estSelectionne)}
-                  className={`block w-full min-w-0 overflow-hidden rounded-xl border p-3 text-left transition ${
+                  className={`group block w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none ${
                     estSelectionne
-                      ? "border-slate-900 bg-slate-50 shadow-sm"
+                      ? "border-sky-300 bg-gradient-to-br from-sky-50 to-white ring-2 ring-sky-100"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
@@ -99,13 +86,9 @@ export default function DevisList({
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <span
-                        className={`bf-status-pill ${getStatutClasses(
-                          item.statut
-                        )}`}
-                      >
+                      <Badge status={item.statut} dot>
                         {item.statut}
-                      </span>
+                      </Badge>
 
                       <p className="mt-3 text-sm font-semibold text-slate-900">
                         {formatMontant(totalTvac)}
@@ -121,8 +104,8 @@ export default function DevisList({
             })}
           </div>
 
-          <div className="hidden overflow-hidden rounded-xl border border-slate-200 md:block">
-            <div className="bf-table-header grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_8rem_8rem] gap-3 px-4 py-3">
+          <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+            <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_8rem_8rem] gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50/60 px-4 py-3 text-xs font-bold uppercase tracking-[0.06em] text-slate-500">
               <span>Devis</span>
               <span>Client / chantier</span>
               <span>Statut</span>
@@ -138,8 +121,10 @@ export default function DevisList({
                   key={item.id}
                   data-testid="devis-list-item"
                   onClick={() => selectionnerDevis(item.id, estSelectionne)}
-                  className={`bf-table-row grid w-full grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_8rem_8rem] items-center gap-3 px-4 py-3 text-left ${
-                    estSelectionne ? "bf-table-row-selected" : ""
+                  className={`group grid w-full grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_8rem_8rem] items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition duration-200 last:border-b-0 hover:bg-sky-50/40 ${
+                    estSelectionne
+                      ? "bg-sky-50/70 shadow-[inset_3px_0_0_#0284c7]"
+                      : "bg-white"
                   }`}
                 >
                   <div className="min-w-0">
@@ -160,13 +145,13 @@ export default function DevisList({
                     </p>
                   </div>
 
-                  <span
-                    className={`bf-status-pill justify-self-start ${getStatutClasses(
-                      item.statut
-                    )}`}
+                  <Badge
+                    status={item.statut}
+                    dot
+                    className="justify-self-start"
                   >
                     {item.statut}
-                  </span>
+                  </Badge>
 
                   <p className="truncate text-right text-sm font-semibold text-slate-950">
                     {formatMontant(totalTvac)}

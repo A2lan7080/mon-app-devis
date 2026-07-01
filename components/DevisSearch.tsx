@@ -17,7 +17,7 @@ type Props = {
 };
 
 const champFormulaireClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block min-h-12 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 shadow-inner shadow-slate-900/[0.02] outline-none transition duration-200 placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100";
 
 export default function DevisSearch({
   recherche,
@@ -31,6 +31,7 @@ export default function DevisSearch({
   return (
     <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
       <input
+        aria-label="Rechercher un devis"
         type="text"
         value={recherche}
         onChange={(e) => setRecherche(e.target.value)}
@@ -39,6 +40,7 @@ export default function DevisSearch({
       />
 
       <select
+        aria-label="Filtrer par statut"
         value={filtreStatut}
         onChange={(e) => setFiltreStatut(e.target.value as FiltreStatut)}
         className={champFormulaireClasses}
@@ -52,6 +54,7 @@ export default function DevisSearch({
       </select>
 
       <select
+        aria-label="Filtrer par archivage"
         value={filtreArchivage}
         onChange={(e) =>
           setFiltreArchivage(e.target.value as FiltreArchivage)

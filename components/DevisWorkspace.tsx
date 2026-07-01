@@ -10,6 +10,9 @@ import DevisPreviewModal from "./DevisPreviewModal";
 import DevisSearch from "./DevisSearch";
 import DevisSendModal, { type DevisSendValues } from "./DevisSendModal";
 import MobileFullscreenModal from "./MobileFullscreenModal";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import SectionHeader from "./ui/SectionHeader";
 import { STATUTS_DEVIS } from "../lib/devis-constants";
 import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type {
@@ -155,57 +158,41 @@ export default function DevisWorkspace({
       : "Envoyer";
   const ouvrirFenetreEnvoi = () => setFenetreEnvoiOuverte(true);
   const actionsCreationDesktop = (
-    <button
+    <Button
       type="submit"
       form={creationFormDesktopId}
-      className="bf-button-primary"
+      variant="accent"
     >
       Enregistrer
-    </button>
+    </Button>
   );
   const actionsDetailDesktop = modeEdition ? (
     <>
-      <button
-        type="button"
-        onClick={enregistrerEdition}
-        className="bf-button-primary"
-      >
+      <Button variant="accent" onClick={enregistrerEdition}>
         Enregistrer
-      </button>
-      <button
-        type="button"
-        onClick={annulerEdition}
-        className="bf-button-secondary"
-      >
+      </Button>
+      <Button variant="secondary" onClick={annulerEdition}>
         Annuler
-      </button>
+      </Button>
     </>
   ) : (
     <>
       {!devisEstVerrouille && (
-        <button
-          type="button"
+        <Button
+          variant="accent"
           onClick={ouvrirFenetreEnvoi}
-          disabled={envoiEnCours}
-          className="bf-button-soft disabled:cursor-not-allowed disabled:opacity-60"
+          loading={envoiEnCours}
+          loadingLabel="Envoi..."
         >
-          {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
-        </button>
+          {libelleEnvoiDevis}
+        </Button>
       )}
-      <button
-        type="button"
-        onClick={handleExporterPdf}
-        className="bf-button-primary"
-      >
+      <Button variant="secondary" onClick={handleExporterPdf}>
         PDF
-      </button>
-      <button
-        type="button"
-        onClick={dupliquerDevis}
-        className="bf-button-secondary"
-      >
+      </Button>
+      <Button variant="secondary" onClick={dupliquerDevis}>
         Dupliquer
-      </button>
+      </Button>
     </>
   );
 
@@ -219,30 +206,30 @@ export default function DevisWorkspace({
       />
 
       {devis.length === 0 && !afficherFormulaire && (
-        <div className="bf-card mb-4 p-4 sm:p-5 md:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h3 className="text-xl font-bold text-slate-950">
-                Bienvenue sur BatiFlow
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Créez votre premier devis en quelques secondes
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onCreateFirstDevis}
-              className="bf-button-primary w-full sm:w-auto"
-            >
-              Créer mon premier devis
-            </button>
-          </div>
-        </div>
+        <Card variant="info" className="mb-4 shadow-sm" padding="lg">
+          <SectionHeader
+            headingLevel={3}
+            title="Bienvenue sur BatiFlow"
+            description="Créez votre premier devis en quelques secondes"
+            actions={
+              <Button onClick={onCreateFirstDevis} fullWidth>
+                Créer mon premier devis
+              </Button>
+            }
+          />
+        </Card>
       )}
 
       <div className="grid gap-4 lg:gap-6">
-        <div className="bf-card min-w-0 overflow-hidden p-4 sm:p-5 md:p-6">
+        <Card className="min-w-0 overflow-hidden shadow-[0_12px_30px_rgba(15,23,42,0.06)] md:p-6" padding="md">
+          <SectionHeader
+            headingLevel={3}
+            eyebrow="Portefeuille devis"
+            title="Suivi des propositions"
+            description="Retrouve rapidement un devis, son statut et son montant."
+          />
+
+          <div className="mt-5">
           <DevisSearch
             recherche={recherche}
             setRecherche={setRecherche}
@@ -252,6 +239,7 @@ export default function DevisWorkspace({
             setFiltreArchivage={setFiltreArchivage}
             statuts={STATUTS_DEVIS}
           />
+          </div>
 
           <DevisList
             devis={devisFiltres}
@@ -261,7 +249,7 @@ export default function DevisWorkspace({
             setModeEdition={setModeEdition}
             onCreateFirstDevis={onCreateFirstDevis}
           />
-        </div>
+        </Card>
 
       </div>
 
@@ -269,6 +257,7 @@ export default function DevisWorkspace({
         open={afficherFormulaire}
         title={titreMobile}
         onClose={onCloseFormulaire}
+        premium
       >
         <DevisForm
           devis={devis}
@@ -286,6 +275,7 @@ export default function DevisWorkspace({
         open={detailOuvert}
         title={titreMobile}
         onClose={fermerDetail}
+        premium
       >
         <DevisDetailPanel
           devisSelectionne={devisSelectionne}
@@ -321,6 +311,7 @@ export default function DevisWorkspace({
         eyebrow="Création devis"
         actions={actionsCreationDesktop}
         onClose={onCloseFormulaire}
+        premium
       >
         <DevisForm
           devis={devis}
@@ -340,6 +331,7 @@ export default function DevisWorkspace({
         eyebrow={modeEdition ? "Modification devis" : "Consultation devis"}
         actions={actionsDetailDesktop}
         onClose={fermerDetail}
+        premium
       >
         <DevisDetailPanel
           devisSelectionne={devisSelectionne}

@@ -67,9 +67,9 @@ function getPageAccent(vue: VuePrincipale) {
       };
     case "admin":
       return {
-        dot: "bg-amber-500",
+        dot: "bg-orange-400",
         subtitle:
-          "Pilote les réglages, la bibliothèque et la valeur business.",
+          "Pilote la valeur signée, le pipeline et les priorités commerciales.",
       };
     default:
       return {
@@ -160,10 +160,12 @@ export default function AdminShell({
       ? "Chantiers"
       : vueAffichee === "factures"
       ? "Factures"
-      : "Admin";
+      : "Dashboard";
 
   const accentPage = getPageAccent(vueAffichee);
   const actionPrincipale = getActionPrincipale(vueAffichee, afficherFormulaire);
+  const estDashboard = vueAffichee === "admin";
+  const estDevis = vueAffichee === "devis";
 
   useEffect(() => {
     if (!menuMobileOuvert) return;
@@ -267,7 +269,7 @@ export default function AdminShell({
     },
     {
       id: "admin",
-      label: "Admin",
+      label: "Dashboard",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
       activeButton: "border-amber-200 bg-amber-50 text-amber-800 shadow-sm",
@@ -316,7 +318,7 @@ export default function AdminShell({
     },
     {
       id: "admin",
-      label: "Admin",
+      label: "Dashboard",
       icon: "⚙️",
       accent: "bg-amber-50 text-amber-800",
       activeButton: "border-amber-200 bg-amber-50 text-amber-800 shadow-sm",
@@ -391,7 +393,15 @@ export default function AdminShell({
           </div>
         </aside>
 
-        <section className="min-w-0 flex-1 p-4 pb-28 md:h-screen md:overflow-y-auto md:p-8 md:pb-8">
+        <section
+          className={`min-w-0 flex-1 p-4 pb-28 md:h-screen md:overflow-y-auto md:p-8 md:pb-8 ${
+            estDashboard
+              ? "bg-gradient-to-br from-slate-50 via-slate-100 to-sky-50/50"
+              : estDevis
+                ? "bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30"
+                : ""
+          }`}
+        >
           <div className="mx-auto max-w-7xl">
             <div className="bf-card mb-3 p-4 md:hidden">
               <div className="flex justify-center">
@@ -399,46 +409,90 @@ export default function AdminShell({
               </div>
             </div>
 
-            <header className="bf-card mb-4 overflow-hidden md:mb-8">
-              <div className="border-b border-slate-100 bg-gradient-to-r from-white via-slate-50 to-white p-4 md:p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      {sauvegardeEnCours && (
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                          Synchronisation...
-                        </span>
-                      )}
-                    </div>
+            {!estDashboard && (
+              <header
+                className={`relative mb-4 overflow-hidden md:mb-8 ${
+                  estDevis
+                    ? "rounded-[1.75rem] border border-slate-800 bg-slate-950 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]"
+                    : "bf-card"
+                }`}
+              >
+                {estDevis && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-14 -top-20 h-52 w-52 rounded-full bg-orange-500/20 blur-3xl"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl"
+                    />
+                  </>
+                )}
+                <div
+                  className={`relative p-4 md:p-6 ${
+                    estDevis
+                      ? ""
+                      : "border-b border-slate-100 bg-gradient-to-r from-white via-slate-50 to-white"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        {sauvegardeEnCours && (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              estDevis
+                                ? "border border-white/10 bg-white/10 text-slate-200"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            Synchronisation...
+                          </span>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`h-3 w-3 shrink-0 rounded-full ${accentPage.dot}`}
-                      />
-                      <h2 className="text-2xl font-bold md:text-3xl">
-                        {titre}
-                      </h2>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`h-3 w-3 shrink-0 rounded-full ${accentPage.dot}`}
+                        />
+                        <h2
+                          className={`text-2xl font-bold tracking-tight md:text-3xl ${
+                            estDevis ? "text-white" : ""
+                          }`}
+                        >
+                          {titre}
+                        </h2>
+                      </div>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                      {accentPage.subtitle}
-                    </p>
-                  </div>
-
-                  {actionPrincipale && (
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                      <button
-                        data-testid="primary-action"
-                        onClick={handleActionPrincipale}
-                        className="bf-button-primary w-full sm:w-auto"
+                      <p
+                        className={`mt-2 text-sm ${
+                          estDevis ? "text-slate-300" : "text-slate-500"
+                        }`}
                       >
-                        {actionPrincipale}
-                      </button>
+                        {accentPage.subtitle}
+                      </p>
                     </div>
-                  )}
+
+                    {actionPrincipale && (
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                        <button
+                          data-testid="primary-action"
+                          onClick={handleActionPrincipale}
+                          className={
+                            estDevis
+                              ? "min-h-11 w-full rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(249,115,22,0.28)] transition duration-200 hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_14px_30px_rgba(249,115,22,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 motion-reduce:transform-none sm:w-auto"
+                              : "bf-button-primary w-full sm:w-auto"
+                          }
+                        >
+                          {actionPrincipale}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </header>
+              </header>
+            )}
 
             {!entrepriseConfiguree && (
               <div className="bf-card mb-4 border-amber-200 bg-amber-50 p-4 md:mb-6">

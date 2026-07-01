@@ -16,6 +16,8 @@ import {
 import { formatNumeroDevisPourAffichage } from "../lib/format-numero-devis";
 import type { PrestationEdition } from "../hooks/useDevisActions";
 import type { Devis, NouvelleLigneState, StatutDevis } from "../types/devis";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
 
 type DevisBusiness = Devis & {
   acomptePourcentage: number;
@@ -80,21 +82,6 @@ type Props = {
   onClose?: () => void;
 };
 
-function getStatutClasses(statut: StatutDevis) {
-  switch (statut) {
-    case "Brouillon":
-      return "bg-slate-200 text-slate-700";
-    case "Envoyé":
-      return "bg-blue-100 text-blue-700";
-    case "Accepté":
-      return "bg-emerald-100 text-emerald-700";
-    case "Refusé":
-      return "bg-red-100 text-red-700";
-    default:
-      return "bg-slate-200 text-slate-700";
-  }
-}
-
 const champFormulaireClasses =
   "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 sm:px-4 sm:py-3";
 
@@ -110,11 +97,8 @@ const styleDateMobile = {
   appearance: "none",
 } as const;
 
-const actionPrincipaleMobile =
-  "rounded-xl px-3 py-2.5 text-xs font-semibold transition";
-
 const actionDesktop =
-  "w-full rounded-xl px-4 py-3 text-sm font-semibold transition";
+  "w-full rounded-xl px-4 py-3 text-sm font-semibold transition duration-200";
 
 const actionVerrouilleClasses = "disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -252,106 +236,169 @@ export default function DevisDetailPanel({
     return (
       <>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm text-slate-500">Fiche devis</p>
-              <h3 className="mt-1 break-all text-xl font-bold sm:text-2xl">
-                {numeroDevisAffiche}
-              </h3>
+          <div className="relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-gradient-to-br from-white via-white to-sky-50 p-5 text-slate-950 shadow-[0_18px_44px_rgba(15,23,42,0.10)] sm:p-6">
+            <span
+              aria-hidden="true"
+              className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/12 blur-3xl"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-sky-500/12 blur-3xl"
+            />
+
+            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
+                  Fiche devis
+                </p>
+                <h3 className="mt-2 break-all text-2xl font-bold tracking-tight sm:text-3xl">
+                  {numeroDevisAffiche}
+                </h3>
+                <p className="mt-2 break-words text-sm text-slate-600">
+                  {devisSelectionne.client}
+                  {devisSelectionne.chantierTitre
+                    ? ` · ${devisSelectionne.chantierTitre}`
+                    : ""}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  tone={
+                    devisEstAccepte
+                      ? "success"
+                      : devisEstRefuse
+                        ? "danger"
+                        : devisSelectionne.statut === "Envoyé"
+                          ? "info"
+                          : "neutral"
+                  }
+                  dot
+                  data-testid="devis-detail-status"
+                >
+                  {devisSelectionne.statut}
+                </Badge>
+
+                {devisSelectionne.archive && (
+                  <Badge tone="neutral">
+                    Archivé
+                  </Badge>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <span
-                data-testid="devis-detail-status"
-                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                  devisSelectionne.statut
-                )}`}
-              >
-                {devisSelectionne.statut}
-              </span>
-
-              {devisSelectionne.archive && (
-                <span className="inline-flex rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
-                  Archivé
-                </span>
-              )}
+            <div className="relative mt-6 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-4 shadow-sm">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-orange-700">
+                  Total TVAC
+                </p>
+                <p className="mt-2 break-words text-xl font-bold text-slate-950 sm:text-2xl">
+                  {formatMontant(totalTvacSelectionne)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-slate-400">
+                  Validité
+                </p>
+                <p className="mt-2 text-sm font-bold text-slate-950 sm:text-base">
+                  {validiteSelectionnee.dateValidite || `${devisSelectionne.validiteJours} jours`}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {validiteSelectionnee.statutLabel}
+                </p>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 md:hidden">
             {!devisEstTraite && (
-              <button
+              <Button
                 onClick={ouvrirEdition}
-                className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+                variant="secondary"
+                size="sm"
+                fullWidth
               >
                 Modifier
-              </button>
+              </Button>
             )}
 
-            <button
+            <Button
               data-testid="devis-export-pdf"
               onClick={handleExporterPdf}
-              className={`${actionPrincipaleMobile} bg-slate-900 text-white hover:opacity-90`}
+              variant="primary"
+              size="sm"
+              fullWidth
             >
               PDF
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setAfficherActionsMobile((prev) => !prev)}
-              className={`${actionPrincipaleMobile} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              variant="secondary"
+              size="sm"
+              fullWidth
             >
               Plus
-            </button>
+            </Button>
           </div>
 
           {afficherActionsMobile && (
-            <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 md:hidden">
-              <button
+            <div className="grid gap-2 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-lg md:hidden">
+              <Button
                 onClick={dupliquerDevis}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+                variant="secondary"
+                fullWidth
               >
                 Dupliquer
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={handleEnvoyerParMail}
                 disabled={envoiEnCours || devisEstRefuse}
+                loading={envoiEnCours}
+                loadingLabel="Envoi..."
+                variant="accent"
+                fullWidth
                 title={
                   devisEstRefuse
                     ? "Ce devis est refusé et ne peut plus être renvoyé."
                     : undefined
                 }
-                className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60`}
+                className={devisEstTraite ? "hidden" : ""}
               >
-                {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
-              </button>
+                {libelleEnvoiDevis}
+              </Button>
 
               {!devisSelectionne.archive ? (
-                <button
+                <Button
                   onClick={archiverDevis}
                   disabled={devisEstTraite}
+                  variant="warning"
+                  fullWidth
                   title={
                     devisEstTraite
                       ? messageVerrouillage
                       : undefined
                   }
-                  className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ${actionVerrouilleClasses}`}
+                  className={devisEstTraite ? "hidden" : ""}
                 >
                   Archiver
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   onClick={restaurerDevis}
                   disabled={devisEstTraite}
+                  variant="success"
+                  fullWidth
                   title={
                     devisEstTraite
                       ? messageVerrouillage
                       : undefined
                   }
-                  className={`${devisEstTraite ? "hidden " : ""}w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 ${actionVerrouilleClasses}`}
+                  className={devisEstTraite ? "hidden" : ""}
                 >
                   Restaurer
-                </button>
+                </Button>
               )}
 
               <button
@@ -425,80 +472,64 @@ export default function DevisDetailPanel({
           )}
 
           {devisEstTraite && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <div
+              className={`rounded-2xl border p-4 text-sm shadow-sm ${
+                devisEstAccepte
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : "border-red-200 bg-red-50 text-red-900"
+              }`}
+            >
               {messageVerrouillage} Les actions disponibles restent limitées à
               la consultation, au PDF et à la duplication.
             </div>
           )}
 
-          <div className="hidden gap-2 md:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <button
+          <div className="hidden gap-2 md:grid md:grid-cols-3">
+            <Button
               onClick={ouvrirEdition}
               disabled={devisEstTraite}
+              variant="secondary"
+              fullWidth
               title={
                 devisEstTraite
                   ? messageVerrouillage
                   : undefined
               }
-              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 ${actionVerrouilleClasses}`}
+              className={devisEstTraite ? "hidden" : ""}
             >
               Modifier
-            </button>
-
-            <button
-              onClick={dupliquerDevis}
-              className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            >
-              Dupliquer
-            </button>
-
-            <button
-              onClick={handleExporterPdf}
-              className={`${actionDesktop} bg-slate-900 text-white hover:opacity-90`}
-            >
-              Export PDF
-            </button>
-
-            <button
-              data-testid="devis-send-email"
-              onClick={handleEnvoyerParMail}
-              disabled={envoiEnCours || devisEstRefuse}
-              title={
-                devisEstRefuse
-                  ? "Ce devis est refusé et ne peut plus être renvoyé."
-                  : undefined
-              }
-              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60`}
-            >
-              {envoiEnCours ? "Envoi..." : libelleEnvoiDevis}
-            </button>
+            </Button>
 
             {!devisSelectionne.archive ? (
-              <button
+              <Button
                 onClick={archiverDevis}
                 disabled={devisEstTraite}
+                variant="warning"
+                fullWidth
                 title={
                   devisEstTraite
                     ? messageVerrouillage
                     : undefined
                 }
-                className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 ${actionVerrouilleClasses}`}
+                className={devisEstTraite ? "hidden" : ""}
               >
                 Archiver
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 onClick={restaurerDevis}
                 disabled={devisEstTraite}
+                variant="success"
+                fullWidth
                 title={
                   devisEstTraite
                     ? messageVerrouillage
                     : undefined
                 }
-                className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ${actionVerrouilleClasses}`}
+                className={devisEstTraite ? "hidden" : ""}
               >
                 Restaurer
-              </button>
+              </Button>
             )}
 
             <button
@@ -509,23 +540,15 @@ export default function DevisDetailPanel({
                   ? "Ce devis est déjà traité et ne peut plus être supprimé."
                   : undefined
               }
-              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 sm:col-span-2 xl:col-span-1 ${actionVerrouilleClasses}`}
+              className={`${devisEstTraite ? "hidden " : ""}${actionDesktop} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 ${actionVerrouilleClasses}`}
             >
               Supprimer
             </button>
 
-            {onClose && (
-              <button
-                onClick={onClose}
-                className={`${actionDesktop} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-              >
-                Fermer
-              </button>
-            )}
           </div>
 
           <div
-            className={`hidden rounded-2xl bg-slate-50 p-4 md:block ${
+            className={`hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm md:block ${
               devisEstTraite ? "md:hidden" : ""
             }`}
           >
@@ -541,13 +564,9 @@ export default function DevisDetailPanel({
                 </p>
               </div>
 
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatutClasses(
-                  devisSelectionne.statut
-                )}`}
-              >
+              <Badge status={devisSelectionne.statut} dot>
                 {devisSelectionne.statut}
-              </span>
+              </Badge>
             </div>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -587,7 +606,13 @@ export default function DevisDetailPanel({
         </div>
 
         {(devisSelectionne.acceptedAt || devisSelectionne.refusedAt) && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div
+            className={`mt-6 rounded-2xl border p-4 shadow-sm ${
+              devisSelectionne.acceptedAt
+                ? "border-emerald-200 bg-emerald-50/70"
+                : "border-red-200 bg-red-50/70"
+            }`}
+          >
             {devisSelectionne.acceptedAt && (
               <>
                 <p className="text-sm font-semibold text-emerald-700">
@@ -622,7 +647,7 @@ export default function DevisDetailPanel({
         )}
 
         <div className="mt-6 space-y-4">
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-white to-sky-50 p-4 shadow-sm transition duration-200 hover:shadow-md">
             <p className="text-sm text-slate-500">Client</p>
             <p className="mt-1 wrap-break-word text-lg font-semibold">
               {devisSelectionne.client}
@@ -633,7 +658,7 @@ export default function DevisDetailPanel({
             </p>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
             <p className="text-sm text-slate-500">Chantier lié</p>
             <p className="mt-1 wrap-break-word font-semibold">
               {devisSelectionne.chantierTitre || "Aucun chantier lié"}
@@ -641,7 +666,7 @@ export default function DevisDetailPanel({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
               <p className="text-sm text-slate-500">Adresse</p>
               <p className="mt-1 wrap-break-word font-semibold">
                 {devisSelectionne.adresse || "Non renseignée"}
@@ -653,7 +678,7 @@ export default function DevisDetailPanel({
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
               <p className="text-sm text-slate-500">Contact</p>
               <p className="mt-1 wrap-break-word font-semibold">
                 {devisSelectionne.email || "Non renseigné"}
@@ -668,17 +693,17 @@ export default function DevisDetailPanel({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
               <p className="text-sm text-slate-500">Date</p>
               <p className="mt-1 font-semibold">{devisSelectionne.date}</p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
               <p className="text-sm text-slate-500">TVA par défaut</p>
               <p className="mt-1 font-semibold">{devisSelectionne.tvaTaux}%</p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-3 xl:col-span-1">
+            <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm transition duration-200 hover:shadow-md sm:col-span-3 xl:col-span-1">
               <p className="text-sm text-slate-500">Validité</p>
               <p className="mt-1 font-semibold">
                 {validiteSelectionnee.dateValidite
@@ -695,7 +720,7 @@ export default function DevisDetailPanel({
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">Prestations</p>
               <p className="text-sm font-semibold text-slate-700">
@@ -711,7 +736,7 @@ export default function DevisDetailPanel({
                 return (
                   <div
                     key={ligne.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4"
+                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 transition duration-200 hover:border-slate-300 hover:bg-white"
                   >
                     <p className="text-sm font-semibold text-slate-900">
                       {ligne.designation}
@@ -769,9 +794,9 @@ export default function DevisDetailPanel({
             </div>
 
             <div className="mt-4 hidden overflow-x-auto md:block">
-              <table className="min-w-full">
+              <table className="min-w-full overflow-hidden rounded-xl border border-slate-200">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                  <tr className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-sky-50/50 text-left text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
                     <th className="px-3 py-3 font-medium">Désignation</th>
                     <th className="px-3 py-3 font-medium">Qté</th>
                     <th className="px-3 py-3 font-medium">Unité</th>
@@ -787,7 +812,7 @@ export default function DevisDetailPanel({
                     return (
                       <tr
                         key={ligne.id}
-                        className="border-b border-slate-200 last:border-b-0"
+                        className="border-b border-slate-100 transition duration-150 last:border-b-0 hover:bg-sky-50/40"
                       >
                         <td className="px-3 py-3 text-sm font-medium">
                           {ligne.designation}
@@ -812,7 +837,7 @@ export default function DevisDetailPanel({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-500">Total HT</p>
               <p
                 data-testid="devis-total-ht"
@@ -822,7 +847,7 @@ export default function DevisDetailPanel({
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-500">TVA totale</p>
               <p
                 data-testid="devis-total-tva"
@@ -832,17 +857,17 @@ export default function DevisDetailPanel({
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-4 shadow-sm">
               <p className="text-sm text-slate-500">Total TVAC</p>
               <p
                 data-testid="devis-total-tvac"
-                className="mt-1 wrap-break-word font-semibold"
+                className="mt-1 wrap-break-word text-lg font-bold text-slate-950"
               >
                 {formatMontant(totalTvacSelectionne)}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-500">Acompte</p>
               <p className="mt-1 wrap-break-word font-semibold">
                 {formatMontant(acompteSelectionne)}
@@ -851,7 +876,7 @@ export default function DevisDetailPanel({
           </div>
 
           {totauxSelectionne.detailTva.length > 0 && (
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <p className="text-sm text-slate-500">Détail TVA par taux</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
                 {totauxSelectionne.detailTva.map((ligne) => (
@@ -863,7 +888,7 @@ export default function DevisDetailPanel({
             </div>
           )}
 
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
             <p className="text-sm text-slate-500">Conditions</p>
             <p className="mt-2 whitespace-pre-line wrap-break-word text-sm leading-6 text-slate-700">
               {devisSelectionne.conditions || "Aucune condition particulière."}
