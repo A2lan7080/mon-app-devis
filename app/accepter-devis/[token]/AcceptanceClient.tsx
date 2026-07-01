@@ -354,18 +354,49 @@ export default function AcceptanceClient({ token }: Props) {
     );
   }
 
+  const statutNormalise = devis.statut.trim().toLowerCase();
+  const devisAccepte = statutNormalise === "accepté" || alreadyAccepted;
+  const devisRefuse = statutNormalise === "refusé" || alreadyRefused;
   const devisTraite = alreadyAccepted || alreadyRefused;
   const etapes: Array<{
     label: string;
-    etat: "terminee" | "active" | "avenir";
-  }> = [
-    { label: "Envoyé", etat: "terminee" },
-    {
-      label: "Consultation",
-      etat: devisTraite ? "terminee" : "active",
-    },
-    { label: "Décision", etat: devisTraite ? "active" : "avenir" },
-  ];
+    detail: string;
+    etat: "terminee" | "active" | "avenir" | "enregistree";
+  }> = devisAccepte
+    ? [
+        { label: "Envoyé", detail: "Transmis", etat: "terminee" },
+        { label: "Consultation", detail: "Consulté", etat: "terminee" },
+        { label: "Décision", detail: "Accepté", etat: "terminee" },
+        {
+          label: "Suivi entreprise",
+          detail: "Prochaine étape",
+          etat: "active",
+        },
+      ]
+    : devisRefuse
+      ? [
+          { label: "Envoyé", detail: "Transmis", etat: "terminee" },
+          { label: "Consultation", detail: "Consulté", etat: "terminee" },
+          {
+            label: "Décision",
+            detail: "Réponse enregistrée",
+            etat: "enregistree",
+          },
+        ]
+      : [
+          { label: "Envoyé", detail: "Transmis", etat: "terminee" },
+          {
+            label: "Consultation",
+            detail: "Vous êtes ici",
+            etat: "active",
+          },
+          { label: "Décision", detail: "En attente", etat: "avenir" },
+        ];
+  const statutBadgeClasses = devisAccepte
+    ? "border-emerald-300 bg-emerald-100 px-3 py-1.5 text-sm text-emerald-900 shadow-sm"
+    : devisRefuse
+      ? "border-rose-200 bg-slate-100 px-2.5 py-1 text-xs text-slate-700"
+      : "border-sky-200 bg-sky-100 px-2.5 py-1 text-xs text-sky-900";
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-slate-950 sm:px-6 sm:py-8 lg:px-8">
@@ -391,17 +422,20 @@ export default function AcceptanceClient({ token }: Props) {
 
           <ol
             aria-label="Progression du devis"
-            className="mt-6 grid grid-cols-3 border-t border-sky-200 pt-5"
+            className={`mt-6 flex flex-col gap-4 border-t border-sky-200 pt-5 sm:grid sm:gap-0 ${
+              etapes.length === 4 ? "sm:grid-cols-4" : "sm:grid-cols-3"
+            }`}
           >
             {etapes.map((etape, index) => (
               <li
                 key={etape.label}
-                className="relative flex flex-col items-center px-1 text-center"
+                className="relative flex items-start gap-3 text-left sm:flex-col sm:items-center sm:gap-0 sm:px-1 sm:text-center"
               >
                 {index < etapes.length - 1 && (
                   <span
-                    className={`absolute left-1/2 top-3 h-0.5 w-full ${
-                      etape.etat === "terminee"
+                    className={`absolute left-[0.7rem] top-6 h-[calc(100%+1rem)] w-0.5 transition-colors duration-300 sm:left-1/2 sm:top-3 sm:h-0.5 sm:w-full ${
+                      etape.etat === "terminee" ||
+                      etape.etat === "enregistree"
                         ? "bg-sky-300"
                         : "bg-slate-200"
                     }`}
@@ -409,26 +443,36 @@ export default function AcceptanceClient({ token }: Props) {
                 )}
                 <span
                   aria-current={etape.etat === "active" ? "step" : undefined}
-                  className={`relative flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ring-4 ring-sky-50 ${
+                  className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-4 ring-sky-50 transition-colors duration-300 ${
                     etape.etat === "terminee"
                       ? "bg-sky-600 text-white"
                       : etape.etat === "active"
                         ? "bg-white text-sky-700 outline outline-2 outline-sky-600"
+                        : etape.etat === "enregistree"
+                          ? "bg-slate-500 text-white"
                         : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  {etape.etat === "terminee" ? "✓" : index + 1}
+                  {etape.etat === "terminee" ||
+                  etape.etat === "enregistree"
+                    ? "✓"
+                    : index + 1}
                 </span>
-                <span
-                  className={`mt-2 text-xs font-semibold sm:text-sm ${
-                    etape.etat === "active"
-                      ? "text-sky-800"
-                      : etape.etat === "terminee"
-                        ? "text-slate-700"
-                        : "text-slate-500"
-                  }`}
-                >
-                  {etape.label}
+                <span className="min-w-0 sm:mt-2">
+                  <span
+                    className={`block text-xs font-semibold transition-colors duration-300 sm:text-sm ${
+                      etape.etat === "active"
+                        ? "text-sky-800"
+                        : etape.etat === "terminee"
+                          ? "text-slate-700"
+                          : "text-slate-500"
+                    }`}
+                  >
+                    {etape.label}
+                  </span>
+                  <span className="mt-0.5 block text-[0.68rem] leading-4 text-slate-500 sm:text-xs">
+                    {etape.detail}
+                  </span>
                 </span>
               </li>
             ))}
@@ -476,7 +520,7 @@ export default function AcceptanceClient({ token }: Props) {
               aria-label="Résumé du devis"
               className="grid grid-cols-2 gap-3 lg:grid-cols-4"
             >
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+              <div className="public-card rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
                 <div className="flex items-center gap-2 text-slate-500">
                   <InfoIcon name="document" />
                   <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
@@ -488,7 +532,10 @@ export default function AcceptanceClient({ token }: Props) {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 sm:p-5">
+              <div
+                className="public-card rounded-2xl border border-orange-200 bg-orange-50/60 p-4 sm:p-5"
+                style={{ animationDelay: "60ms" }}
+              >
                 <div className="flex items-center gap-2 text-orange-700">
                   <InfoIcon name="document" />
                   <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
@@ -500,23 +547,31 @@ export default function AcceptanceClient({ token }: Props) {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+              <div
+                className="public-card rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5"
+                style={{ animationDelay: "120ms" }}
+              >
                 <div className="flex items-center gap-2 text-slate-500">
                   <InfoIcon name="calendar" />
                   <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
-                    Validité
+                    {devisAccepte ? "Validité initiale" : "Validité"}
                   </p>
                 </div>
                 <p
                   className={`mt-3 text-sm font-bold sm:text-base ${
-                    devis.validiteExpiree ? "text-red-700" : "text-slate-950"
+                    devis.validiteExpiree && !devisAccepte
+                      ? "text-red-700"
+                      : "text-slate-950"
                   }`}
                 >
                   {devis.dateValidite || "Non renseignée"}
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+              <div
+                className="public-card rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5"
+                style={{ animationDelay: "180ms" }}
+              >
                 <div className="flex items-center gap-2 text-slate-500">
                   <InfoIcon name="status" />
                   <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
@@ -525,14 +580,17 @@ export default function AcceptanceClient({ token }: Props) {
                 </div>
                 <p className="mt-3">
                   <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
-                      alreadyAccepted
-                        ? "bg-emerald-100 text-emerald-800"
-                        : alreadyRefused
-                          ? "bg-slate-200 text-slate-700"
-                          : "bg-sky-100 text-sky-800"
-                    }`}
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-full border font-bold transition-colors duration-300 ${statutBadgeClasses}`}
                   >
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                        devisAccepte
+                          ? "bg-emerald-600"
+                          : devisRefuse
+                            ? "bg-rose-400"
+                            : "bg-orange-500"
+                      }`}
+                    />
                     {devis.statut}
                   </span>
                 </p>
@@ -540,7 +598,10 @@ export default function AcceptanceClient({ token }: Props) {
             </section>
 
             <section className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div
+                className="public-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                style={{ animationDelay: "220ms" }}
+              >
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                     <InfoIcon name="building" />
@@ -567,7 +628,10 @@ export default function AcceptanceClient({ token }: Props) {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div
+                className="public-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                style={{ animationDelay: "280ms" }}
+              >
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
                     <InfoIcon name="user" />
@@ -611,10 +675,14 @@ export default function AcceptanceClient({ token }: Props) {
                 </div>
                 <p
                   className={`text-sm font-semibold ${
-                    devis.validiteExpiree ? "text-red-700" : "text-slate-600"
+                    devis.validiteExpiree && !devisAccepte
+                      ? "text-red-700"
+                      : "text-slate-600"
                   }`}
                 >
-                  {devis.validiteLabel}
+                  {devisAccepte
+                    ? `Validité initiale : ${devis.validiteLabel}`
+                    : devis.validiteLabel}
                 </p>
               </div>
 
@@ -809,7 +877,7 @@ export default function AcceptanceClient({ token }: Props) {
                     type="button"
                     onClick={() => ouvrirConfirmation("accept")}
                     disabled={actionEnCours !== null}
-                    className="min-h-14 w-full rounded-xl bg-emerald-700 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-14 w-full rounded-xl bg-emerald-700 px-5 py-3 text-base font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-md active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     ✓ J&apos;accepte ce devis
                   </button>
@@ -818,7 +886,7 @@ export default function AcceptanceClient({ token }: Props) {
                     type="button"
                     onClick={() => ouvrirConfirmation("refuse")}
                     disabled={actionEnCours !== null}
-                    className="min-h-14 w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-14 w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-semibold text-slate-700 transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-100 hover:shadow-sm active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Je ne souhaite pas donner suite
                   </button>
@@ -930,6 +998,29 @@ export default function AcceptanceClient({ token }: Props) {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes public-card-in {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .public-card {
+          animation: public-card-in 360ms ease-out both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .public-card {
+            animation: none;
+          }
+        }
+      `}</style>
     </main>
   );
 }
