@@ -7,6 +7,7 @@ import MobileFullscreenModal from "./MobileFullscreenModal";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
+import ConfirmDialog from "./ui/ConfirmDialog";
 import EmptyState from "./ui/EmptyState";
 import SectionHeader from "./ui/SectionHeader";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
@@ -99,6 +100,8 @@ export default function ChantiersWorkspace({
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
+  const [confirmationSuppressionOuverte, setConfirmationSuppressionOuverte] =
+    useState(false);
   const [formulaire, setFormulaire] = useState<ChantierFormState>(
     creerFormulaireVide()
   );
@@ -380,18 +383,13 @@ export default function ChantiersWorkspace({
   const supprimerChantier = async () => {
     if (!chantierSelectionne) return;
 
-    const confirmation = window.confirm(
-      `Supprimer définitivement le chantier ${chantierSelectionne.titre} ?`
-    );
-
-    if (!confirmation) return;
-
     try {
       setSauvegardeEnCours(true);
       await deleteDoc(doc(db, "chantiers", chantierSelectionne.id));
       setChantierSelectionneId(null);
       setModeEdition(false);
       setAfficherFormulaire(false);
+      setConfirmationSuppressionOuverte(false);
       resetFormulaire();
     } catch (error) {
       console.error("Erreur suppression chantier :", error);
@@ -734,7 +732,7 @@ export default function ChantiersWorkspace({
               )}
 
               <Button
-                onClick={supprimerChantier}
+                onClick={() => setConfirmationSuppressionOuverte(true)}
                 variant="danger"
                 fullWidth
                 className="sm:col-span-2 xl:col-span-1"
@@ -966,6 +964,16 @@ export default function ChantiersWorkspace({
       >
         {renderFormulaireOuDetail()}
       </MobileFullscreenModal>
+
+      <ConfirmDialog
+        open={confirmationSuppressionOuverte}
+        title="Supprimer ce chantier ?"
+        description={`Le chantier « ${chantierSelectionne?.titre ?? ""} » sera supprimé définitivement. Cette action est irréversible.`}
+        confirmLabel="Supprimer définitivement"
+        loading={sauvegardeEnCours}
+        onCancel={() => setConfirmationSuppressionOuverte(false)}
+        onConfirm={() => void supprimerChantier()}
+      />
     </>
   );
 }

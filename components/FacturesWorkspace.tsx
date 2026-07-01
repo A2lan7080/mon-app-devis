@@ -8,6 +8,7 @@ import MobileFullscreenModal from "./MobileFullscreenModal";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
+import ConfirmDialog from "./ui/ConfirmDialog";
 import EmptyState from "./ui/EmptyState";
 import SectionHeader from "./ui/SectionHeader";
 import { useEntrepriseChantiers } from "../hooks/useEntrepriseChantiers";
@@ -260,6 +261,12 @@ export default function FacturesWorkspace({
   const [modeEdition, setModeEdition] = useState(false);
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [confirmation, setConfirmation] = useState<
+    "fermeture" | "selection" | "suppression" | null
+  >(null);
+  const [factureASelectionnerId, setFactureASelectionnerId] = useState<
+    string | null
+  >(null);
   const [recherchePrestation, setRecherchePrestation] = useState("");
   const [afficherActionsFactureMobile, setAfficherActionsFactureMobile] =
     useState(false);
@@ -789,11 +796,8 @@ export default function FacturesWorkspace({
   };
 
   const demanderFermetureFormulaire = () => {
-    if (
-      !sauvegardeEnCours &&
-      formulaireFactureContientSaisie &&
-      !window.confirm("Fermer la facture en cours sans enregistrer ?")
-    ) {
+    if (!sauvegardeEnCours && formulaireFactureContientSaisie) {
+      setConfirmation("fermeture");
       return;
     }
 
@@ -808,13 +812,9 @@ export default function FacturesWorkspace({
 
   const selectionnerFacture = (factureId: string) => {
     if (afficherFormulaireFacture && formulaireFactureContientSaisie) {
-      const fermerSansEnregistrer = window.confirm(
-        "Fermer la facture en cours sans enregistrer ?"
-      );
-
-      if (!fermerSansEnregistrer) return;
-
-      resetFormulaire();
+      setFactureASelectionnerId(factureId);
+      setConfirmation("selection");
+      return;
     }
 
     setAfficherActionsFactureMobile(false);
@@ -1249,16 +1249,13 @@ export default function FacturesWorkspace({
   const supprimerFacture = async () => {
     if (!factureSelectionnee) return;
 
-    const confirmation = window.confirm("Êtes-vous sûr ?");
-
-    if (!confirmation) return;
-
     try {
       setSauvegardeEnCours(true);
       await deleteDoc(doc(db, "factures", factureSelectionnee.id));
       setFactureSelectionneeId(null);
       setModeEdition(false);
       setAfficherFormulaire(false);
+      setConfirmation(null);
       resetFormulaire();
     } catch (error) {
       console.error("Erreur suppression facture :", error);
@@ -2585,7 +2582,7 @@ export default function FacturesWorkspace({
             )}
 
             <button
-              onClick={supprimerFacture}
+              onClick={() => setConfirmation("suppression")}
               className="bf-button-secondary bf-button-danger w-full"
             >
               Supprimer
@@ -2621,7 +2618,7 @@ export default function FacturesWorkspace({
           )}
 
           <button
-            onClick={supprimerFacture}
+            onClick={() => setConfirmation("suppression")}
             className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition duration-200 hover:bg-red-100"
           >
             Supprimer
@@ -2832,8 +2829,59 @@ export default function FacturesWorkspace({
     </>
   ) : null;
 
+  const confirmerAction = () => {
+    if (confirmation === "suppression") {
+      void supprimerFacture();
+      return;
+    }
+
+    if (confirmation === "fermeture") {
+      fermerFormulaire();
+      setConfirmation(null);
+      return;
+    }
+
+    if (confirmation === "selection" && factureASelectionnerId) {
+      resetFormulaire();
+      setAfficherActionsFactureMobile(false);
+      setFactureSelectionneeId(factureASelectionnerId);
+      setModeEdition(false);
+      setAfficherFormulaire(false);
+      setFactureASelectionnerId(null);
+      setConfirmation(null);
+    }
+  };
+
+  const confirmationSuppression = confirmation === "suppression";
+
   return (
     <>
+      <ConfirmDialog
+        open={confirmation !== null}
+        title={
+          confirmationSuppression
+            ? "Supprimer cette facture ?"
+            : "Fermer sans enregistrer ?"
+        }
+        description={
+          confirmationSuppression
+            ? `La facture « ${factureSelectionnee?.reference ?? ""} » sera supprimée définitivement. Cette action est irréversible.`
+            : "Les informations saisies depuis le dernier enregistrement seront perdues."
+        }
+        confirmLabel={
+          confirmationSuppression
+            ? "Supprimer définitivement"
+            : "Fermer sans enregistrer"
+        }
+        tone={confirmationSuppression ? "danger" : "warning"}
+        loading={confirmationSuppression && sauvegardeEnCours}
+        onCancel={() => {
+          setConfirmation(null);
+          setFactureASelectionnerId(null);
+        }}
+        onConfirm={confirmerAction}
+      />
+
       <MobileFullscreenModal
         open={afficherFormulaireFacture}
         title={modeEdition ? "Modifier la facture" : "Nouvelle facture"}

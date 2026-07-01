@@ -19,6 +19,15 @@ import { useEntrepriseFactures } from "../hooks/useEntrepriseFactures";
 import { useEntreprisePrestations } from "../hooks/useEntreprisePrestations";
 import { useEntrepriseSettings } from "../hooks/useEntrepriseSettings";
 import AdminDashboard from "./AdminDashboard";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import ConfirmDialog from "./ui/ConfirmDialog";
+import EmptyState from "./ui/EmptyState";
+import FeedbackMessage from "./ui/FeedbackMessage";
+import Input from "./ui/Input";
+import LoadingState from "./ui/LoadingState";
+import Select from "./ui/Select";
+import Textarea from "./ui/Textarea";
 import type {
   PrestationBibliotheque,
   UnitePrestation,
@@ -58,9 +67,6 @@ const UNITES_PREDEFINIES: UnitePrestation[] = [
   "heure",
   "jour",
 ];
-
-const champFormulaireClasses =
-  "w-full min-w-0 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
 
 const creerPrestationVide = (): PrestationFormState => ({
   designation: "",
@@ -154,6 +160,12 @@ export default function AdminWorkspace({
   const [uploadLogoEnCours, setUploadLogoEnCours] = useState(false);
   const [infosEntrepriseOuvertes, setInfosEntrepriseOuvertes] = useState(false);
   const [bibliothequeOuverte, setBibliothequeOuverte] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    tone: "success" | "error" | "warning" | "info";
+    message: string;
+  } | null>(null);
+  const [prestationASupprimer, setPrestationASupprimer] =
+    useState<PrestationBibliotheque | null>(null);
 
   const prestationsActives = useMemo(
     () => prestations.filter((prestation) => !prestation.archive),
@@ -218,19 +230,28 @@ export default function AdminWorkspace({
     if (!file) return;
 
     if (!entrepriseId) {
-      alert("Impossible d’identifier l’entreprise.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible d’identifier l’entreprise.",
+      });
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Le fichier doit être une image.");
+      setFeedback({
+        tone: "error",
+        message: "Le fichier doit être une image.",
+      });
       return;
     }
 
     const tailleMax = 2 * 1024 * 1024;
 
     if (file.size > tailleMax) {
-      alert("Le logo ne peut pas dépasser 2 Mo.");
+      setFeedback({
+        tone: "error",
+        message: "Le logo ne peut pas dépasser 2 Mo.",
+      });
       return;
     }
 
@@ -253,12 +274,17 @@ export default function AdminWorkspace({
         logoStoragePath: chemin,
       }));
 
-      alert(
-        "Logo envoyé. Clique maintenant sur Enregistrer pour sauvegarder les informations entreprise."
-      );
+      setFeedback({
+        tone: "success",
+        message:
+          "Logo envoyé. Clique maintenant sur Enregistrer pour sauvegarder les informations entreprise.",
+      });
     } catch (error) {
       console.error("Erreur upload logo :", error);
-      alert("Impossible d’envoyer le logo.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible d’envoyer le logo.",
+      });
     } finally {
       setUploadLogoEnCours(false);
     }
@@ -285,27 +311,37 @@ export default function AdminWorkspace({
 
   const handleSauvegardeEntreprise = async () => {
     if (prochaineFactureInvalide) {
-      alert(
-        `Le prochain numéro de facture doit être au moins ${plusGrandNumeroFacture + 1}.`
-      );
+      setFeedback({
+        tone: "error",
+        message: `Le prochain numéro de facture doit être au moins ${plusGrandNumeroFacture + 1}.`,
+      });
       return;
     }
 
     const succes = await enregistrerEntreprise();
 
     if (succes) {
-      alert("Informations entreprise enregistrées.");
+      setFeedback({
+        tone: "success",
+        message: "Informations entreprise enregistrées.",
+      });
     }
   };
 
   const enregistrerPrestation = async () => {
     if (!entrepriseId || !createdByUid) {
-      alert("Impossible d’identifier l’entreprise ou l’utilisateur.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible d’identifier l’entreprise ou l’utilisateur.",
+      });
       return;
     }
 
     if (!formulairePrestation.designation.trim()) {
-      alert("La désignation est obligatoire.");
+      setFeedback({
+        tone: "error",
+        message: "La désignation est obligatoire.",
+      });
       return;
     }
 
@@ -313,12 +349,18 @@ export default function AdminWorkspace({
     const tvaTaux = Number(formulairePrestation.tvaTaux);
 
     if (Number.isNaN(prixUnitaire) || prixUnitaire < 0) {
-      alert("Le prix unitaire doit être valide.");
+      setFeedback({
+        tone: "error",
+        message: "Le prix unitaire doit être valide.",
+      });
       return;
     }
 
     if (Number.isNaN(tvaTaux) || tvaTaux < 0) {
-      alert("Le taux de TVA doit être valide.");
+      setFeedback({
+        tone: "error",
+        message: "Le taux de TVA doit être valide.",
+      });
       return;
     }
 
@@ -332,7 +374,10 @@ export default function AdminWorkspace({
           prestations.find((item) => item.id === prestationEditionId) ?? null;
 
         if (!prestationExistante) {
-          alert("La prestation à modifier est introuvable.");
+          setFeedback({
+            tone: "error",
+            message: "La prestation à modifier est introuvable.",
+          });
           return;
         }
 
@@ -347,6 +392,10 @@ export default function AdminWorkspace({
         });
 
         resetPrestationFormulaire();
+        setFeedback({
+          tone: "success",
+          message: "Prestation mise à jour.",
+        });
         return;
       }
 
@@ -374,9 +423,16 @@ export default function AdminWorkspace({
       );
 
       resetPrestationFormulaire();
+      setFeedback({
+        tone: "success",
+        message: "Prestation ajoutée à la bibliothèque.",
+      });
     } catch (error) {
       console.error("Erreur enregistrement prestation :", error);
-      alert("Impossible d’enregistrer la prestation.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible d’enregistrer la prestation.",
+      });
     } finally {
       setSauvegardePrestationEnCours(false);
     }
@@ -407,9 +463,16 @@ export default function AdminWorkspace({
       if (prestationEditionId === prestation.id) {
         resetPrestationFormulaire();
       }
+      setFeedback({
+        tone: "success",
+        message: "Prestation archivée.",
+      });
     } catch (error) {
       console.error("Erreur archivage prestation :", error);
-      alert("Impossible d’archiver la prestation.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible d’archiver la prestation.",
+      });
     } finally {
       setSauvegardePrestationEnCours(false);
     }
@@ -424,32 +487,45 @@ export default function AdminWorkspace({
         archive: false,
         updatedAt: Date.now(),
       });
+      setFeedback({
+        tone: "success",
+        message: "Prestation restaurée.",
+      });
     } catch (error) {
       console.error("Erreur restauration prestation :", error);
-      alert("Impossible de restaurer la prestation.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible de restaurer la prestation.",
+      });
     } finally {
       setSauvegardePrestationEnCours(false);
     }
   };
 
-  const supprimerPrestation = async (prestation: PrestationBibliotheque) => {
-    const confirmation = window.confirm(
-      `Supprimer définitivement la prestation ${prestation.designation} ?`
-    );
-
-    if (!confirmation) return;
+  const supprimerPrestation = async () => {
+    if (!prestationASupprimer) return;
 
     try {
       setSauvegardePrestationEnCours(true);
 
-      await deleteDoc(doc(db, "prestationsBibliotheque", prestation.id));
+      await deleteDoc(
+        doc(db, "prestationsBibliotheque", prestationASupprimer.id)
+      );
 
-      if (prestationEditionId === prestation.id) {
+      if (prestationEditionId === prestationASupprimer.id) {
         resetPrestationFormulaire();
       }
+      setFeedback({
+        tone: "success",
+        message: "Prestation supprimée définitivement.",
+      });
+      setPrestationASupprimer(null);
     } catch (error) {
       console.error("Erreur suppression prestation :", error);
-      alert("Impossible de supprimer la prestation.");
+      setFeedback({
+        tone: "error",
+        message: "Impossible de supprimer la prestation.",
+      });
     } finally {
       setSauvegardePrestationEnCours(false);
     }
@@ -472,15 +548,41 @@ export default function AdminWorkspace({
         totalRefuses={totalRefuses}
       />
 
+      {feedback && (
+        <FeedbackMessage
+          tone={feedback.tone}
+          className="mt-4 sm:mt-6"
+          aria-live="polite"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>{feedback.message}</span>
+            <button
+              type="button"
+              onClick={() => setFeedback(null)}
+              className="rounded-lg px-2 py-1 text-xs font-bold underline-offset-4 transition duration-150 hover:bg-black/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none"
+            >
+              Fermer
+            </button>
+          </div>
+        </FeedbackMessage>
+      )}
+
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="bf-card p-4 sm:p-6">
+        <Card
+          padding="lg"
+          className="overflow-hidden shadow-[0_12px_35px_rgba(15,23,42,0.06)]"
+        >
           <button
             type="button"
             onClick={() => setInfosEntrepriseOuvertes((prev) => !prev)}
-            className="flex w-full items-center justify-between gap-4 text-left"
+            className="-m-2 flex w-[calc(100%+1rem)] items-center justify-between gap-4 rounded-2xl p-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            aria-expanded={infosEntrepriseOuvertes}
           >
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
+                Paramètres
+              </p>
+              <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
                 Entreprise
               </h3>
               <p className="mt-1 text-sm text-slate-500">
@@ -491,7 +593,7 @@ export default function AdminWorkspace({
               </p>
             </div>
 
-            <span className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+            <span className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
               {infosEntrepriseOuvertes ? "Masquer ↑" : "Afficher ↓"}
             </span>
           </button>
@@ -515,25 +617,27 @@ export default function AdminWorkspace({
                   </p>
                 </div>
 
-                <button
+                <Button
                   onClick={handleSauvegardeEntreprise}
                   disabled={
                     chargementEntreprise ||
                     sauvegardeEntrepriseEnCours ||
                     uploadLogoEnCours
                   }
-                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  loading={sauvegardeEntrepriseEnCours}
+                  loadingLabel="Enregistrement…"
+                  className="w-full sm:w-auto"
                 >
-                  {sauvegardeEntrepriseEnCours
-                    ? "Enregistrement..."
-                    : "Enregistrer"}
-                </button>
+                  Enregistrer
+                </Button>
               </div>
 
               {chargementEntreprise ? (
-                <div className="mt-6 flex min-h-40 items-center justify-center text-sm text-slate-500">
-                  Chargement des informations entreprise...
-                </div>
+                <LoadingState
+                  compact
+                  label="Chargement des informations entreprise…"
+                  className="mt-6 rounded-2xl border border-slate-200 bg-slate-50"
+                />
               ) : (
                 <>
                   <div className="mt-6 grid min-w-0 gap-4 md:grid-cols-2">
@@ -541,13 +645,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Nom de l’entreprise
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.nom}
                         onChange={(e) =>
                           handleEntrepriseChange("nom", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="Ex. Entreprise Dupont"
+                        autoComplete="organization"
                       />
                     </div>
 
@@ -555,13 +660,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Adresse
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.adresse}
                         onChange={(e) =>
                           handleEntrepriseChange("adresse", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="Rue et numéro"
+                        autoComplete="street-address"
                       />
                     </div>
 
@@ -569,13 +675,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Code postal
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.codePostal ?? ""}
                         onChange={(e) =>
                           handleEntrepriseChange("codePostal", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="1000"
+                        autoComplete="postal-code"
                       />
                     </div>
 
@@ -583,13 +690,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Ville / commune
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.ville ?? ""}
                         onChange={(e) =>
                           handleEntrepriseChange("ville", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="Bruxelles"
+                        autoComplete="address-level2"
                       />
                     </div>
 
@@ -597,13 +705,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Email
                       </label>
-                      <input
+                      <Input
                         type="email"
                         value={entrepriseSettings.email}
                         onChange={(e) =>
                           handleEntrepriseChange("email", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="contact@entreprise.be"
+                        autoComplete="email"
                       />
                     </div>
 
@@ -611,13 +720,14 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Téléphone
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.telephone}
                         onChange={(e) =>
                           handleEntrepriseChange("telephone", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="+32 4 00 00 00 00"
+                        autoComplete="tel"
                       />
                     </div>
 
@@ -625,13 +735,13 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         TVA
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.tva}
                         onChange={(e) =>
                           handleEntrepriseChange("tva", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="BE0123.456.789"
                       />
                     </div>
 
@@ -639,13 +749,13 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         IBAN
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={entrepriseSettings.iban}
                         onChange={(e) =>
                           handleEntrepriseChange("iban", e.target.value)
                         }
-                        className={champFormulaireClasses}
+                        placeholder="BE00 0000 0000 0000"
                       />
                       {!entrepriseSettings.iban.trim() && (
                         <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
@@ -659,7 +769,7 @@ export default function AdminWorkspace({
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Mentions légales facture
                       </label>
-                      <textarea
+                      <Textarea
                         value={entrepriseSettings.mentionsLegalesFacture}
                         onChange={(e) =>
                           handleEntrepriseChange(
@@ -668,7 +778,7 @@ export default function AdminWorkspace({
                           )
                         }
                         rows={4}
-                        className={champFormulaireClasses}
+                        placeholder="Délais de paiement, indemnités et mentions applicables…"
                       />
                     </div>
 
@@ -703,7 +813,7 @@ export default function AdminWorkspace({
                             <label className="mb-2 block text-sm font-medium text-slate-700">
                               Préfixe
                             </label>
-                            <input
+                            <Input
                               type="text"
                               value={invoiceNumberConfig.invoiceNumberPrefix}
                               onChange={(e) =>
@@ -712,7 +822,7 @@ export default function AdminWorkspace({
                                   invoiceNumberPrefix: e.target.value,
                                 }))
                               }
-                              className={champFormulaireClasses}
+                              placeholder="FAC"
                             />
                           </div>
 
@@ -720,7 +830,7 @@ export default function AdminWorkspace({
                             <label className="mb-2 block text-sm font-medium text-slate-700">
                               Format
                             </label>
-                            <select
+                            <Select
                               value={invoiceNumberConfig.invoiceNumberFormat}
                               onChange={(e) =>
                                 setEntrepriseSettings((prev) => ({
@@ -728,7 +838,6 @@ export default function AdminWorkspace({
                                   invoiceNumberFormat: e.target.value,
                                 }))
                               }
-                              className={champFormulaireClasses}
                             >
                               <option value="{prefix}-{year}-{number}">
                                 FAC-2026-001
@@ -738,14 +847,14 @@ export default function AdminWorkspace({
                               <option value="{prefix}-{year}-{rawNumber}">
                                 FAC-2026-152
                               </option>
-                            </select>
+                            </Select>
                           </div>
 
                           <div className="min-w-0">
                             <label className="mb-2 block text-sm font-medium text-slate-700">
                               Chiffres minimum
                             </label>
-                            <input
+                            <Input
                               type="number"
                               min={1}
                               max={8}
@@ -759,7 +868,6 @@ export default function AdminWorkspace({
                                   ),
                                 }))
                               }
-                              className={champFormulaireClasses}
                             />
                           </div>
 
@@ -767,7 +875,7 @@ export default function AdminWorkspace({
                             <label className="mb-2 block text-sm font-medium text-slate-700">
                               Prochain numéro
                             </label>
-                            <input
+                            <Input
                               type="number"
                               min={1}
                               value={invoiceNumberConfig.invoiceNextNumber}
@@ -780,7 +888,6 @@ export default function AdminWorkspace({
                                   ),
                                 }))
                               }
-                              className={champFormulaireClasses}
                             />
                           </div>
                         </div>
@@ -880,34 +987,45 @@ export default function AdminWorkspace({
                           </p>
                         </div>
 
-                        <button
+                        <Button
+                          variant="danger"
                           onClick={() => void supprimerLogo()}
                           disabled={uploadLogoEnCours}
-                          className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-full"
                         >
                           Supprimer le logo
-                        </button>
+                        </Button>
                       </div>
                     ) : (
-                      <div className="flex min-h-40 items-center justify-center text-center text-sm text-slate-500">
-                        Aucun logo chargé pour le moment.
-                      </div>
+                      <EmptyState
+                        icon="▧"
+                        title="Aucun logo chargé"
+                        description="Ajoute le logo de l’entreprise pour l’afficher dans les emails et les documents."
+                        className="border-0 bg-transparent"
+                      />
                     )}
                   </div>
                 </>
               )}
             </>
           )}
-        </div>
+        </Card>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+        <Card
+          padding="lg"
+          className="overflow-hidden shadow-[0_12px_35px_rgba(15,23,42,0.06)]"
+        >
           <button
             type="button"
             onClick={() => setBibliothequeOuverte((prev) => !prev)}
-            className="flex w-full items-center justify-between gap-4 text-left"
+            className="-m-2 flex w-[calc(100%+1rem)] items-center justify-between gap-4 rounded-2xl p-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            aria-expanded={bibliothequeOuverte}
           >
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
+                Catalogue
+              </p>
+              <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
                 Bibliothèque de prestations
               </h3>
               <p className="mt-1 text-sm text-slate-500">
@@ -919,7 +1037,7 @@ export default function AdminWorkspace({
               </p>
             </div>
 
-            <span className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+            <span className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
               {bibliothequeOuverte ? "Masquer ↑" : "Afficher ↓"}
             </span>
           </button>
@@ -937,12 +1055,12 @@ export default function AdminWorkspace({
                 </div>
 
                 {prestationEditionId && (
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={resetPrestationFormulaire}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Annuler l’édition
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -951,7 +1069,7 @@ export default function AdminWorkspace({
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Désignation
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={formulairePrestation.designation}
                     onChange={(e) =>
@@ -960,7 +1078,7 @@ export default function AdminWorkspace({
                         designation: e.target.value,
                       }))
                     }
-                    className={champFormulaireClasses}
+                    placeholder="Ex. Pose de carrelage"
                   />
                 </div>
 
@@ -968,7 +1086,7 @@ export default function AdminWorkspace({
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Unité
                   </label>
-                  <select
+                  <Select
                     value={formulairePrestation.unite}
                     onChange={(e) =>
                       setFormulairePrestation((prev) => ({
@@ -976,21 +1094,20 @@ export default function AdminWorkspace({
                         unite: e.target.value as UnitePrestation,
                       }))
                     }
-                    className={champFormulaireClasses}
                   >
                     {UNITES_PREDEFINIES.map((unite) => (
                       <option key={unite} value={unite}>
                         {unite}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="min-w-0">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Prix unitaire
                   </label>
-                  <input
+                  <Input
                     type="number"
                     value={formulairePrestation.prixUnitaire}
                     onChange={(e) =>
@@ -999,7 +1116,9 @@ export default function AdminWorkspace({
                         prixUnitaire: e.target.value,
                       }))
                     }
-                    className={champFormulaireClasses}
+                    placeholder="0,00"
+                    min="0"
+                    step="0.01"
                   />
                 </div>
 
@@ -1007,7 +1126,7 @@ export default function AdminWorkspace({
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     TVA par défaut (%)
                   </label>
-                  <select
+                  <Select
                     value={formulairePrestation.tvaTaux}
                     onChange={(e) =>
                       setFormulairePrestation((prev) => ({
@@ -1015,7 +1134,6 @@ export default function AdminWorkspace({
                         tvaTaux: e.target.value,
                       }))
                     }
-                    className={champFormulaireClasses}
                   >
                     {obtenirOptionsTvaAvecValeur(
                       formulairePrestation.tvaTaux
@@ -1024,14 +1142,14 @@ export default function AdminWorkspace({
                         {taux}%
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="min-w-0 md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Description
                   </label>
-                  <textarea
+                  <Textarea
                     value={formulairePrestation.description}
                     onChange={(e) =>
                       setFormulairePrestation((prev) => ({
@@ -1040,42 +1158,47 @@ export default function AdminWorkspace({
                       }))
                     }
                     rows={3}
-                    className={champFormulaireClasses}
+                    placeholder="Détail de la prestation, fournitures incluses…"
                   />
                 </div>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <button
+                <Button
                   onClick={enregistrerPrestation}
                   disabled={sauvegardePrestationEnCours}
-                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  loading={sauvegardePrestationEnCours}
+                  loadingLabel="Enregistrement…"
+                  className="w-full sm:w-auto"
                 >
-                  {sauvegardePrestationEnCours
-                    ? "Enregistrement..."
-                    : prestationEditionId
+                  {prestationEditionId
                     ? "Enregistrer les modifications"
                     : "Ajouter la prestation"}
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="secondary"
                   onClick={resetPrestationFormulaire}
                   disabled={sauvegardePrestationEnCours}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="w-full sm:w-auto"
                 >
                   Réinitialiser
-                </button>
+                </Button>
               </div>
 
               <div className="mt-6">
                 {chargementPrestations ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    Chargement des prestations...
-                  </div>
+                  <LoadingState
+                    compact
+                    label="Chargement des prestations…"
+                    className="rounded-2xl border border-slate-200 bg-slate-50"
+                  />
                 ) : prestations.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    Aucune prestation enregistrée pour le moment.
-                  </div>
+                  <EmptyState
+                    icon="+"
+                    title="Aucune prestation enregistrée"
+                    description="Ajoute une première prestation pour la réutiliser rapidement dans tes prochains devis."
+                  />
                 ) : (
                   <div className="space-y-3">
                     {prestations.map((prestation) => (
@@ -1105,35 +1228,40 @@ export default function AdminWorkspace({
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                            <button
+                            <Button
+                              size="sm"
+                              variant="secondary"
                               onClick={() => modifierPrestation(prestation)}
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                             >
                               Modifier
-                            </button>
+                            </Button>
 
                             {!prestation.archive ? (
-                              <button
+                              <Button
+                                size="sm"
+                                variant="warning"
                                 onClick={() => archiverPrestation(prestation)}
-                                className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
                               >
                                 Archiver
-                              </button>
+                              </Button>
                             ) : (
-                              <button
+                              <Button
+                                size="sm"
+                                variant="success"
                                 onClick={() => restaurerPrestation(prestation)}
-                                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
                               >
                                 Restaurer
-                              </button>
+                              </Button>
                             )}
 
-                            <button
-                              onClick={() => supprimerPrestation(prestation)}
-                              className="col-span-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-1"
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => setPrestationASupprimer(prestation)}
+                              className="col-span-2 sm:col-span-1"
                             >
                               Supprimer
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1152,8 +1280,18 @@ export default function AdminWorkspace({
               </div>
             </>
           )}
-        </div>
+        </Card>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(prestationASupprimer)}
+        title="Supprimer cette prestation ?"
+        description={`La prestation « ${prestationASupprimer?.designation ?? ""} » sera supprimée définitivement de la bibliothèque. Cette action est irréversible.`}
+        confirmLabel="Supprimer définitivement"
+        loading={sauvegardePrestationEnCours}
+        onCancel={() => setPrestationASupprimer(null)}
+        onConfirm={() => void supprimerPrestation()}
+      />
     </>
   );
 }

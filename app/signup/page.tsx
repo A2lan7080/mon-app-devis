@@ -11,6 +11,9 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import AuthFeatureCards from "@/components/AuthFeatureCards";
+import Button from "@/components/ui/Button";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import Input from "@/components/ui/Input";
 import { auth } from "@/lib/firebase";
 
 function LogoBatiflow({ grand = false }: { grand?: boolean }) {
@@ -225,14 +228,13 @@ export default function SignupPage() {
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Nom affiché
                   </label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Jean Dupont"
                     autoComplete="name"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                 </div>
 
@@ -240,14 +242,13 @@ export default function SignupPage() {
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Nom de l&apos;entreprise
                   </label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={entrepriseNom}
                     onChange={(e) => setEntrepriseNom(e.target.value)}
                     placeholder="Bati Dupont"
                     autoComplete="organization"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                 </div>
 
@@ -255,14 +256,13 @@ export default function SignupPage() {
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Adresse email
                   </label>
-                  <input
+                  <Input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="exemple@email.com"
                     autoComplete="email"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                 </div>
 
@@ -270,7 +270,7 @@ export default function SignupPage() {
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Mot de passe
                   </label>
-                  <input
+                  <Input
                     type="password"
                     required
                     minLength={6}
@@ -278,7 +278,6 @@ export default function SignupPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Au moins 6 caractères"
                     autoComplete="new-password"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                 </div>
 
@@ -286,14 +285,13 @@ export default function SignupPage() {
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Code d&apos;invitation
                   </label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={invitationCode}
                     onChange={(e) => setInvitationCode(e.target.value)}
                     placeholder="Code fourni pour la bêta privée"
                     autoComplete="off"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                   <p className="mt-2 text-xs leading-5 text-slate-500">
                     Code fourni pour la bêta privée
@@ -301,18 +299,20 @@ export default function SignupPage() {
                 </div>
 
                 {erreur && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  <FeedbackMessage tone="error">
                     {erreur}
-                  </div>
+                  </FeedbackMessage>
                 )}
 
-                <button
+                <Button
                   type="submit"
                   disabled={chargement}
-                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  loading={chargement}
+                  loadingLabel="Création…"
+                  fullWidth
                 >
-                  {chargement ? "Création..." : "Créer mon compte"}
-                </button>
+                  Créer mon compte
+                </Button>
               </form>
 
               <p className="mt-6 text-center text-sm text-slate-500">

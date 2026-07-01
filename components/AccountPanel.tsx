@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
+import FeedbackMessage from "./ui/FeedbackMessage";
 
 type Props = {
   mode?: "card" | "menu";
@@ -67,7 +70,7 @@ export default function AccountPanel({
         <button
           type="button"
           onClick={() => setOuvert((prev) => !prev)}
-          className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-white"
+          className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left transition duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 motion-reduce:transition-none"
           aria-expanded={ouvert}
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold uppercase text-white">
@@ -81,7 +84,7 @@ export default function AccountPanel({
           </div>
 
           <span
-            className={`shrink-0 text-xs font-semibold text-slate-500 transition ${
+            className={`shrink-0 text-xs font-semibold text-slate-500 transition duration-200 motion-reduce:transition-none ${
               ouvert ? "rotate-180" : ""
             }`}
             aria-hidden="true"
@@ -91,7 +94,7 @@ export default function AccountPanel({
         </button>
 
         {ouvert && (
-          <div className="mt-2 border-t border-slate-200 pt-3">
+          <div className="mt-2 animate-[bf-dialog-in_180ms_ease-out] border-t border-slate-200 pt-3 motion-reduce:animate-none">
             <div className="px-2">
               <p className="truncate text-xs text-slate-500">
                 {email || "Email non renseigné"}
@@ -121,38 +124,40 @@ export default function AccountPanel({
             {(message || erreur) && (
               <div className="mt-3 space-y-2">
                 {message && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                  <FeedbackMessage tone="success" className="rounded-xl px-3 py-2 text-xs">
                     {message}
-                  </div>
+                  </FeedbackMessage>
                 )}
 
                 {erreur && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                  <FeedbackMessage tone="error" className="rounded-xl px-3 py-2 text-xs">
                     {erreur}
-                  </div>
+                  </FeedbackMessage>
                 )}
               </div>
             )}
 
             <div className="mt-3 space-y-2">
-              <button
-                type="button"
+              <Button
+                size="sm"
+                variant="soft"
                 onClick={handleResetPassword}
                 disabled={chargementReset}
-                className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                loading={chargementReset}
+                loadingLabel="Envoi en cours…"
+                className="w-full"
               >
-                {chargementReset
-                  ? "Envoi en cours..."
-                  : "Changer mon mot de passe"}
-              </button>
+                Changer mon mot de passe
+              </Button>
 
-              <button
-                type="button"
+              <Button
+                size="sm"
+                variant="danger"
                 onClick={handleDeconnexion}
-                className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                className="w-full"
               >
                 Se déconnecter
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -165,7 +170,8 @@ export default function AccountPanel({
       <button
         type="button"
         onClick={() => setOuvert((prev) => !prev)}
-        className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left sm:px-5"
+        className="flex w-full items-center justify-between gap-4 rounded-2xl px-4 py-4 text-left transition duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 sm:px-5 motion-reduce:transition-none"
+        aria-expanded={ouvert}
       >
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-sm font-bold uppercase text-white">
@@ -181,9 +187,9 @@ export default function AccountPanel({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:inline-flex">
+          <Badge tone="success" dot className="hidden sm:inline-flex">
             Compte actif
-          </span>
+          </Badge>
 
           <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
             {ouvert ? "Masquer" : "Mon compte"}
@@ -192,7 +198,7 @@ export default function AccountPanel({
       </button>
 
       {ouvert && (
-        <div className="border-t border-slate-100 px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="animate-[bf-dialog-in_180ms_ease-out] border-t border-slate-100 px-4 pb-4 motion-reduce:animate-none sm:px-5 sm:pb-5">
           <div className="grid gap-3 pt-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -234,38 +240,38 @@ export default function AccountPanel({
           {(message || erreur) && (
             <div className="mt-4">
               {message && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                <FeedbackMessage tone="success">
                   {message}
-                </div>
+                </FeedbackMessage>
               )}
 
               {erreur && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                <FeedbackMessage tone="error">
                   {erreur}
-                </div>
+                </FeedbackMessage>
               )}
             </div>
           )}
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
+            <Button
+              variant="soft"
               onClick={handleResetPassword}
               disabled={chargementReset}
-              className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              loading={chargementReset}
+              loadingLabel="Envoi en cours…"
+              className="w-full sm:w-auto"
             >
-              {chargementReset
-                ? "Envoi en cours..."
-                : "Changer mon mot de passe"}
-            </button>
+              Changer mon mot de passe
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="danger"
               onClick={handleDeconnexion}
-              className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
+              className="w-full sm:w-auto"
             >
               Se déconnecter
-            </button>
+            </Button>
           </div>
         </div>
       )}

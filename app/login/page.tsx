@@ -9,6 +9,10 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import AuthFeatureCards from "@/components/AuthFeatureCards";
+import Button from "@/components/ui/Button";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import FormField from "@/components/ui/FormField";
+import Input from "@/components/ui/Input";
 import { auth } from "@/lib/firebase";
 
 function LogoBatiflow({ grand = false }: { grand?: boolean }) {
@@ -138,11 +142,9 @@ export default function LoginPage() {
               </div>
 
               <form onSubmit={handleLogin} className="mt-7 space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Adresse email
-                  </label>
-                  <input
+                <FormField label="Adresse email" htmlFor="login-email">
+                  <Input
+                    id="login-email"
                     data-testid="login-email"
                     type="email"
                     required
@@ -150,13 +152,15 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="exemple@email.com"
                     autoComplete="email"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
-                </div>
+                </FormField>
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="block text-sm font-semibold text-slate-700">
+                    <label
+                      htmlFor="login-password"
+                      className="block text-sm font-semibold text-slate-700"
+                    >
                       Mot de passe
                     </label>
 
@@ -164,13 +168,14 @@ export default function LoginPage() {
                       type="button"
                       onClick={handleResetPassword}
                       disabled={resetEnCours || chargement}
-                      className="text-xs font-semibold text-slate-600 underline-offset-4 transition hover:text-slate-900 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                      className="-my-2 inline-flex min-h-11 items-center rounded-lg px-2 text-xs font-semibold text-slate-600 underline-offset-4 transition duration-150 hover:bg-slate-50 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
                     >
                       {resetEnCours ? "Envoi..." : "Mot de passe oublié ?"}
                     </button>
                   </div>
 
-                  <input
+                  <Input
+                    id="login-password"
                     data-testid="login-password"
                     type="password"
                     required
@@ -178,30 +183,31 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Ton mot de passe"
                     autoComplete="current-password"
-                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400"
                   />
                 </div>
 
                 {erreur && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  <FeedbackMessage tone="error">
                     {erreur}
-                  </div>
+                  </FeedbackMessage>
                 )}
 
                 {messageSucces && (
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                  <FeedbackMessage tone="success">
                     {messageSucces}
-                  </div>
+                  </FeedbackMessage>
                 )}
 
-                <button
+                <Button
                   data-testid="login-submit"
                   type="submit"
                   disabled={chargement || resetEnCours}
-                  className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  loading={chargement}
+                  loadingLabel="Connexion…"
+                  fullWidth
                 >
-                  {chargement ? "Connexion..." : "Se connecter"}
-                </button>
+                  Se connecter
+                </Button>
               </form>
 
               <p className="mt-6 text-center text-sm text-slate-500">

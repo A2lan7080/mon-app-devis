@@ -6,6 +6,11 @@ import { useMemo, useState, type FormEvent } from "react";
 import AccessDeniedState from "../../components/AccessDeniedState";
 import EmptyAuthState from "../../components/EmptyAuthState";
 import PageLoadingState from "../../components/PageLoadingState";
+import Button from "../../components/ui/Button";
+import FeedbackMessage from "../../components/ui/FeedbackMessage";
+import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
+import Textarea from "../../components/ui/Textarea";
 import { useAuthenticatedProfile } from "../../hooks/useAuthenticatedProfile";
 import { useSessionNavigation } from "../../hooks/useSessionNavigation";
 
@@ -121,9 +126,6 @@ const questionsOuvertes = [
 type QuestionOuiNonId = (typeof questionsOuiNon)[number]["id"];
 type NoteId = (typeof notes)[number]["id"];
 type QuestionOuverteId = (typeof questionsOuvertes)[number]["id"];
-
-const champClasses =
-  "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100";
 
 const sectionClasses = "bf-card p-4 sm:p-6";
 
@@ -288,21 +290,31 @@ export default function BetaTestPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
-        <header className="bf-card overflow-hidden">
-          <div className="border-b border-slate-100 bg-white px-4 py-5 sm:px-6">
+        <header className="relative overflow-hidden rounded-[1.75rem] border border-slate-800 bg-slate-950 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
+          <span
+            aria-hidden="true"
+            className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl"
+          />
+          <div className="relative px-4 py-6 sm:px-6 sm:py-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-slate-950 sm:text-3xl">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-300">
+                  Programme bêta
+                </p>
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                   Test bêta BatiFlow
                 </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
                   Merci de tester BatiFlow comme si vous deviez l’utiliser dans
                   votre activité. Le but est de repérer ce qui est clair, ce qui
                   bloque et ce qui manque.
                 </p>
               </div>
 
-              <Link href="/dashboard" className="bf-button-secondary text-center">
+              <Link
+                href="/dashboard"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-center text-sm font-bold text-white transition duration-150 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 motion-reduce:transition-none"
+              >
                 Accéder à BatiFlow
               </Link>
             </div>
@@ -341,7 +353,7 @@ export default function BetaTestPage() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Prénom *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   value={formulaire.prenom}
@@ -351,7 +363,6 @@ export default function BetaTestPage() {
                       prenom: event.target.value,
                     }))
                   }
-                  className={champClasses}
                   autoComplete="given-name"
                 />
               </div>
@@ -360,7 +371,7 @@ export default function BetaTestPage() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Nom *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   value={formulaire.nom}
@@ -370,7 +381,6 @@ export default function BetaTestPage() {
                       nom: event.target.value,
                     }))
                   }
-                  className={champClasses}
                   autoComplete="family-name"
                 />
               </div>
@@ -379,7 +389,7 @@ export default function BetaTestPage() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Métier / activité
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formulaire.metier}
                   onChange={(event) =>
@@ -388,7 +398,6 @@ export default function BetaTestPage() {
                       metier: event.target.value,
                     }))
                   }
-                  className={champClasses}
                 />
               </div>
             </div>
@@ -447,13 +456,12 @@ export default function BetaTestPage() {
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     {note.label} *
                   </label>
-                  <select
+                  <Select
                     required
                     value={formulaire.notes[note.id]}
                     onChange={(event) =>
                       mettreAJourNote(note.id, event.target.value)
                     }
-                    className={champClasses}
                   >
                     <option value="">Choisir</option>
                     {noteOptions.map((option) => (
@@ -461,7 +469,7 @@ export default function BetaTestPage() {
                         {option}/10
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               ))}
             </div>
@@ -477,13 +485,12 @@ export default function BetaTestPage() {
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     {question.label}
                   </label>
-                  <textarea
+                  <Textarea
                     value={formulaire.reponsesOuvertes[question.id]}
                     onChange={(event) =>
                       mettreAJourReponseOuverte(question.id, event.target.value)
                     }
                     rows={3}
-                    className={champClasses}
                   />
                 </div>
               ))}
@@ -491,26 +498,21 @@ export default function BetaTestPage() {
           </details>
 
           {(messageSucces || messageErreur) && (
-            <div
-              role="status"
-              className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
-                messageSucces
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border-red-200 bg-red-50 text-red-700"
-              }`}
-            >
+            <FeedbackMessage tone={messageSucces ? "success" : "error"}>
               {messageSucces || messageErreur}
-            </div>
+            </FeedbackMessage>
           )}
 
           <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:static sm:mx-0 sm:rounded-2xl sm:border">
-            <button
+            <Button
               type="submit"
               disabled={envoiEnCours || !formulaireComplet}
-              className="bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              loading={envoiEnCours}
+              loadingLabel="Envoi en cours…"
+              className="w-full sm:w-auto"
             >
-              {envoiEnCours ? "Envoi en cours..." : "Envoyer mon retour"}
-            </button>
+              Envoyer mon retour
+            </Button>
           </div>
         </form>
       </div>
