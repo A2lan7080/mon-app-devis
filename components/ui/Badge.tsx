@@ -43,7 +43,8 @@ function getStatusTone(status?: string): BadgeTone {
 
   if (
     normalizedStatus === "refusé" ||
-    normalizedStatus === "en retard"
+    normalizedStatus === "en retard" ||
+    normalizedStatus === "suspendu"
   ) {
     return "danger";
   }

@@ -52,7 +52,7 @@ function getPageAccent(vue: VuePrincipale) {
       };
     case "clients":
       return {
-        dot: "bg-emerald-500",
+        dot: "bg-sky-400",
         subtitle: "Centralise les coordonnées et informations clients.",
       };
     case "chantiers":
@@ -167,7 +167,10 @@ export default function AdminShell({
   const estDashboard = vueAffichee === "admin";
   const estDevis = vueAffichee === "devis";
   const estFactures = vueAffichee === "factures";
-  const estModulePremium = estDevis || estFactures;
+  const estClients = vueAffichee === "clients";
+  const estChantiers = vueAffichee === "chantiers";
+  const estModulePremium =
+    estDevis || estFactures || estClients || estChantiers;
 
   useEffect(() => {
     if (!menuMobileOuvert) return;
@@ -245,10 +248,9 @@ export default function AdminShell({
       id: "clients",
       label: "Clients",
       icon: "👤",
-      accent: "bg-emerald-50 text-emerald-700",
-      activeButton:
-        "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm",
-      activeDot: "bg-emerald-500",
+      accent: "bg-sky-50 text-sky-700",
+      activeButton: "border-sky-200 bg-sky-50 text-sky-800 shadow-sm",
+      activeDot: "bg-sky-500",
       onClick: onOuvrirVueClients,
     },
     {
@@ -294,10 +296,9 @@ export default function AdminShell({
       id: "clients",
       label: "Clients",
       icon: "👤",
-      accent: "bg-emerald-50 text-emerald-700",
-      activeButton:
-        "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm",
-      activeDot: "bg-emerald-500",
+      accent: "bg-sky-50 text-sky-700",
+      activeButton: "border-sky-200 bg-sky-50 text-sky-800 shadow-sm",
+      activeDot: "bg-sky-500",
       onClick: ouvrirVueClientsMobile,
     },
     {

@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import ClientsKpiCards from "./ClientsKpiCards";
 import MobileFullscreenModal from "./MobileFullscreenModal";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import EmptyState from "./ui/EmptyState";
+import SectionHeader from "./ui/SectionHeader";
 import { useEntrepriseClients } from "../hooks/useEntrepriseClients";
 import { db } from "../lib/firebase";
 import type { Client, TypeClient } from "../types/clients";
@@ -45,7 +51,10 @@ const creerFormulaireVide = (): ClientFormState => ({
 const TYPES_CLIENT: TypeClient[] = ["Particulier", "Professionnel"];
 
 const champFormulaireClasses =
-  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400";
+  "block w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition duration-200 hover:border-slate-300 focus:border-orange-400 focus:ring-4 focus:ring-orange-100";
+
+const filtreClientClasses =
+  "block min-h-12 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 shadow-inner shadow-slate-900/[0.02] outline-none transition duration-200 placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100";
 
 function genererReferenceClient(clients: Client[]) {
   const plusGrandNumero = clients.reduce((max, client) => {
@@ -359,27 +368,23 @@ export default function ClientsWorkspace({
     if (afficherFormulaireClient) {
       return (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm text-slate-500">
-                {modeEdition ? "Édition client" : "Nouveau client"}
-              </p>
-              <h3 className="mt-1 text-xl font-bold sm:text-2xl">
-                {modeEdition && clientSelectionne
-                  ? clientSelectionne.reference
-                  : "Créer une fiche client"}
-              </h3>
-            </div>
+          <SectionHeader
+            eyebrow={modeEdition ? "Édition client" : "Nouveau client"}
+            title={
+              modeEdition && clientSelectionne
+                ? clientSelectionne.reference
+                : "Créer une fiche client"
+            }
+            description="Renseigne les coordonnées utiles aux devis, factures et chantiers."
+            headingLevel={3}
+            actions={
+              <Button variant="secondary" onClick={fermerFormulaire}>
+                Fermer
+              </Button>
+            }
+          />
 
-            <button
-              onClick={fermerFormulaire}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto"
-            >
-              Fermer
-            </button>
-          </div>
-
-          <div className="mt-6 grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+          <div className="mt-7 grid min-w-0 max-w-full gap-5 md:grid-cols-2">
             <div className="min-w-0 overflow-hidden">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Nom du client
@@ -556,7 +561,7 @@ export default function ClientsWorkspace({
             </div>
           </div>
 
-          <div className="mt-4 min-w-0 overflow-hidden">
+          <div className="mt-5 min-w-0 overflow-hidden">
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Notes
             </label>
@@ -573,26 +578,28 @@ export default function ClientsWorkspace({
             />
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
+          <div className="mt-7 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row">
+            <Button
               onClick={enregistrerClient}
               disabled={sauvegardeEnCours}
-              className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              loading={sauvegardeEnCours}
+              loadingLabel="Enregistrement..."
+              variant="accent"
+              className="w-full sm:w-auto"
             >
-              {sauvegardeEnCours
-                ? "Enregistrement..."
-                : modeEdition
+              {modeEdition
                 ? "Enregistrer les modifications"
                 : "Créer le client"}
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={fermerFormulaire}
               disabled={sauvegardeEnCours}
-              className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              variant="secondary"
+              className="w-full sm:w-auto"
             >
               Annuler
-            </button>
+            </Button>
           </div>
         </>
       );
@@ -602,65 +609,97 @@ export default function ClientsWorkspace({
       return (
         <>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm text-slate-500">Fiche client</p>
-                <h3 className="mt-1 break-words text-xl font-bold sm:text-2xl">
-                  {clientSelectionne.nom}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {clientSelectionne.reference}
-                </p>
-              </div>
+            <div className="relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.10)]">
+              <span
+                aria-hidden="true"
+                className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/12 blur-3xl"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-sky-500/12 blur-3xl"
+              />
 
-              <div className="flex flex-wrap gap-2">
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                    clientSelectionne.archive
-                      ? "bg-amber-100 text-amber-800"
-                      : "bg-emerald-100 text-emerald-700"
-                  }`}
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
+                    Fiche client
+                  </p>
+                  <h3 className="mt-2 break-words text-2xl font-bold tracking-tight text-slate-950">
+                    {clientSelectionne.nom}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {clientSelectionne.reference} · {clientSelectionne.typeClient}
+                  </p>
+                </div>
+
+                <Badge
+                  tone={clientSelectionne.archive ? "warning" : "success"}
+                  dot
                 >
                   {clientSelectionne.archive ? "Archivé" : "Actif"}
-                </span>
+                </Badge>
+              </div>
+
+              <div className="relative mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-sky-200 bg-white/80 p-4 shadow-sm">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-slate-500">
+                    Contact
+                  </p>
+                  <p className="mt-2 break-all text-sm font-bold text-slate-950">
+                    {clientSelectionne.email || "Email non renseigné"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-4 shadow-sm">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-orange-700">
+                    Localisation
+                  </p>
+                  <p className="mt-2 break-words text-sm font-bold text-slate-950">
+                    {clientSelectionne.ville || "Ville non renseignée"}
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              <button
+              <Button
                 onClick={ouvrirEdition}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                variant="secondary"
+                fullWidth
               >
                 Modifier
-              </button>
+              </Button>
 
               {!clientSelectionne.archive ? (
-                <button
+                <Button
                   onClick={archiverClient}
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                  variant="warning"
+                  fullWidth
                 >
                   Archiver
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   onClick={restaurerClient}
-                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                  variant="success"
+                  fullWidth
                 >
                   Restaurer
-                </button>
+                </Button>
               )}
 
-              <button
+              <Button
                 onClick={supprimerClient}
-                className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 sm:col-span-2 xl:col-span-1"
+                variant="danger"
+                fullWidth
+                className="sm:col-span-2 xl:col-span-1"
               >
                 Supprimer
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="mt-6 space-y-4">
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-white to-sky-50 p-4 shadow-sm transition duration-200 hover:shadow-md">
               <p className="text-sm text-slate-500">Type</p>
               <p className="mt-1 text-lg font-semibold">
                 {clientSelectionne.typeClient}
@@ -668,14 +707,14 @@ export default function ClientsWorkspace({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl bg-slate-50 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
                 <p className="text-sm text-slate-500">Société</p>
                 <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.societe || "Non renseignée"}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
                 <p className="text-sm text-slate-500">TVA</p>
                 <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.tva || "Non renseignée"}
@@ -684,14 +723,14 @@ export default function ClientsWorkspace({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl bg-slate-50 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
                 <p className="text-sm text-slate-500">Email</p>
                 <p className="mt-1 break-all font-semibold">
                   {clientSelectionne.email || "Non renseigné"}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
                 <p className="text-sm text-slate-500">Téléphone</p>
                 <p className="mt-1 break-words font-semibold">
                   {clientSelectionne.telephone || "Non renseigné"}
@@ -699,7 +738,7 @@ export default function ClientsWorkspace({
               </div>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm">
               <p className="text-sm text-slate-500">Adresse</p>
               <p className="mt-1 break-words font-semibold">
                 {clientSelectionne.adresse || "Non renseignée"}
@@ -715,7 +754,7 @@ export default function ClientsWorkspace({
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
               <p className="text-sm text-slate-500">Notes</p>
               <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700">
                 {clientSelectionne.notes || "Aucune note pour ce client."}
@@ -727,113 +766,53 @@ export default function ClientsWorkspace({
     }
 
     return (
-      <div className="flex min-h-80 items-center justify-center text-center text-sm text-slate-500">
-        Sélectionne un client pour voir sa fiche.
-      </div>
+      <EmptyState
+        className="flex min-h-80 flex-col justify-center"
+        icon={<span aria-hidden="true">👤</span>}
+        title="Sélectionne un client"
+        description="Sa fiche, ses coordonnées et ses actions apparaîtront ici."
+      />
     );
   };
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4">
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                Clients actifs
-              </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
-                {totalClients}
-              </p>
-            </div>
-
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-              👥
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Base client exploitable
-          </p>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                Professionnels
-              </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
-                {totalPros}
-              </p>
-            </div>
-
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
-              🏢
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Entreprises et indépendants
-          </p>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                Particuliers
-              </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
-                {totalParticuliers}
-              </p>
-            </div>
-
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-lg">
-              🏠
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Clients résidentiels
-          </p>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 sm:text-sm">
-                Archivés
-              </p>
-              <p className="mt-2 text-2xl font-bold sm:text-3xl">
-                {totalClientsArchives}
-              </p>
-            </div>
-
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-lg">
-              📦
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Clients conservés hors liste active
-          </p>
-        </div>
-      </div>
+      <ClientsKpiCards
+        totalClients={totalClients}
+        totalPros={totalPros}
+        totalParticuliers={totalParticuliers}
+        totalArchives={totalClientsArchives}
+      />
 
       <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          <div className="grid gap-4">
+        <Card
+          className="min-w-0 overflow-hidden shadow-[0_12px_30px_rgba(15,23,42,0.06)] md:p-6"
+          padding="md"
+        >
+          <SectionHeader
+            eyebrow="Carnet clients"
+            title="Répertoire clients"
+            description="Retrouve rapidement les coordonnées utiles à tes documents et chantiers."
+            headingLevel={3}
+          />
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
             <input
+              aria-label="Rechercher un client"
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un client, email, société..."
-              className={champFormulaireClasses}
+              className={filtreClientClasses}
             />
 
             <select
+              aria-label="Filtrer les clients par archivage"
               value={filtreArchivage}
               onChange={(e) =>
                 setFiltreArchivage(e.target.value as FiltreArchivage)
               }
-              className={champFormulaireClasses}
+              className={filtreClientClasses}
             >
               <option value="actifs">Clients actifs</option>
               <option value="archives">Clients archivés</option>
@@ -841,32 +820,26 @@ export default function ClientsWorkspace({
             </select>
           </div>
 
-          <div className="mt-6 space-y-2 overflow-hidden">
+          <div className="mt-5 space-y-2 overflow-hidden">
             {clientsFiltres.length === 0 ? (
-              <div className="bf-empty-state">
-                {clients.length === 0 && (
-                  <p className="mb-1 text-sm font-semibold text-emerald-700">
-                    Ajoutez votre premier client
-                  </p>
-                )}
-                <p className="text-sm font-semibold text-slate-700">
-                  {clients.length === 0
-                    ? "Aucun client pour le moment."
-                    : "Aucun client trouvé."}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {clients.length === 0
+              <EmptyState
+                icon={<span aria-hidden="true">👤</span>}
+                title={
+                  clients.length === 0
+                    ? "Aucun client pour le moment"
+                    : "Aucun client trouvé"
+                }
+                description={
+                  clients.length === 0
                     ? "Ajoute ton premier client pour réutiliser ses coordonnées dans les devis et factures."
-                    : "Ajuste les filtres ou lance une nouvelle fiche client."}
-                </p>
-                <button
-                  type="button"
-                  onClick={ouvrirCreation}
-                  className="bf-button-primary mt-4"
-                >
-                  {clients.length === 0 ? "Ajouter un client" : "Nouveau client"}
-                </button>
-              </div>
+                    : "Ajuste les filtres ou lance une nouvelle fiche client."
+                }
+                action={
+                  <Button variant="accent" onClick={ouvrirCreation}>
+                    {clients.length === 0 ? "Ajouter un client" : "Nouveau client"}
+                  </Button>
+                }
+              />
             ) : (
               clientsFiltres.map((client) => {
                 const estSelectionne = client.id === clientSelectionneId;
@@ -879,10 +852,10 @@ export default function ClientsWorkspace({
                       setAfficherFormulaire(false);
                       setClientSelectionneId(estSelectionne ? null : client.id);
                     }}
-                    className={`block w-full min-w-0 overflow-hidden rounded-xl border px-3 py-3 text-left transition ${
+                    className={`group block w-full min-w-0 overflow-hidden rounded-2xl border px-4 py-3.5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none ${
                       estSelectionne
-                        ? "border-slate-900 bg-slate-50"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
+                        ? "border-sky-300 bg-gradient-to-br from-sky-50 to-white ring-2 ring-sky-100"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-sky-50/40"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -892,22 +865,19 @@ export default function ClientsWorkspace({
                             {client.reference}
                           </p>
 
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                              client.archive
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
+                          <Badge
+                            tone={client.archive ? "warning" : "success"}
+                            dot
                           >
                             {client.archive ? "Archivé" : "Actif"}
-                          </span>
+                          </Badge>
                         </div>
 
                         <p className="mt-1 truncate text-sm font-medium text-slate-700">
                           {client.nom}
                         </p>
 
-                        <p className="mt-1 truncate text-xs text-slate-400">
+                        <p className="mt-1 truncate text-xs text-slate-500">
                           {client.societe || client.typeClient}
                         </p>
                       </div>
@@ -916,7 +886,7 @@ export default function ClientsWorkspace({
                         <p className="text-xs text-slate-500">
                           {client.ville || "Ville"}
                         </p>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500">
                           {client.telephone || "Téléphone"}
                         </p>
                       </div>
@@ -926,31 +896,32 @@ export default function ClientsWorkspace({
               })
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="hidden min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6 xl:block">
+        <Card
+          className="hidden min-w-0 overflow-hidden shadow-[0_12px_30px_rgba(15,23,42,0.06)] xl:block"
+          padding="lg"
+        >
           {renderFormulaireOuDetail()}
-        </div>
+        </Card>
       </div>
 
       <MobileFullscreenModal
         open={afficherFormulaireClient}
         title={titreMobile}
         onClose={fermerFormulaire}
+        premium
       >
-        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          {renderFormulaireOuDetail()}
-        </div>
+        {renderFormulaireOuDetail()}
       </MobileFullscreenModal>
 
       <MobileFullscreenModal
         open={!afficherFormulaireClient && clientSelectionne !== null}
         title={titreMobile}
         onClose={fermerDetail}
+        premium
       >
-        <div className="max-w-full overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5 md:p-6">
-          {renderFormulaireOuDetail()}
-        </div>
+        {renderFormulaireOuDetail()}
       </MobileFullscreenModal>
     </>
   );
