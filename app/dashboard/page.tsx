@@ -162,8 +162,11 @@ export default function Home() {
   }: DevisSendValues) => {
     if (!devisSelectionne) return false;
 
-    if (devisSelectionne.statut === "Refusé") {
-      alert("Ce devis est refusé et ne peut plus être renvoyé.");
+    if (
+      devisSelectionne.statut === "Accepté" ||
+      devisSelectionne.statut === "Refusé"
+    ) {
+      alert("Ce devis est finalisé et ne peut plus être envoyé.");
       return false;
     }
 

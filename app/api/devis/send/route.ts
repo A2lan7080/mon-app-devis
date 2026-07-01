@@ -275,6 +275,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
     }
 
+    if (
+      devisFirestore?.statut === "Accepté" ||
+      devisFirestore?.statut === "Refusé"
+    ) {
+      return NextResponse.json(
+        { error: "Ce devis est déjà finalisé et ne peut plus être renvoyé." },
+        { status: 409 }
+      );
+    }
+
     const entrepriseSnap = await adminDb
       .collection("entreprises")
       .doc(securiteEmail.entrepriseId)

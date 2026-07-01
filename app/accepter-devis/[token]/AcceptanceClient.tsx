@@ -338,11 +338,6 @@ export default function AcceptanceClient({ token }: Props) {
                     {entreprise.nom}
                   </p>
                 )}
-                <p className="mt-2 text-sm text-slate-300">
-                  {[entreprise.adresse, joindreLocalite(entreprise.codePostal, entreprise.ville)]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
               </div>
               <div className="sm:text-right">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
