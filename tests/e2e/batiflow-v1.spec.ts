@@ -94,7 +94,7 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
       /Votre devis DEV-/
     );
     await expect(page.getByTestId("devis-send-message")).toHaveValue(
-      /Suite à notre rendez-vous/
+      /Veuillez trouver ci-joint/
     );
     await page
       .getByTestId("devis-send-subject")
@@ -117,18 +117,35 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
       /Envoy/
     );
 
+    const acceptanceResponse = await page.request.get(
+      `/api/devis/acceptance/${encodeURIComponent(acceptanceToken)}`
+    );
+    expect(
+      acceptanceResponse.ok(),
+      await acceptanceResponse.text()
+    ).toBeTruthy();
+
     await page.goto(`/accepter-devis/${encodeURIComponent(acceptanceToken)}`);
     await expect(page.getByRole("heading", { name: devisId })).toBeVisible();
     await page.getByTestId("acceptance-name").fill("Client Signature");
     await page.getByTestId("acceptance-email").fill(clientEmail);
     await page.getByTestId("acceptance-submit").click();
+    await expect(
+      page.getByRole("heading", { name: "Confirmer l’acceptation" })
+    ).toBeVisible();
+    await expect
+      .poll(async () => (await findLatestDevis(identity.entrepriseId))?.statut)
+      .toBe("Envoyé");
+    await page.getByTestId("acceptance-confirm").click();
 
-    await expect(page.getByText(/Ce devis est accept/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Merci pour votre confiance !" })
+    ).toBeVisible();
     await expect
       .poll(async () => (await findLatestDevis(identity.entrepriseId))?.statut)
       .toBe("Accepté");
 
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Devis" })).toBeVisible();
     await page.getByTestId("devis-list-item").filter({ hasText: clientName }).click();
     await expect(page.getByTestId("devis-detail-status").first()).toContainText(
@@ -176,7 +193,6 @@ test.describe("BatiFlow V1 - parcours devis à facture", () => {
       .getByTestId("facture-list-item")
       .filter({ hasText: String(facture.reference) });
     await expect(factureListItem).toBeVisible();
-    await factureListItem.click();
 
     const popupPromise = page.waitForEvent("popup");
     await page.locator('[data-testid="facture-export-pdf"]:visible').click();

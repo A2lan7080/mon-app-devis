@@ -88,11 +88,11 @@ const devisBase = {
 
 const message = `Bonjour Sophie,
 
-Suite à notre rendez-vous, vous trouverez ci-joint votre devis.
+Veuillez trouver ci-joint votre devis.
 
-Vous pouvez également le consulter en ligne et l'accepter directement.
+Vous pouvez également le consulter en ligne avant de l'accepter ou de le refuser.
 
-Je reste à votre disposition.
+Le PDF est joint à cet email.
 
 Bien cordialement,
 
@@ -141,12 +141,11 @@ for (const preview of previews) {
     message
   );
   const fragmentsAttendus = [
-    "Pourquoi ce lien ?",
-    "Consulter le devis",
-    "Accepter ou refuser",
-    "BE68 5390 0754 7034",
-    "Offre valable 30 jours.",
-    "Atelier Horizon SRL",
+    "Consulter le devis en ligne",
+    "Le PDF du devis est joint à cet email.",
+    "avant de prendre votre décision",
+    "Atelier Horizon",
+    "Sophie Lambert",
   ];
 
   for (const fragment of fragmentsAttendus) {
@@ -157,19 +156,20 @@ for (const preview of previews) {
     }
   }
 
-  const bandeauAttendu =
-    preview.devis.statut === "Accepté"
-      ? "Devis accepté"
-      : preview.devis.statut === "Refusé"
-        ? "Devis refusé"
-        : preview.filename.includes("expire")
-          ? "Devis expiré"
-          : null;
+  const fragmentsInterdits = [
+    "Pourquoi ce lien ?",
+    "Accepter ou refuser",
+    "Désignation",
+    "Offre valable 30 jours.",
+    "Atelier Horizon SRL",
+  ];
 
-  if (bandeauAttendu && !html.includes(bandeauAttendu)) {
-    throw new Error(
-      `Le rendu ${preview.filename} ne contient pas le bandeau : ${bandeauAttendu}`
-    );
+  for (const fragment of fragmentsInterdits) {
+    if (html.includes(fragment)) {
+      throw new Error(
+        `Le rendu ${preview.filename} contient encore : ${fragment}`
+      );
+    }
   }
 
   fs.writeFileSync(path.join(outputDir, preview.filename), html, "utf8");

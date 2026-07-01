@@ -3,7 +3,6 @@ import {
   calculerTotauxDevis,
   calculerValiditeDevis,
   formatMontant,
-  normaliserLignesDevis,
 } from "./devis-helpers";
 import { formatNumeroDevisPourAffichage } from "./format-numero-devis";
 import type { Devis, Entreprise } from "../types/devis";
@@ -37,342 +36,35 @@ function texteOuDefaut(valeur?: string, defaut = "-") {
   return nettoyee ? echapperHtml(nettoyee) : defaut;
 }
 
-function texteMultiligneOuDefaut(
-  valeur: string,
-  defaut = "Aucune condition particulière."
-) {
-  const nettoyee = valeur.trim();
+function renderLogo(entreprise: EntrepriseSettings) {
+  const logoUrl = entreprise.logoUrl?.trim();
 
-  if (!nettoyee) {
-    return defaut;
-  }
-
-  return echapperHtml(nettoyee).replaceAll("\n", "<br />");
-}
-
-function getLogoState(logoUrl?: string) {
-  const logoUrlNettoyee = logoUrl?.trim();
-
-  if (!logoUrlNettoyee) {
-    return { afficherLogo: false, blocLogo: "" };
-  }
-
-  return {
-    afficherLogo: true,
-    blocLogo: `
-      <div style="display:inline-block; padding:10px 14px; background:#ffffff; border-radius:14px;">
-        <img
-          src="${echapperHtml(logoUrlNettoyee)}"
-          alt="Logo entreprise"
-          style="max-height:76px; max-width:280px; width:auto; object-fit:contain; display:block;"
-        />
-      </div>
-    `,
-  };
-}
-
-function renderBrandHeader(
-  entreprise: EntrepriseSettings,
-  blocLogo: string,
-  afficherLogo: boolean
-) {
-  const afficherNom =
-    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
+  if (!logoUrl) return "";
 
   return `
-    <tr>
-      <td class="email-pad" style="padding:28px 32px; background:#0f172a;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          <tr>
-            <td style="vertical-align:middle;">
-              ${blocLogo}
-              ${
-                afficherNom
-                  ? `<div style="${afficherLogo ? "margin-top:14px;" : ""} font-size:24px; line-height:30px; font-weight:800; color:#ffffff; word-break:break-word;">${texteOuDefaut(
-                      entreprise.nom,
-                      "Entreprise"
-                    )}</div>`
-                  : ""
-              }
-            </td>
-            <td align="right" style="vertical-align:middle;">
-              <div style="display:inline-block; padding:7px 11px; border:1px solid #334155; border-radius:999px; font-size:11px; line-height:16px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#cbd5e1;">
-                Document sécurisé
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+    <div style="display:inline-block; padding:9px 12px; background:#ffffff; border-radius:14px;">
+      <img
+        src="${echapperHtml(logoUrl)}"
+        alt="Logo de ${texteOuDefaut(entreprise.nom, "l'entreprise")}"
+        style="display:block; width:auto; max-width:240px; max-height:72px; object-fit:contain;"
+      />
+    </div>
   `;
 }
 
-function renderEntrepriseBloc(
-  entreprise: EntrepriseSettings,
-  blocLogo: string,
-  afficherLogo: boolean
-) {
-  const codePostalVille = [entreprise.codePostal, entreprise.ville]
-    .filter(Boolean)
-    .join(" · ");
-
-  const afficherNom =
-    !afficherLogo || entreprise.logoRemplaceNomEntreprise !== true;
-
-  return `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px; margin-bottom:20px;">
-      <tr>
-        <td style="padding:18px;">
-          ${blocLogo}
-
-          <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">
-            Entreprise
-          </div>
-
-          ${
-            afficherNom
-              ? `
-                <div style="margin-top:6px; font-size:22px; line-height:30px; font-weight:700; color:#0f172a; word-break:break-word;">
-                  ${texteOuDefaut(entreprise.nom, "Entreprise")}
-                </div>
-              `
-              : ""
-          }
-
-          <div style="${afficherNom ? "margin-top:8px;" : "margin-top:10px;"} font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-            <strong>Adresse :</strong> ${texteOuDefaut(
-              entreprise.adresse,
-              "Adresse non renseignée"
-            )}
-          </div>
-
-          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-            <strong>Code postal / Ville :</strong> ${texteOuDefaut(
-              codePostalVille,
-              "Coordonnées non renseignées"
-            )}
-          </div>
-
-          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-            <strong>Email :</strong> ${texteOuDefaut(
-              entreprise.email,
-              "Email non renseigné"
-            )}
-          </div>
-
-          <div style="font-size:14px; line-height:22px; color:#475569;">
-            <strong>Téléphone :</strong> ${texteOuDefaut(
-              entreprise.telephone,
-              "Téléphone non renseigné"
-            )}
-          </div>
-
-          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-            <strong>TVA :</strong> ${texteOuDefaut(
-              entreprise.tva,
-              "Non renseignée"
-            )}
-          </div>
-
-          <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-            <strong>IBAN :</strong> ${texteOuDefaut(
-              entreprise.iban,
-              "IBAN non renseigné"
-            )}
-          </div>
-        </td>
-      </tr>
-    </table>
-  `;
-}
-
-function renderFooterEntreprise(entreprise: EntrepriseSettings) {
-  const infosEntreprise = [
-    entreprise.nom?.trim(),
-    entreprise.email?.trim(),
-    entreprise.telephone?.trim(),
-    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
-    entreprise.iban?.trim() ? `IBAN : ${entreprise.iban.trim()}` : "",
-  ].filter(Boolean);
-
-  return `
-    <tr>
-      <td style="padding-top:4px; font-size:14px; line-height:24px; color:#475569;">
-        Merci pour votre confiance.
-        ${
-          infosEntreprise.length > 0
-            ? `
-              <div style="margin-top:10px; font-size:12px; line-height:20px; color:#64748b; word-break:break-word;">
-                ${infosEntreprise
-                  .map((info) => echapperHtml(info))
-                  .join(" &middot; ")}
-              </div>
-            `
-            : ""
-        }
-      </td>
-    </tr>
-  `;
-}
-
-function renderAcceptanceBlock(acceptanceUrl?: string) {
-  const url = acceptanceUrl?.trim();
-
-  if (!url) return "";
-
-  const urlHtml = echapperHtml(url);
-
-  return `
-    <tr>
-      <td style="padding-bottom:20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:18px;">
-          <tr>
-            <td class="card-pad" style="padding:24px;">
-              <div style="font-size:20px; line-height:28px; font-weight:800; color:#052e16;">
-                Votre devis est prêt
-              </div>
-
-              <div style="margin-top:8px; font-size:14px; line-height:22px; color:#166534;">
-                Consultez les détails en ligne et transmettez votre décision en quelques instants.
-              </div>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
-                <tr>
-                  <td style="padding:0 10px 10px 0;">
-                    <a href="${urlHtml}" style="display:inline-block; background:#f97316; color:#ffffff; text-decoration:none; font-size:14px; line-height:20px; font-weight:800; padding:13px 18px; border-radius:12px;">
-                      Consulter le devis
-                    </a>
-                  </td>
-                  <td style="padding:0 0 10px 0;">
-                    <a href="${urlHtml}" style="display:inline-block; background:#ffffff; border:1px solid #86efac; color:#166534; text-decoration:none; font-size:14px; line-height:20px; font-weight:800; padding:12px 17px; border-radius:12px;">
-                      Accepter ou refuser
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:8px; background:#ffffff; border-radius:12px;">
-                <tr>
-                  <td style="padding:14px 16px;">
-                    <div style="font-size:13px; line-height:20px; font-weight:800; color:#14532d;">
-                      Pourquoi ce lien ?
-                    </div>
-                    <div style="margin-top:3px; font-size:13px; line-height:20px; color:#166534;">
-                      Vous pouvez consulter votre devis en ligne, le télécharger, l'accepter ou le refuser.
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              <div style="margin-top:12px; font-size:12px; line-height:18px; color:#15803d;">
-                Le PDF complet est également joint à cet email.
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `;
-}
-
-function renderStatusBanner(
-  statut: DevisBusiness["statut"],
-  expire: boolean
-) {
-  const configuration =
-    statut === "Accepté"
-      ? {
-          fond: "#ecfdf5",
-          bordure: "#a7f3d0",
-          couleur: "#065f46",
-          label: "Devis accepté",
-          detail: "Ce devis a été accepté par le client.",
-        }
-      : statut === "Refusé"
-        ? {
-            fond: "#fef2f2",
-            bordure: "#fecaca",
-            couleur: "#991b1b",
-            label: "Devis refusé",
-            detail: "Ce devis a été refusé par le client.",
-          }
-        : expire
-          ? {
-              fond: "#fff7ed",
-              bordure: "#fed7aa",
-              couleur: "#9a3412",
-              label: "Devis expiré",
-              detail:
-                "La date de validité de ce devis est dépassée. Contactez l'entreprise pour le renouveler.",
-            }
-          : null;
-
-  if (!configuration) return "";
-
-  return `
-    <tr>
-      <td style="padding-bottom:20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${configuration.fond}; border:1px solid ${configuration.bordure}; border-radius:12px;">
-          <tr>
-            <td style="padding:13px 16px; font-size:13px; line-height:20px; color:${configuration.couleur};">
-              <strong>${configuration.label}</strong> &nbsp;·&nbsp; ${configuration.detail}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `;
-}
-
-function renderMessageOptionnelHtml(message?: string) {
+function renderMessage(message?: string) {
   const messageNettoye = message?.trim();
+  const contenu =
+    messageNettoye ||
+    `Bonjour,
 
-  if (!messageNettoye) return "";
+Veuillez trouver ci-joint votre devis.
 
-  return `
-    <tr>
-      <td style="padding-bottom:16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
-          <tr>
-            <td style="padding:18px;">
-              <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:10px;">
-                Message
-              </div>
+Vous pouvez également le consulter en ligne avant de l'accepter ou de le refuser.
 
-              <div style="font-size:14px; line-height:24px; color:#334155; word-break:break-word;">
-                ${echapperHtml(messageNettoye).replaceAll("\n", "<br />")}
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `;
-}
+Le PDF est joint à cet email.`;
 
-function renderMentionsHtml(mentions?: string) {
-  const mentionsNettoyees = mentions?.trim();
-
-  if (!mentionsNettoyees) return "";
-
-  return `
-    <tr>
-      <td style="padding-bottom:16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px;">
-          <tr>
-            <td style="padding:16px 18px;">
-              <div style="font-size:11px; line-height:17px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#64748b;">
-                Mentions
-              </div>
-              <div style="margin-top:6px; font-size:12px; line-height:19px; color:#64748b; word-break:break-word;">
-                ${echapperHtml(mentionsNettoyees).replaceAll("\n", "<br />")}
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `;
+  return echapperHtml(contenu).replaceAll("\n", "<br />");
 }
 
 export function renderDevisEmailHtml(
@@ -381,60 +73,12 @@ export function renderDevisEmailHtml(
   acceptanceUrl?: string,
   message?: string
 ) {
-  const totauxDevis = calculerTotauxDevis(devis);
-  const totalHt = totauxDevis.totalHt;
-  const totalTvac = totauxDevis.totalTtc;
-  const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
-  const soldeRestant = totalTvac - montantAcompte;
-  const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
+  const numeroDevis = formatNumeroDevisPourAffichage(devis.id);
+  const totalTvac = calculerTotauxDevis(devis).totalTtc;
   const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
-
-  const { afficherLogo, blocLogo } = getLogoState(entreprise.logoUrl);
-
-  const blocEntreprise = renderEntrepriseBloc(
-    entreprise,
-    "",
-    afficherLogo
-  );
-
-  const lignesHtml = normaliserLignesDevis(devis)
-    .map((ligne) => {
-      const sousTotal = ligne.quantite * ligne.prixUnitaire;
-
-      return `
-        <tr>
-          <td style="padding:10px 0; font-size:14px; line-height:22px; color:#0f172a;">
-            ${texteOuDefaut(ligne.designation)}
-          </td>
-          <td align="center" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
-            ${ligne.quantite}
-          </td>
-          <td class="mobile-hide" align="center" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
-            ${texteOuDefaut(ligne.unite)}
-          </td>
-          <td class="mobile-hide" align="right" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
-            ${formatMontant(ligne.prixUnitaire)}
-          </td>
-          <td class="mobile-hide" align="right" style="padding:10px 0; font-size:14px; line-height:22px; color:#334155;">
-            ${ligne.tvaTaux}%
-          </td>
-          <td align="right" style="padding:10px 0; font-size:14px; line-height:22px; font-weight:700; color:#0f172a;">
-            ${formatMontant(sousTotal)}
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-  const detailTvaHtml = totauxDevis.detailTva
-    .map(
-      (ligne) => `
-        <tr>
-          <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">TVA ${ligne.taux}%</td>
-          <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(ligne.montantTva)}</td>
-        </tr>
-      `
-    )
-    .join("");
+  const logo = renderLogo(entreprise);
+  const afficherNom = !logo || entreprise.logoRemplaceNomEntreprise !== true;
+  const url = acceptanceUrl?.trim();
 
   return `
 <!DOCTYPE html>
@@ -442,224 +86,128 @@ export function renderDevisEmailHtml(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${echapperHtml(numeroDevisAffiche)}</title>
+    <title>${echapperHtml(numeroDevis)}</title>
     <style>
       @media only screen and (max-width: 620px) {
+        .email-outer { padding: 0 !important; }
         .email-shell { width: 100% !important; border-radius: 0 !important; }
         .email-pad { padding-left: 20px !important; padding-right: 20px !important; }
-        .email-outer { padding: 0 !important; }
-        .card-pad { padding: 18px !important; }
-        .mobile-hide { display: none !important; }
+        .summary-label, .summary-value { display: block !important; width: 100% !important; text-align: left !important; }
+        .summary-value { padding-top: 3px !important; }
+        .primary-button { display: block !important; text-align: center !important; }
       }
     </style>
   </head>
-
   <body style="margin:0; padding:0; background:#e2e8f0; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">
     <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-      Consultez ${echapperHtml(numeroDevisAffiche)} et répondez en ligne.
+      Votre devis ${echapperHtml(numeroDevis)} est disponible en ligne et en pièce jointe.
     </div>
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#e2e8f0; margin:0; padding:0; width:100%;">
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; background:#e2e8f0;">
       <tr>
         <td class="email-outer" align="center" style="padding:28px 12px;">
-          <table class="email-shell" role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:680px; width:100%; background:#ffffff; border:1px solid #cbd5e1; border-radius:22px; overflow:hidden; box-shadow:0 18px 45px rgba(15,23,42,.12);">
-            ${renderBrandHeader(entreprise, blocLogo, afficherLogo)}
+          <table class="email-shell" role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; max-width:640px; overflow:hidden; border:1px solid #cbd5e1; border-radius:22px; background:#ffffff; box-shadow:0 18px 45px rgba(15,23,42,.12);">
             <tr>
-              <td class="email-pad" style="padding:32px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <td class="email-pad" style="padding:28px 32px; background:#0f172a;">
+                ${logo}
+                ${
+                  afficherNom
+                    ? `<div style="${logo ? "margin-top:14px;" : ""} font-size:24px; line-height:30px; font-weight:800; color:#ffffff;">${texteOuDefaut(
+                        entreprise.nom,
+                        "Votre entreprise"
+                      )}</div>`
+                    : ""
+                }
+              </td>
+            </tr>
+
+            <tr>
+              <td class="email-pad" style="padding:34px 32px 32px;">
+                <div style="font-size:12px; line-height:18px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#f97316;">
+                  Votre devis
+                </div>
+                <h1 style="margin:8px 0 0; font-size:32px; line-height:39px; letter-spacing:-.02em; color:#0f172a;">
+                  ${echapperHtml(numeroDevis)}
+                </h1>
+
+                <div style="margin-top:22px; font-size:15px; line-height:25px; color:#334155;">
+                  ${renderMessage(message)}
+                </div>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:26px; border:1px solid #e2e8f0; border-radius:16px; background:#f8fafc;">
                   <tr>
-                    <td style="padding-bottom:24px;">
-                      <div style="font-size:12px; line-height:18px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#f97316;">
-                        Proposition commerciale
-                      </div>
-
-                      <div style="margin-top:8px; font-size:32px; line-height:39px; font-weight:800; letter-spacing:-.02em; color:#0f172a; word-break:break-word;">
-                        Votre devis ${echapperHtml(numeroDevisAffiche)}
-                      </div>
-
-                      <div style="margin-top:12px; font-size:15px; line-height:24px; color:#475569;">
-                        Préparé pour <strong style="color:#0f172a;">${texteOuDefaut(
-                          devis.client
-                        )}</strong>
-                      </div>
-
-                      <div style="margin-top:4px; font-size:13px; line-height:21px; color:#64748b;">
-                        Émis le ${texteOuDefaut(devis.date)} &nbsp;·&nbsp; ${echapperHtml(
-                          validite.label
-                        )} &nbsp;·&nbsp; ${formatMontant(totalTvac)} TVAC
-                      </div>
-                    </td>
-                  </tr>
-
-                  ${renderStatusBanner(devis.statut, validite.expire)}
-
-                  ${renderMessageOptionnelHtml(message)}
-
-                  ${renderAcceptanceBlock(acceptanceUrl)}
-
-                  <tr>
-                    <td style="padding-bottom:16px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
+                    <td style="padding:18px;">
+                      ${
+                        devis.client?.trim()
+                          ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td class="summary-label" style="padding:5px 0; font-size:13px; color:#64748b;">Client</td>
+                                <td class="summary-value" align="right" style="padding:5px 0; font-size:14px; font-weight:700; color:#0f172a;">${texteOuDefaut(
+                                  devis.client
+                                )}</td>
+                              </tr>
+                            </table>`
+                          : ""
+                      }
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td style="padding:18px 18px 8px 18px;">
-                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">
-                              Client
-                            </div>
-
-                            <div style="margin-top:6px; font-size:20px; line-height:28px; font-weight:700; color:#0f172a; word-break:break-word;">
-                              ${texteOuDefaut(devis.client)}
-                            </div>
-
-                            <div style="margin-top:6px; font-size:14px; line-height:22px; color:#475569;">
-                              ${texteOuDefaut(devis.typeClient)}
-                              ${
-                                devis.societe.trim()
-                                  ? ` · ${texteOuDefaut(devis.societe)}`
-                                  : ""
-                              }
-                            </div>
-                          </td>
+                          <td class="summary-label" style="padding:5px 0; font-size:13px; color:#64748b;">Montant total TVAC</td>
+                          <td class="summary-value" align="right" style="padding:5px 0; font-size:17px; font-weight:800; color:#0f172a;">${formatMontant(
+                            totalTvac
+                          )}</td>
                         </tr>
-
                         <tr>
-                          <td style="padding:0 18px 18px 18px;">
-                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-                              <strong>Chantier :</strong> ${texteOuDefaut(
-                                devis.chantierTitre,
-                                "Aucun chantier lié"
-                              )}
-                            </div>
-
-                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-                              <strong>Adresse :</strong> ${texteOuDefaut(
-                                devis.adresse,
-                                "Non renseignée"
-                              )}
-                            </div>
-
-                            <div style="font-size:14px; line-height:22px; color:#475569;">
-                              <strong>Code postal / Ville :</strong> ${texteOuDefaut(
-                                [devis.codePostal, devis.ville]
-                                  .filter(Boolean)
-                                  .join(" · "),
-                                "Coordonnées non renseignées"
-                              )}
-                            </div>
-
-                            <div style="font-size:14px; line-height:22px; color:#475569; word-break:break-word;">
-                              <strong>Email :</strong> ${texteOuDefaut(
-                                devis.email,
-                                "Non renseigné"
-                              )}
-                            </div>
-
-                            <div style="font-size:14px; line-height:22px; color:#475569;">
-                              <strong>Téléphone :</strong> ${texteOuDefaut(
-                                devis.telephone,
-                                "Non renseigné"
-                              )}
-                            </div>
-                          </td>
+                          <td class="summary-label" style="padding:5px 0; font-size:13px; color:#64748b;">Date</td>
+                          <td class="summary-value" align="right" style="padding:5px 0; font-size:14px; font-weight:700; color:#0f172a;">${texteOuDefaut(
+                            devis.date
+                          )}</td>
+                        </tr>
+                        <tr>
+                          <td class="summary-label" style="padding:5px 0; font-size:13px; color:#64748b;">Validité</td>
+                          <td class="summary-value" align="right" style="padding:5px 0; font-size:14px; font-weight:700; color:#0f172a;">${echapperHtml(
+                            validite.label
+                          )}</td>
                         </tr>
                       </table>
                     </td>
                   </tr>
-
-                  <tr>
-                    <td style="padding-bottom:16px;">
-                      ${blocEntreprise}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding-bottom:16px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
-                        <tr>
-                          <td style="padding:18px;">
-                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:14px;">
-                              Prestations
-                            </div>
-
-                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                              <tr>
-                                <td style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Désignation</td>
-                                <td align="center" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Qté</td>
-                                <td class="mobile-hide" align="center" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Unité</td>
-                                <td class="mobile-hide" align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">PU</td>
-                                <td class="mobile-hide" align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">TVA</td>
-                                <td align="right" style="padding:0 0 10px 0; border-bottom:1px solid #e2e8f0; font-size:12px; line-height:18px; font-weight:700; color:#64748b;">Total</td>
-                              </tr>
-
-                              ${lignesHtml}
-                            </table>
-
-                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:18px;">
-                              <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Total HT</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(
-                                  totalHt
-                                )}</td>
-                              </tr>
-
-                              ${detailTvaHtml}
-
-                              <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Total TVAC</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(
-                                  totalTvac
-                                )}</td>
-                              </tr>
-
-                              <tr>
-                                <td style="padding:6px 0; font-size:15px; line-height:22px; color:#334155;">Acompte (${devis.acomptePourcentage}%)</td>
-                                <td align="right" style="padding:6px 0; font-size:15px; line-height:22px; font-weight:700; color:#0f172a;">${formatMontant(
-                                  montantAcompte
-                                )}</td>
-                              </tr>
-
-                              <tr>
-                                <td colspan="2" style="padding-top:10px;">
-                                  <div style="border-top:1px solid #e2e8f0;"></div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">Solde à la livraison</td>
-                                <td align="right" style="padding:14px 0 4px 0; font-size:22px; line-height:28px; font-weight:700; color:#0f172a;">${formatMontant(
-                                  soldeRestant
-                                )}</td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding-bottom:16px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e2e8f0; border-radius:16px;">
-                        <tr>
-                          <td style="padding:18px;">
-                            <div style="font-size:12px; line-height:18px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; padding-bottom:10px;">
-                              Conditions
-                            </div>
-
-                            <div style="font-size:14px; line-height:24px; color:#334155; word-break:break-word;">
-                              ${texteMultiligneOuDefaut(
-                                devis.conditions,
-                                "Aucune condition particulière."
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  ${renderMentionsHtml(entreprise.mentionsLegalesFacture)}
-
-                  ${renderFooterEntreprise(entreprise)}
                 </table>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:18px; border:1px solid #fed7aa; border-radius:14px; background:#fff7ed;">
+                  <tr>
+                    <td style="padding:16px 18px; font-size:13px; line-height:21px; color:#9a3412;">
+                      <strong>Le PDF du devis est joint à cet email.</strong><br />
+                      Vous pouvez également consulter ce devis en ligne avant de prendre votre décision.
+                    </td>
+                  </tr>
+                </table>
+
+                ${
+                  url
+                    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:24px;">
+                        <tr>
+                          <td align="center">
+                            <a class="primary-button" href="${echapperHtml(
+                              url
+                            )}" style="display:inline-block; padding:14px 22px; border-radius:12px; background:#f97316; color:#ffffff; font-size:15px; line-height:21px; font-weight:800; text-decoration:none;">
+                              Consulter le devis en ligne
+                            </a>
+                          </td>
+                        </tr>
+                      </table>`
+                    : ""
+                }
+
+                <div style="margin-top:28px; padding-top:20px; border-top:1px solid #e2e8f0; font-size:12px; line-height:20px; color:#64748b;">
+                  ${[
+                    entreprise.nom?.trim(),
+                    entreprise.email?.trim(),
+                    entreprise.telephone?.trim(),
+                  ]
+                    .filter(Boolean)
+                    .map((info) => echapperHtml(info as string))
+                    .join(" &middot; ")}
+                </div>
               </td>
             </tr>
           </table>
@@ -677,90 +225,43 @@ export function renderDevisEmailText(
   acceptanceUrl?: string,
   message?: string
 ) {
-  const totauxDevis = calculerTotauxDevis(devis);
-  const totalHt = totauxDevis.totalHt;
-  const totalTvac = totauxDevis.totalTtc;
-  const montantAcompte = totalTvac * (devis.acomptePourcentage / 100);
-  const soldeRestant = totalTvac - montantAcompte;
-  const numeroDevisAffiche = formatNumeroDevisPourAffichage(devis.id);
+  const numeroDevis = formatNumeroDevisPourAffichage(devis.id);
+  const totalTvac = calculerTotauxDevis(devis).totalTtc;
   const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
-  const detailTvaTexte = totauxDevis.detailTva
-    .map((ligne) => `TVA ${ligne.taux}% : ${formatMontant(ligne.montantTva)}`)
-    .join("\n");
+  const messageProfessionnel =
+    message?.trim() ||
+    `Bonjour,
 
-  const codePostalVille = [entreprise.codePostal, entreprise.ville]
-    .filter(Boolean)
-    .join(" · ");
-  const nomEntreprise = entreprise.nom?.trim() || "Entreprise";
-  const statutImportant =
-    devis.statut === "Accepté"
-      ? "DEVIS ACCEPTÉ"
-      : devis.statut === "Refusé"
-        ? "DEVIS REFUSÉ"
-        : validite.expire
-          ? "DEVIS EXPIRÉ"
-          : "";
-  const infosFooter = [
-    entreprise.nom?.trim(),
-    entreprise.email?.trim(),
-    entreprise.telephone?.trim(),
-    entreprise.tva?.trim() ? `TVA : ${entreprise.tva.trim()}` : "",
-  ]
-    .filter(Boolean)
-    .join(" - ");
+Veuillez trouver ci-joint votre devis.
+
+Vous pouvez également le consulter en ligne avant de l'accepter ou de le refuser.
+
+Le PDF est joint à cet email.`;
 
   return `
-ENTREPRISE
-${nomEntreprise}
-Adresse : ${entreprise.adresse || "-"}
-Code postal / Ville : ${codePostalVille || "-"}
-Email : ${entreprise.email || "-"}
-Téléphone : ${entreprise.telephone || "-"}
-TVA : ${entreprise.tva || "-"}
-IBAN : ${entreprise.iban || "-"}
+${entreprise.nom?.trim() || "Votre entreprise"}
 
-DEVIS ${numeroDevisAffiche}
-Date : ${devis.date}
-Statut : ${devis.statut}
+DEVIS ${numeroDevis}
+${devis.client?.trim() ? `Client : ${devis.client.trim()}\n` : ""}Montant total TVAC : ${formatMontant(
+    totalTvac
+  )}
+Date : ${devis.date || "-"}
 Validité : ${validite.label}
-${statutImportant}
 
-${message?.trim() ? `MESSAGE\n${message.trim()}\n` : ""}
+${messageProfessionnel}
 
-CLIENT
-Client : ${devis.client}
-Type : ${devis.typeClient}${devis.societe ? ` - ${devis.societe}` : ""}
-Chantier : ${devis.chantierTitre || "Aucun chantier lié"}
-Adresse : ${devis.adresse || "-"}
-Code postal / Ville : ${
-    [devis.codePostal, devis.ville].filter(Boolean).join(" · ") || "-"
-  }
-Email : ${devis.email || "-"}
-Téléphone : ${devis.telephone || "-"}
-
-Total HT : ${formatMontant(totalHt)}
-${detailTvaTexte}
-Total TVAC : ${formatMontant(totalTvac)}
-Acompte (${devis.acomptePourcentage}%) : ${formatMontant(montantAcompte)}
-Solde à la livraison : ${formatMontant(soldeRestant)}
+Le PDF du devis est joint à cet email.
+Vous pouvez également consulter ce devis en ligne avant de prendre votre décision.
 
 ${
-    acceptanceUrl?.trim()
-      ? `DEVIS EN LIGNE
-Lien pour voir, accepter ou refuser le devis : ${acceptanceUrl.trim()}
+  acceptanceUrl?.trim()
+    ? `Consulter le devis en ligne : ${acceptanceUrl.trim()}`
+    : ""
+}
 
-Pourquoi ce lien ?
-Vous pouvez consulter votre devis en ligne, le télécharger, l'accepter ou le refuser.
-`
-      : ""
-  }
-
-  Conditions :
-${devis.conditions || "Aucune condition particulière."}
-
-${entreprise.mentionsLegalesFacture?.trim() ? `Mentions :\n${entreprise.mentionsLegalesFacture.trim()}\n` : ""}
-
-Merci pour votre confiance.
-${infosFooter || ""}
+${[entreprise.nom, entreprise.email, entreprise.telephone]
+  .map((info) => info?.trim())
+  .filter(Boolean)
+  .join(" - ")}
 `.trim();
 }

@@ -3,11 +3,10 @@ import { adminDb } from "../../../../../lib/firebase-admin";
 import { hashAcceptanceToken } from "../../../../../lib/devis-acceptance";
 import {
   calculerValiditeDevis,
-  calculerTotalHt,
-  calculerTotalTvac,
+  calculerTotauxDevis,
   formatMontant,
 } from "../../../../../lib/devis-helpers";
-import type { Devis } from "../../../../../types/devis";
+import type { Devis, Entreprise } from "../../../../../types/devis";
 
 export const runtime = "nodejs";
 
@@ -39,6 +38,12 @@ type AcceptanceBody = {
   name?: string;
   email?: string;
   action?: "accept" | "refuse";
+  comment?: string;
+};
+
+type EntreprisePublique = Entreprise & {
+  logoUrl?: string;
+  logoRemplaceNomEntreprise?: boolean;
 };
 
 class AcceptanceError extends Error {
@@ -108,22 +113,61 @@ function normaliserAction(action?: string) {
   return action;
 }
 
+function normaliserCommentaire(comment?: string) {
+  const commentaire = comment?.trim() ?? "";
+  return commentaire ? commentaire.slice(0, 1000) : "";
+}
+
 function toPublicDevis(devis: DevisBusiness) {
-  const totalHt = calculerTotalHt(devis);
-  const totalTvac = calculerTotalTvac(devis);
+  const totaux = calculerTotauxDevis(devis);
   const validite = calculerValiditeDevis(devis.date, devis.validiteJours);
 
   return {
     id: devis.id,
     client: devis.client,
+    adresse: devis.adresse,
+    codePostal: devis.codePostal,
+    ville: devis.ville,
+    email: devis.email,
+    telephone: devis.telephone,
+    typeClient: devis.typeClient,
+    societe: devis.societe,
+    tvaClient: devis.tvaClient,
     date: devis.date,
     statut: devis.statut,
     chantierTitre: devis.chantierTitre,
+    acomptePourcentage: devis.acomptePourcentage,
     validiteJours: devis.validiteJours,
-    totalHt,
-    totalTvac,
-    totalHtLabel: formatMontant(totalHt),
-    totalTvacLabel: formatMontant(totalTvac),
+    conditions: devis.conditions,
+    lignes: totaux.lignes.map((ligne) => {
+      const montantHt = ligne.quantite * ligne.prixUnitaire;
+      const montantTva = montantHt * ((ligne.tvaTaux ?? 0) / 100);
+
+      return {
+        id: ligne.id,
+        designation: ligne.designation,
+        quantite: ligne.quantite,
+        unite: ligne.unite,
+        prixUnitaire: ligne.prixUnitaire,
+        prixUnitaireLabel: formatMontant(ligne.prixUnitaire),
+        tvaTaux: ligne.tvaTaux ?? 0,
+        montantHtLabel: formatMontant(montantHt),
+        montantTvaLabel: formatMontant(montantTva),
+        totalTtcLabel: formatMontant(montantHt + montantTva),
+      };
+    }),
+    detailTva: totaux.detailTva.map((ligne) => ({
+      taux: ligne.taux,
+      montantHtLabel: formatMontant(ligne.montantHt),
+      montantTvaLabel: formatMontant(ligne.montantTva),
+      totalTtcLabel: formatMontant(ligne.totalTtc),
+    })),
+    totalHt: totaux.totalHt,
+    totalTva: totaux.totalTva,
+    totalTvac: totaux.totalTtc,
+    totalHtLabel: formatMontant(totaux.totalHt),
+    totalTvaLabel: formatMontant(totaux.totalTva),
+    totalTvacLabel: formatMontant(totaux.totalTtc),
     dateValidite: validite.dateValidite,
     validiteLabel: validite.label,
     validiteExpiree: validite.expire,
@@ -134,6 +178,22 @@ function toPublicDevis(devis: DevisBusiness) {
     refusedAt: devis.refusedAt ?? null,
     refusedByName: devis.refusedByName ?? "",
     refusedByEmail: devis.refusedByEmail ?? "",
+  };
+}
+
+function toPublicEntreprise(entreprise: EntreprisePublique) {
+  return {
+    nom: entreprise.nom,
+    adresse: entreprise.adresse,
+    codePostal: entreprise.codePostal ?? "",
+    ville: entreprise.ville ?? "",
+    email: entreprise.email,
+    telephone: entreprise.telephone,
+    tva: entreprise.tva,
+    iban: entreprise.iban,
+    logoUrl: entreprise.logoUrl ?? "",
+    logoRemplaceNomEntreprise:
+      entreprise.logoRemplaceNomEntreprise === true,
   };
 }
 
@@ -184,9 +244,20 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const token = await getToken(context);
     const { devis } = await getDevisByToken(token);
+    const entrepriseSnap = await adminDb
+      .collection("entreprises")
+      .doc(devis.entrepriseId as string)
+      .get();
+
+    if (!entrepriseSnap.exists) {
+      throw new AcceptanceError("Entreprise introuvable.", 404);
+    }
 
     return jsonSuccess({
       devis: toPublicDevis(devis),
+      entreprise: toPublicEntreprise(
+        entrepriseSnap.data() as EntreprisePublique
+      ),
       alreadyAccepted: devis.statut === "Accepté" || Boolean(devis.acceptedAt),
       alreadyRefused: devis.statut === "Refusé" || Boolean(devis.refusedAt),
     });
@@ -206,6 +277,8 @@ export async function POST(request: Request, context: RouteContext) {
     const body = (await request.json()) as AcceptanceBody;
     const identite = normaliserIdentite(body);
     const action = normaliserAction(body.action);
+    const commentaire =
+      action === "refuse" ? normaliserCommentaire(body.comment) : "";
     const tokenHash = hashAcceptanceToken(token);
     const maintenant = Date.now();
     const linkRef = adminDb.collection("devisAcceptanceLinks").doc(tokenHash);
@@ -273,6 +346,7 @@ export async function POST(request: Request, context: RouteContext) {
         usedAction: action,
         usedByName: identite.name,
         usedByEmail: identite.email,
+        ...(commentaire ? { usedComment: commentaire } : {}),
       });
 
       return {

@@ -13,11 +13,11 @@ export function buildDevisEmailMessage(nomEntreprise: string) {
 
   return `Bonjour,
 
-Suite à notre rendez-vous, vous trouverez ci-joint votre devis.
+Veuillez trouver ci-joint votre devis.
 
-Vous pouvez également le consulter en ligne et l'accepter directement.
+Vous pouvez également le consulter en ligne avant de l'accepter ou de le refuser.
 
-Je reste à votre disposition.
+Le PDF est joint à cet email.
 
 Bien cordialement,
 
