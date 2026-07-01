@@ -87,6 +87,65 @@ function joindreLocalite(codePostal: string, ville: string) {
   return [codePostal, ville].filter(Boolean).join(" ");
 }
 
+type InfoIconName =
+  | "building"
+  | "user"
+  | "document"
+  | "calendar"
+  | "status";
+
+function InfoIcon({ name }: { name: InfoIconName }) {
+  const paths: Record<InfoIconName, React.ReactNode> = {
+    building: (
+      <>
+        <path d="M3 21h18" />
+        <path d="M6 21V5l6-2v18" />
+        <path d="M18 21V9l-6-2" />
+        <path d="M9 9v.01M9 13v.01M9 17v.01M15 13v.01M15 17v.01" />
+      </>
+    ),
+    user: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </>
+    ),
+    document: (
+      <>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6M8 13h8M8 17h5" />
+      </>
+    ),
+    calendar: (
+      <>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 11h18" />
+      </>
+    ),
+    status: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8.5 12 2.2 2.2 4.8-5" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 export default function AcceptanceClient({ token }: Props) {
   const [devis, setDevis] = useState<PublicDevis | null>(null);
   const [entreprise, setEntreprise] = useState<PublicEntreprise | null>(null);
@@ -296,25 +355,84 @@ export default function AcceptanceClient({ token }: Props) {
   }
 
   const devisTraite = alreadyAccepted || alreadyRefused;
+  const etapes: Array<{
+    label: string;
+    etat: "terminee" | "active" | "avenir";
+  }> = [
+    { label: "Envoyé", etat: "terminee" },
+    {
+      label: "Consultation",
+      etat: devisTraite ? "terminee" : "active",
+    },
+    { label: "Décision", etat: devisTraite ? "active" : "avenir" },
+  ];
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-slate-950 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-5">
-        <section className="rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm sm:p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 font-bold text-sky-700">
+        <section className="rounded-3xl border border-sky-200 bg-gradient-to-br from-white to-sky-50 p-5 shadow-sm sm:p-7">
+          <div className="flex items-start gap-4 sm:gap-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-100 font-bold text-sky-700">
               ✓
             </div>
-            <div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-sky-700">
+                Bonjour {devis.client},
+              </p>
               <h1 className="text-lg font-bold text-sky-950 sm:text-xl">
                 Vous consultez un devis sécurisé.
               </h1>
               <p className="mt-1 text-sm leading-6 text-sky-800 sm:text-base">
-                Prenez le temps de consulter ce devis. Vous pourrez ensuite
-                décider de l’accepter ou de le refuser.
+                {entreprise.nom} vous invite à découvrir sa proposition. Prenez
+                le temps de la consulter avant de donner votre réponse.
               </p>
             </div>
           </div>
+
+          <ol
+            aria-label="Progression du devis"
+            className="mt-6 grid grid-cols-3 border-t border-sky-200 pt-5"
+          >
+            {etapes.map((etape, index) => (
+              <li
+                key={etape.label}
+                className="relative flex flex-col items-center px-1 text-center"
+              >
+                {index < etapes.length - 1 && (
+                  <span
+                    className={`absolute left-1/2 top-3 h-0.5 w-full ${
+                      etape.etat === "terminee"
+                        ? "bg-sky-300"
+                        : "bg-slate-200"
+                    }`}
+                  />
+                )}
+                <span
+                  aria-current={etape.etat === "active" ? "step" : undefined}
+                  className={`relative flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ring-4 ring-sky-50 ${
+                    etape.etat === "terminee"
+                      ? "bg-sky-600 text-white"
+                      : etape.etat === "active"
+                        ? "bg-white text-sky-700 outline outline-2 outline-sky-600"
+                        : "bg-slate-200 text-slate-500"
+                  }`}
+                >
+                  {etape.etat === "terminee" ? "✓" : index + 1}
+                </span>
+                <span
+                  className={`mt-2 text-xs font-semibold sm:text-sm ${
+                    etape.etat === "active"
+                      ? "text-sky-800"
+                      : etape.etat === "terminee"
+                        ? "text-slate-700"
+                        : "text-slate-500"
+                  }`}
+                >
+                  {etape.label}
+                </span>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <article
@@ -354,33 +472,124 @@ export default function AcceptanceClient({ token }: Props) {
           </header>
 
           <div className="space-y-8 p-5 sm:p-8">
-            <section className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Entreprise
+            <section
+              aria-label="Résumé du devis"
+              className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+            >
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                <div className="flex items-center gap-2 text-slate-500">
+                  <InfoIcon name="document" />
+                  <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
+                    Numéro
+                  </p>
+                </div>
+                <p className="mt-3 break-words text-sm font-bold text-slate-950 sm:text-base">
+                  {devis.id}
                 </p>
-                <p className="mt-3 text-lg font-bold">{entreprise.nom}</p>
-                <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
-                  <p>{entreprise.adresse || "Adresse non renseignée"}</p>
+              </div>
+
+              <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 sm:p-5">
+                <div className="flex items-center gap-2 text-orange-700">
+                  <InfoIcon name="document" />
+                  <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
+                    Montant TVAC
+                  </p>
+                </div>
+                <p className="mt-3 text-lg font-bold text-slate-950 sm:text-xl">
+                  {devis.totalTvacLabel}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                <div className="flex items-center gap-2 text-slate-500">
+                  <InfoIcon name="calendar" />
+                  <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
+                    Validité
+                  </p>
+                </div>
+                <p
+                  className={`mt-3 text-sm font-bold sm:text-base ${
+                    devis.validiteExpiree ? "text-red-700" : "text-slate-950"
+                  }`}
+                >
+                  {devis.dateValidite || "Non renseignée"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                <div className="flex items-center gap-2 text-slate-500">
+                  <InfoIcon name="status" />
+                  <p className="text-[0.68rem] font-bold uppercase tracking-wider sm:text-xs">
+                    Statut
+                  </p>
+                </div>
+                <p className="mt-3">
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
+                      alreadyAccepted
+                        ? "bg-emerald-100 text-emerald-800"
+                        : alreadyRefused
+                          ? "bg-slate-200 text-slate-700"
+                          : "bg-sky-100 text-sky-800"
+                    }`}
+                  >
+                    {devis.statut}
+                  </span>
+                </p>
+              </div>
+            </section>
+
+            <section className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                    <InfoIcon name="building" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Entreprise
+                    </p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-950">
+                      {entreprise.nom}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-2.5 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">
                   <p>
+                    {entreprise.adresse || "Adresse non renseignée"}
+                    <br />
                     {joindreLocalite(entreprise.codePostal, entreprise.ville) ||
                       "Localité non renseignée"}
                   </p>
-                  <p>{entreprise.email}</p>
-                  <p>{entreprise.telephone}</p>
+                  {entreprise.email && <p>{entreprise.email}</p>}
+                  {entreprise.telephone && <p>{entreprise.telephone}</p>}
                   {entreprise.tva && <p>TVA : {entreprise.tva}</p>}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Client
-                </p>
-                <p className="mt-3 text-lg font-bold">{devis.client}</p>
-                <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
-                  {devis.societe && <p>{devis.societe}</p>}
-                  <p>{devis.adresse || "Adresse non renseignée"}</p>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+                    <InfoIcon name="user" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Client
+                    </p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-950">
+                      {devis.client}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-2.5 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">
+                  {devis.societe && (
+                    <p className="font-medium text-slate-700">
+                      {devis.societe}
+                    </p>
+                  )}
                   <p>
+                    {devis.adresse || "Adresse non renseignée"}
+                    <br />
                     {joindreLocalite(devis.codePostal, devis.ville) ||
                       "Localité non renseignée"}
                   </p>
@@ -602,16 +811,16 @@ export default function AcceptanceClient({ token }: Props) {
                     disabled={actionEnCours !== null}
                     className="min-h-14 w-full rounded-xl bg-emerald-700 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Accepter le devis
+                    ✓ J&apos;accepte ce devis
                   </button>
                   <button
                     data-testid="acceptance-refuse"
                     type="button"
                     onClick={() => ouvrirConfirmation("refuse")}
                     disabled={actionEnCours !== null}
-                    className="min-h-14 w-full rounded-xl border border-red-300 bg-white px-5 py-3 text-base font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-14 w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Refuser le devis
+                    Je ne souhaite pas donner suite
                   </button>
                 </div>
               </section>

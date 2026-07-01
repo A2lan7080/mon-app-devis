@@ -213,6 +213,11 @@ export default function Home() {
 
       const idToken = await currentUser.getIdToken();
 
+      console.log("[devis.send] Auth front", {
+        hasUser: Boolean(currentUser),
+        hasToken: Boolean(idToken),
+      });
+
       if (!idToken) {
         throw new Error("Session expirée. Veuillez vous reconnecter.");
       }
